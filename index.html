@@ -1150,9 +1150,8 @@ function doChangePw() {
   saveSession(); // 更新 session 中的密碼
 
   // 同步寫回 Sheets
-  // 儲存時加 'UC:' 前綴，讓系統知道這是使用者主動修改的密碼
-  const superToSave = { ...SUPER_USER, pw: 'UC:' + SUPER_USER.pw };
-  const allUsers = [superToSave, ...getUsers()];
+  // 直接存純密碼（Sheets 為主，不需前綴）
+  const allUsers = [SUPER_USER, ...getUsers()];
   if (APPS_SCRIPT_URL) {
     fetch(APPS_SCRIPT_URL, {
       method: 'POST',
@@ -1310,11 +1309,11 @@ function startApp(){
         if(Array.isArray(d.users)){
           sheetsUsers = d.users.filter(u=>u.level!=='S');
           const savedS = d.users.find(u=>u.level==='S'&&String(u.id)===String(SUPER_USER.id));
-          const oldPws = ['110219','SNadmin2025','SN@North#2025','SNnorth2025',''];
-          if(savedS&&savedS.pw&&savedS.pw.startsWith('UC:')){
-            const realPw=savedS.pw.slice(3);
-            SUPER_USER={...SUPER_USER, pw:realPw};
-            if(currentUser&&isS) currentUser={...currentUser,pw:realPw};
+          // Sheets 有任何密碼就採用（以 Sheets 為主）
+          if(savedS&&savedS.pw){
+            const sheetsPw=savedS.pw.startsWith('UC:')?savedS.pw.slice(3):savedS.pw;
+            SUPER_USER={...SUPER_USER, pw:sheetsPw};
+            if(currentUser&&isS) currentUser={...currentUser,pw:sheetsPw};
           }
           // 確認 A/B 帳號仍有效
           if(appMode==='admin'&&currentUser&&(isA||isB)){
@@ -2811,12 +2810,11 @@ function restoreSession() {
       if (d && d.ok && Array.isArray(d.users)) {
         sheetsUsers = d.users.filter(u => u.level !== 'S');
         const savedS = d.users.find(u => u.level === 'S' && String(u.id) === String(SUPER_USER.id));
-        // 只有 Sheets 的密碼和 HTML 寫死的初始密碼不同，且不是舊的外洩密碼時才覆蓋
-        // 這樣確保 Sheets 有正確密碼時才生效
-        const oldPasswords = ['110219', 'SNadmin2025', 'SN@North#2025', 'SNnorth2025', ''];
-        // 只有使用者在系統內主動修改過的密碼（帶 'UC:' 前綴）才採用
-        if (savedS && savedS.pw && savedS.pw.startsWith('UC:')) {
-          SUPER_USER = { ...SUPER_USER, pw: savedS.pw.slice(3) };
+        // Sheets 有任何密碼就採用（以 Sheets 為主）
+        if (savedS && savedS.pw) {
+          const sheetsPw = savedS.pw.startsWith('UC:') ? savedS.pw.slice(3) : savedS.pw;
+          SUPER_USER = { ...SUPER_USER, pw: sheetsPw };
+          if(currentUser&&isS) currentUser={...currentUser, pw: sheetsPw};
         }
       }
       initAfterLoad();
