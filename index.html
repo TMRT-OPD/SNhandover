@@ -1477,10 +1477,13 @@ function toDateInput(val) {
 
 function formatCreated(val) {
   if (!val) return '系統預設';
-  // Try to parse as date - handles ISO string, full date string, local date string
+  // 強制用台灣時區顯示（UTC+8），避免時區偏移造成日期差一天
   const d = new Date(val);
   if (!isNaN(d.getTime())) {
-    return d.toLocaleDateString('zh-TW', {year:'numeric', month:'2-digit', day:'2-digit'});
+    return d.toLocaleDateString('zh-TW', {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      timeZone: 'Asia/Taipei'
+    });
   }
   return val;
 }
