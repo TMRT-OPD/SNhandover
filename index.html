@@ -1058,7 +1058,7 @@ tbody tr:hover td { background: #fafaf8; }
 
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyAOpTEyQWjPIt3k5TEtXuDTlonvu9eTE8mWXPcV9S-3my7yZRXMYX1DBcHbiUk2K9VEg/exec';
 // 層級 S 帳號（可透過修改密碼功能更新，存於 Sheets users 分頁）
-let SUPER_USER = {id:'110219', pw:'SN@North#2025', name:'\u6797\u7dad\u8fb0', level:'S'};
+let SUPER_USER = {id:'110219', pw:'SNnorth2025', name:'\u6797\u7dad\u8fb0', level:'S'};
 
 
 // ── 首次登入強制改密碼 ─────────────────────────────────────────
@@ -1150,7 +1150,9 @@ function doChangePw() {
   saveSession(); // 更新 session 中的密碼
 
   // 同步寫回 Sheets
-  const allUsers = [SUPER_USER, ...getUsers()];
+  // 儲存時加 'UC:' 前綴，讓系統知道這是使用者主動修改的密碼
+  const superToSave = { ...SUPER_USER, pw: 'UC:' + SUPER_USER.pw };
+  const allUsers = [superToSave, ...getUsers()];
   if (APPS_SCRIPT_URL) {
     fetch(APPS_SCRIPT_URL, {
       method: 'POST',
@@ -1308,10 +1310,11 @@ function startApp(){
         if(Array.isArray(d.users)){
           sheetsUsers = d.users.filter(u=>u.level!=='S');
           const savedS = d.users.find(u=>u.level==='S'&&String(u.id)===String(SUPER_USER.id));
-          const oldPws = ['110219','SNadmin2025','SN@North#2025',''];
-          if(savedS&&savedS.pw&&!oldPws.includes(savedS.pw)){
-            SUPER_USER={...SUPER_USER, pw:savedS.pw};
-            if(currentUser&&isS) currentUser={...currentUser,pw:savedS.pw};
+          const oldPws = ['110219','SNadmin2025','SN@North#2025','SNnorth2025',''];
+          if(savedS&&savedS.pw&&savedS.pw.startsWith('UC:')){
+            const realPw=savedS.pw.slice(3);
+            SUPER_USER={...SUPER_USER, pw:realPw};
+            if(currentUser&&isS) currentUser={...currentUser,pw:realPw};
           }
           // 確認 A/B 帳號仍有效
           if(appMode==='admin'&&currentUser&&(isA||isB)){
@@ -2807,9 +2810,10 @@ function restoreSession() {
         const savedS = d.users.find(u => u.level === 'S' && String(u.id) === String(SUPER_USER.id));
         // 只有 Sheets 的密碼和 HTML 寫死的初始密碼不同，且不是舊的外洩密碼時才覆蓋
         // 這樣確保 Sheets 有正確密碼時才生效
-        const oldPasswords = ['110219', 'SNadmin2025', ''];
-        if (savedS && savedS.pw && !oldPasswords.includes(savedS.pw)) {
-          SUPER_USER = { ...SUPER_USER, pw: savedS.pw };
+        const oldPasswords = ['110219', 'SNadmin2025', 'SN@North#2025', 'SNnorth2025', ''];
+        // 只有使用者在系統內主動修改過的密碼（帶 'UC:' 前綴）才採用
+        if (savedS && savedS.pw && savedS.pw.startsWith('UC:')) {
+          SUPER_USER = { ...SUPER_USER, pw: savedS.pw.slice(3) };
         }
       }
       initAfterLoad();
