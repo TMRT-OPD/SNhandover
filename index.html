@@ -147,6 +147,11 @@ select:focus { outline: none; border-color: var(--accent); }
 .btn-ghost:hover { background: var(--surface2); border-color: var(--border); }
 .viewer-back { color: var(--accent) !important; border-color: var(--accent) !important; background: var(--accent-light) !important; font-weight: 500; }
 .viewer-back:hover { background: #d0e8f5 !important; }
+/* 層級 A 唯讀模式（隱藏編輯按鈕但保留頁面功能） */
+.readonly-mode .edit-btn-col,
+.readonly-mode .page-header .btn-primary,
+.readonly-mode .add-form,
+.readonly-mode #nav-admin-section { display: none !important; }
 @keyframes row-flash {
   0%   { background: rgba(45,95,128,0.18); }
   60%  { background: rgba(45,95,128,0.12); }
@@ -355,6 +360,7 @@ tbody tr:hover td { background: #fafaf8; }
 .user-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;margin-bottom:6px;letter-spacing:.06em}
 .badge-s{background:#f0c040;color:#1a1917}
 .badge-a{background:#7ab8d6;color:#1a1917}
+.badge-b{background:#a8d8a8;color:#1a1917}
 .badge-v{background:rgba(255,255,255,.15);color:rgba(255,255,255,.7)}
 .user-name{font-size:13px;font-weight:500;color:#fff}
 .user-id{font-size:10px;color:rgba(255,255,255,.4);margin-top:2px;font-family:var(--mono)}
@@ -364,11 +370,15 @@ tbody tr:hover td { background: #fafaf8; }
 .user-table tr:last-child td{border-bottom:none}
 .user-table tr:hover td{background:var(--surface2)}
 
-/* 觀看版：隱藏所有編輯功能 */
+/* 觀看版 & B 層：隱藏所有編輯功能 */
 .viewer-mode .page-header .btn-primary,
 .viewer-mode .page-header .btn-ghost:not(.viewer-back),
-.viewer-mode .add-form { display: none !important; }
+.viewer-mode .add-form,
+.level-b .page-header .btn-primary,
+.level-b .add-form { display: none !important; }
 .viewer-mode .modal-overlay { display: none !important; }
+/* B 層：表格內編輯按鈕隱藏 */
+.level-b td .btn-sm { display: none !important; }
 
 
 </style>
@@ -421,6 +431,15 @@ tbody tr:hover td { background: #fafaf8; }
     <div id="nav-s-section" style="display:none">
       <div class="nav-section" style="margin-top:8px">管理</div>
       <div class="nav-item" onclick="showPage('p5')" id="nav-p5"><span class="nav-icon">◈</span> 權限管理</div>
+    </div>
+    <!-- A/B 層：帳號設定（改密碼） -->
+    <div id="nav-ab-section" style="display:none">
+      <div class="nav-section" style="margin-top:8px">帳號設定</div>
+      <div class="nav-item" onclick="openChangeSelfPwModal()"><span class="nav-icon">🔑</span> 修改密碼</div>
+    </div>
+    <div id="nav-a-section" style="display:none">
+      <div class="nav-section" style="margin-top:8px">帳號</div>
+      <div class="nav-item" onclick="openChangeSelfPwModal()"><span class="nav-icon">🔑</span> 修改密碼</div>
     </div>
     <div class="nav-section" style="margin-top:8px">帳號</div>
     <div class="nav-item" onclick="doLogout()"><span class="nav-icon">→</span> 登出</div>
@@ -713,12 +732,20 @@ tbody tr:hover td { background: #fafaf8; }
       <tbody id="user-tbody"></tbody>
     </table></div>
     <div id="add-user-form" class="add-form" style="display:none;margin-top:20px">
-      <div class="form-title">新增層級 A 帳號</div>
+      <div class="form-title">新增帳號</div>
       <div class="form-grid form-grid-2" style="margin-bottom:12px">
         <div class="field"><label>帳號（登入用）</label><input id="nu-id" placeholder="例：A001"></div>
-        <div class="field"><label>密碼</label><input id="nu-pw" type="password" placeholder="請設定密碼"></div>
+        <div class="field"><label>初始密碼</label><input id="nu-pw" type="password" placeholder="請設定初始密碼"></div>
       </div>
-      <div class="field" style="margin-bottom:12px"><label>姓名（顯示用）</label><input id="nu-name" placeholder="例：王小明"></div>
+      <div class="form-grid form-grid-2" style="margin-bottom:12px">
+        <div class="field"><label>姓名（顯示用）</label><input id="nu-name" placeholder="例：王小明"></div>
+        <div class="field"><label>帳號層級</label>
+          <select id="nu-level">
+            <option value="A">層級 A（完整編輯）</option>
+            <option value="B">層級 B（僅檢視）</option>
+          </select>
+        </div>
+      </div>
       <div class="form-actions">
         <button class="btn btn-primary" onclick="addUser()">確認新增</button>
         <button class="btn" onclick="document.getElementById('add-user-form').style.display='none'">取消</button>
@@ -729,6 +756,24 @@ tbody tr:hover td { background: #fafaf8; }
     <div id="changepw-section" style="display:none;margin-top:20px">
       <div style="font-size:12px;color:var(--text2);background:var(--surface2);border-radius:var(--radius);padding:12px 16px;border:1px solid var(--border)">
         💡 點擊上方帳號列表中層級 S 那列的「修改密碼」按鈕，即可修改登入密碼。
+      </div>
+    </div>
+    <!-- A/B 層：修改自己密碼 -->
+    <div id="self-changepw-section" style="display:none;margin-top:20px">
+      <div class="add-form" style="max-width:480px">
+        <div class="form-title">修改我的登入密碼</div>
+        <div class="form-grid form-grid-2" style="margin-bottom:12px">
+          <div class="field"><label>目前密碼</label><input id="scpw-old" type="password" autocomplete="new-password" placeholder="目前密碼"></div>
+          <div class="field"><label>新密碼（至少 4 碼）</label><input id="scpw-new" type="password" autocomplete="new-password" placeholder="新密碼"></div>
+        </div>
+        <div class="field" style="margin-bottom:12px">
+          <label>確認新密碼</label>
+          <input id="scpw-confirm" type="password" autocomplete="new-password" placeholder="再輸入一次">
+        </div>
+        <div id="scpw-error" style="font-size:12px;color:var(--red);min-height:16px;margin-bottom:10px"></div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="doSelfChangePw()">確認修改</button>
+        </div>
       </div>
     </div>
   </div>
@@ -935,6 +980,54 @@ tbody tr:hover td { background: #fafaf8; }
   </div>
 </div>
 
+<!-- CHANGE SELF PASSWORD MODAL (層級 A 用) -->
+<div id="change-self-pw-modal" class="modal-overlay" onclick="if(event.target===this)closeChangeSelfPwModal()">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:420px">
+    <div class="modal-title" style="margin-bottom:16px">修改登入密碼</div>
+    <div class="field" style="margin-bottom:14px">
+      <label>目前密碼</label>
+      <input id="sp-old" type="password" placeholder="請輸入目前密碼" autocomplete="new-password">
+    </div>
+    <div class="field" style="margin-bottom:14px">
+      <label>新密碼（至少 4 碼）</label>
+      <input id="sp-new" type="password" placeholder="請輸入新密碼" autocomplete="new-password">
+    </div>
+    <div class="field" style="margin-bottom:14px">
+      <label>確認新密碼</label>
+      <input id="sp-confirm" type="password" placeholder="再輸入一次新密碼" autocomplete="new-password">
+    </div>
+    <div id="sp-error" style="font-size:12px;color:var(--red);min-height:16px;margin-bottom:12px"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeChangeSelfPwModal()">取消</button>
+      <button class="btn btn-primary" onclick="doChangeSelfPw()">確認修改</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- FORCE CHANGE PASSWORD MODAL（首次登入強制改密碼） -->
+<div id="force-changepw-modal" class="modal-overlay" style="display:none;z-index:9999">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:420px">
+    <div class="modal-title" style="margin-bottom:8px">首次登入：請設定新密碼</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:16px">
+      這是您第一次登入，請設定專屬密碼後才能進入系統。
+    </p>
+    <div class="field" style="margin-bottom:12px">
+      <label>新密碼（至少 4 碼）</label>
+      <input id="fc-new" type="password" placeholder="請輸入新密碼" autocomplete="new-password">
+    </div>
+    <div class="field" style="margin-bottom:16px">
+      <label>確認新密碼</label>
+      <input id="fc-confirm" type="password" placeholder="再輸入一次新密碼" autocomplete="new-password">
+    </div>
+    <div id="fc-error" style="font-size:12px;color:var(--red);min-height:16px;margin-bottom:12px"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="doLogout()">取消登入</button>
+      <button class="btn btn-primary" onclick="doForceChangePw()">設定密碼並進入</button>
+    </div>
+  </div>
+</div>
+
 <!-- CHANGE PASSWORD MODAL -->
 <div id="changepw-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this){this.style.display='none';this.classList.remove('open')}">
   <div class="modal-box" onclick="event.stopPropagation()" style="max-width:420px">
@@ -966,6 +1059,76 @@ tbody tr:hover td { background: #fafaf8; }
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyAOpTEyQWjPIt3k5TEtXuDTlonvu9eTE8mWXPcV9S-3my7yZRXMYX1DBcHbiUk2K9VEg/exec';
 // 層級 S 帳號（可透過修改密碼功能更新，存於 Sheets users 分頁）
 let SUPER_USER = {id:'110219', pw:'SN@North#2025', name:'\u6797\u7dad\u8fb0', level:'S'};
+
+
+// ── 首次登入強制改密碼 ─────────────────────────────────────────
+let pendingUser = null;
+
+function showForceChangePw() {
+  document.getElementById('fc-new').value = '';
+  document.getElementById('fc-confirm').value = '';
+  document.getElementById('fc-error').textContent = '';
+  const m = document.getElementById('force-changepw-modal');
+  m.style.setProperty('display','flex','important');
+}
+
+function doForceChangePw() {
+  const newPw  = toHalf(document.getElementById('fc-new').value);
+  const conf   = toHalf(document.getElementById('fc-confirm').value);
+  const errEl  = document.getElementById('fc-error');
+  errEl.textContent = '';
+
+  if(newPw.length < 4){ errEl.textContent='密碼至少需要 4 個字元'; return; }
+  if(newPw !== conf){ errEl.textContent='兩次輸入的密碼不一致'; return; }
+  if(!pendingUser){ doLogout(); return; }
+
+  // 更新 Sheets 上的密碼，清除 isFirstLogin
+  const users = getUsers();
+  const idx = users.findIndex(u=>String(u.id)===String(pendingUser.id));
+  if(idx>=0){
+    users[idx].pw = newPw;
+    users[idx].isFirstLogin = false;
+    saveUsers(users);
+  }
+
+  // 更新 currentUser 並進入系統
+  currentUser = {...pendingUser, pw: newPw, isFirstLogin: false};
+  pendingUser = null;
+  const m = document.getElementById('force-changepw-modal');
+  m.style.display = 'none';
+  appMode = 'admin';
+  startApp();
+  saveSession();
+  toast('密碼已設定，歡迎進入系統 ✓');
+}
+
+
+// ── A/B 層自己改密碼 ───────────────────────────────────────────
+function doSelfChangePw() {
+  const oldPw  = toHalf(document.getElementById('scpw-old').value);
+  const newPw  = toHalf(document.getElementById('scpw-new').value);
+  const conf   = toHalf(document.getElementById('scpw-confirm').value);
+  const errEl  = document.getElementById('scpw-error');
+  errEl.textContent = '';
+
+  if(oldPw !== currentUser.pw){ errEl.textContent='目前密碼錯誤'; return; }
+  if(newPw.length < 4){ errEl.textContent='新密碼至少需要 4 個字元'; return; }
+  if(newPw !== conf){ errEl.textContent='兩次輸入的密碼不一致'; return; }
+
+  const users = getUsers();
+  const idx = users.findIndex(u=>String(u.id)===String(currentUser.id));
+  if(idx>=0){
+    users[idx].pw = newPw;
+    users[idx].isFirstLogin = false;
+    saveUsers(users);
+  }
+  currentUser = {...currentUser, pw: newPw, isFirstLogin: false};
+  saveSession();
+  ['scpw-old','scpw-new','scpw-confirm'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  toast('密碼已修改 ✓');
+}
 
 function clearChangePwForm() {
   ['cpw-old','cpw-new','cpw-confirm'].forEach(id => document.getElementById(id).value = '');
@@ -1035,7 +1198,25 @@ function doLogin(){
   err.textContent='';
   if(id===SUPER_USER.id&&pw===SUPER_USER.pw){currentUser=SUPER_USER;appMode='admin';startApp();saveSession();return}
   const found=getUsers().find(u=>String(u.id)===String(id)&&String(u.pw)===String(pw));
-  if(found){currentUser=found;appMode='admin';startApp();saveSession();return}
+  if(found){
+    currentUser=found; appMode='admin';
+    if(found.firstLogin === true || found.firstLogin === 'true'){
+      // 首次登入：強制顯示改密碼 modal，不進入主系統
+      document.getElementById('login-screen').style.display='none';
+      document.getElementById('app-screen').style.display='flex';
+      document.getElementById('user-display-name').textContent=found.name;
+      document.getElementById('user-display-id').textContent='首次登入，請立即修改密碼';
+      document.getElementById('user-badge-label').textContent='A';
+      document.getElementById('user-badge-label').className='user-badge badge-a';
+      document.getElementById('sys-subtitle').textContent='首次登入';
+      ['nav-admin-section','nav-s-section','nav-a-section'].forEach(id=>{
+        const el=document.getElementById(id); if(el) el.style.display='none';
+      });
+      setTimeout(()=>openChangeSelfPwModal(), 300);
+      return;
+    }
+    startApp(); saveSession(); return;
+  }
   err.textContent='\u5e33\u865f\u6216\u5bc6\u78bc\u932f\u8aa4\uff0c\u8acb\u91cd\u65b0\u8f38\u5165';
 }
 function enterViewer(){currentUser={id:'guest',name:'\u8a2a\u5ba2',level:'V'};appMode='viewer';startApp();saveSession();}
@@ -1052,65 +1233,110 @@ function doLogout(){
 function startApp(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app-screen').style.display='flex';
-  const isAdmin=appMode==='admin', isViewer=appMode==='viewer';
-  const isSuper=isAdmin&&currentUser.level==='S';
-  const badge=document.getElementById('user-badge-label');
-  badge.textContent=currentUser.level;
-  badge.className='user-badge '+(currentUser.level==='S'?'badge-s':currentUser.level==='A'?'badge-a':'badge-v');
-  document.getElementById('user-display-name').textContent=currentUser.name;
-  document.getElementById('user-display-id').textContent=isViewer?'\u89c0\u770b\u6a21\u5f0f':'ID: '+currentUser.id;
-  document.getElementById('sys-subtitle').textContent=isViewer?'\u89c0\u770b\u7248':isSuper?'\u5f8c\u53f0\u7ba1\u7406':'\u5f8c\u53f0\u7de8\u8f2f';
-  document.getElementById('nav-admin-section').style.display=isAdmin?'':'none';
-  document.getElementById('nav-s-section').style.display=isAdmin?'':'none';
-  document.body.classList.toggle('viewer-mode',isViewer);
-  if(isViewer){
+
+  const level    = currentUser ? currentUser.level : 'V';
+  const isS      = level === 'S';
+  const isA      = level === 'A';
+  const isB      = level === 'B';
+  const isViewer = appMode === 'viewer';
+  const isSuper  = isS; // 相容舊程式碼
+
+  // ── Badge & 使用者資訊 ────────────────────────────────────
+  const badge = document.getElementById('user-badge-label');
+  badge.textContent  = level;
+  badge.className    = 'user-badge ' +
+    (isS?'badge-s':isA?'badge-a':isB?'badge-b':'badge-v');
+  document.getElementById('user-display-name').textContent = currentUser.name;
+  document.getElementById('user-display-id').textContent   =
+    isViewer ? '觀看模式' : 'ID: ' + currentUser.id;
+  document.getElementById('sys-subtitle').textContent =
+    isViewer?'觀看版':isS?'後台管理 S':isA?'後台編輯 A':isB?'檢視模式 B':'觀看版';
+
+  // ── 左側選單顯示控制 ─────────────────────────────────────
+  // 資料儲存區（同步 Sheets 等）：S 和 A 可見
+  const navAdmin = document.getElementById('nav-admin-section');
+  if(navAdmin) navAdmin.style.display = (isS||isA) ? '' : 'none';
+  // 管理區（權限管理）：僅 S
+  const navS = document.getElementById('nav-s-section');
+  if(navS) navS.style.display = isS ? '' : 'none';
+  // p3 未完成專案：訪客隱藏
+  const navP3 = document.getElementById('nav-p3');
+  if(navP3) navP3.style.display = isViewer ? 'none' : '';
+  // A/B 層顯示帳號設定（改密碼）- nav-ab-section 去 p5
+  const navAB = document.getElementById('nav-ab-section');
+  if(navAB) navAB.style.display = (isA||isB) ? '' : 'none';
+  // nav-a-section: 直接開改密碼 modal（同樣給 A/B 用，二擇一保留）
+  const navASec = document.getElementById('nav-a-section');
+  if(navASec) navASec.style.display = 'none';  // 統一用 nav-ab-section
+
+  // ── CSS body class ───────────────────────────────────────
+  document.body.classList.toggle('viewer-mode', isViewer);
+  document.body.classList.toggle('level-b', isB);
+
+  // ── 函式鎖死 ─────────────────────────────────────────────
+  // 訪客 & B 層：不能編輯
+  if(isViewer || isB){
+    const noop  = ()=>{};
+    const toast2 = isB ? ()=>toast('B 層僅能檢視，無法編輯') : noop;
+    window.openEditModal     = toast2;
+    window.openProjModal     = toast2;
+    window.openShuwuModal    = toast2;
+    window.openAddShuWuModal = toast2;
+    window.toggleForm        = noop;
+    window.addItem           = noop;
+    window.addProject        = noop;
+    window.deleteProject     = noop;
+    window.updatePct         = noop;
+    window.addShuWu          = noop;
+  }
+
+  if(isViewer || isB){
     applyViewerRestrictions();
-    // 鎖死所有編輯 modal 開啟函式，訪客無法觸發
-    window.openEditModal   = () => {};
-    window.openProjModal   = () => {};
-    window.openShuwuModal  = () => {};
-    window.openAddShuWuModal = () => {};
-    window.addShuWu        = () => {};
-    window.toggleForm      = () => {};
-    window.addItem         = () => {};
-    window.addProject      = () => {};
-    window.deleteProject   = () => {};
-    window.updatePct       = () => {};
-    document.getElementById('sync-status').textContent='\u8f09\u5165\u4e2d...';
+  }
+
+  if(isViewer){
+    document.getElementById('sync-status').textContent='載入中...';
     loadFromSheetsJsonp();
   } else {
-    const restored=restoreData();
+    const restored = restoreData();
     renderMain();renderDetail();renderProjects();renderShuWu();updateTimestamp();
-    if(restored)toast('\u5df2\u81ea\u52d5\u9084\u539f\u4e0a\u6b21\u8cc7\u6599 \u2713');
-    if(APPS_SCRIPT_URL){fetch(APPS_SCRIPT_URL+'?action=load').then(r=>r.json()).then(d=>{
-      if(Array.isArray(d.users)){
-        sheetsUsers=d.users.filter(u=>u.level!=='S');
-        const savedS=d.users.find(u=>u.level==='S'&&u.id===SUPER_USER.id);
-        const oldPws=['110219','SNadmin2025',''];
-        if(savedS&&savedS.pw&&!oldPws.includes(savedS.pw)){
-          SUPER_USER={...SUPER_USER, pw:savedS.pw};
-          if(currentUser&&currentUser.level==='S') currentUser={...currentUser,pw:savedS.pw};
+    if(restored) toast('已自動還原上次資料 ✓');
+
+    // 從 Sheets 載入最新帳號及 S 密碼
+    if(APPS_SCRIPT_URL){
+      fetch(APPS_SCRIPT_URL+'?action=load').then(r=>r.json()).then(d=>{
+        if(Array.isArray(d.users)){
+          sheetsUsers = d.users.filter(u=>u.level!=='S');
+          const savedS = d.users.find(u=>u.level==='S'&&String(u.id)===String(SUPER_USER.id));
+          const oldPws = ['110219','SNadmin2025','SN@North#2025',''];
+          if(savedS&&savedS.pw&&!oldPws.includes(savedS.pw)){
+            SUPER_USER={...SUPER_USER, pw:savedS.pw};
+            if(currentUser&&isS) currentUser={...currentUser,pw:savedS.pw};
+          }
+          // 確認 A/B 帳號仍有效
+          if(appMode==='admin'&&currentUser&&(isA||isB)){
+            const valid=sheetsUsers.find(u=>String(u.id)===String(currentUser.id));
+            if(!valid){ doLogout(); toast('帳號已失效，請重新登入'); return; }
+            currentUser={...valid};
+          }
+          saveSession();
         }
-        // Level A: 還原 session 後用 Sheets 確認帳號有效
-        if(appMode==='admin'&&currentUser&&currentUser.level==='A'){
-          const validA=sheetsUsers.find(u=>String(u.id)===String(currentUser.id));
-          if(!validA){ doLogout(); toast('帳號已失效，請重新登入'); return; }
-          currentUser={...validA};
-        }
-        saveSession();
-      }
-      renderUsers();
-    }).catch(()=>renderUsers());}else{renderUsers();}
-    // Show add button and subtitle based on level
+        renderUsers();
+      }).catch(()=>renderUsers());
+    } else { renderUsers(); }
+
+    // 權限管理頁按鈕
     const addBtn = document.getElementById('btn-add-user');
-    if(addBtn) addBtn.style.display = isSuper ? '' : 'none';
+    if(addBtn) addBtn.style.display = isS ? '' : 'none';
     const p5sub = document.getElementById('p5-sub');
-    if(p5sub) p5sub.textContent = isSuper ? '層級 S 專屬：新增或刪除層級 A 帳號' : '帳號列表（僅供檢視）';
-    // 層級 S 顯示修改密碼區塊
+    if(p5sub) p5sub.textContent = isS
+      ? '帳號管理：新增、編輯、刪除 A/B 層帳號'
+      : '帳號列表（僅供檢視）';
     const cpwSec = document.getElementById('changepw-section');
-    if(cpwSec) cpwSec.style.display = isSuper ? '' : 'none';
+    if(cpwSec) cpwSec.style.display = isS ? '' : 'none';
   }
 }
+
 
 function applyViewerRestrictions(){
   document.addEventListener('contextmenu',e=>e.preventDefault());
@@ -1169,6 +1395,83 @@ function loadFromSheets(){
   }).catch(err=>{toast('載入失敗：'+err.message)})
 }
 
+
+// ── 層級 A 修改自己密碼 ──────────────────────────────────────────
+function openChangeSelfPwModal() {
+  ['sp-old','sp-new','sp-confirm'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  const errEl = document.getElementById('sp-error');
+  if(errEl) errEl.textContent = '';
+  const modal = document.getElementById('change-self-pw-modal');
+  if(modal){ modal.style.setProperty('display','flex','important'); modal.classList.add('open'); }
+  setTimeout(()=>{ const inp=document.getElementById('sp-old'); if(inp) inp.focus(); }, 100);
+}
+function closeChangeSelfPwModal() {
+  const modal = document.getElementById('change-self-pw-modal');
+  if(modal){ modal.classList.remove('open'); modal.style.removeProperty('display'); }
+}
+function doChangeSelfPw() {
+  const oldPw    = toHalf(document.getElementById('sp-old').value);
+  const newPw    = toHalf(document.getElementById('sp-new').value);
+  const confirm2 = toHalf(document.getElementById('sp-confirm').value);
+  const errEl    = document.getElementById('sp-error');
+  errEl.textContent = '';
+
+  if (!currentUser || currentUser.level !== 'A') { toast('權限不足'); return; }
+
+  // 比對目前密碼
+  const users = getUsers();
+  const me = users.find(u => String(u.id) === String(currentUser.id));
+  if (!me || oldPw !== String(me.pw)) { errEl.textContent = '目前密碼錯誤'; return; }
+  if (newPw.length < 4) { errEl.textContent = '新密碼至少需要 4 個字元'; return; }
+  if (newPw !== confirm2) { errEl.textContent = '兩次輸入的新密碼不一致'; return; }
+
+  // 更新密碼
+  const idx = users.findIndex(u => String(u.id) === String(currentUser.id));
+  users[idx].pw = newPw;
+  users[idx].firstLogin = false;  // 清除首次登入標記
+  currentUser.pw = newPw;
+  currentUser.firstLogin = false;
+  saveUsers(users);
+  closeChangeSelfPwModal();
+  // 若是首次登入完成密碼修改，現在正式進入系統
+  if(appMode === 'admin') {
+    startApp();
+    saveSession();
+    toast('密碼已修改 ✓ 歡迎進入系統');
+  } else {
+    saveSession();
+    toast('密碼已修改並同步至 Sheets ✓');
+  }
+}
+
+// ── 日期輔助函式 ───────────────────────────────────────────────
+function formatDate(val) {
+  if (!val || val === '—' || val === '') return '—';
+  const d = new Date(val);
+  if (isNaN(d.getTime())) return val;  // 無法解析就原樣顯示
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return y + '/' + m + '/' + dd;
+}
+
+function toDateInput(val) {
+  if (!val || val === '—' || val === '') return '';
+  const d = new Date(val);
+  if (isNaN(d.getTime())) {
+    // 嘗試從 YYYY/MM/DD 或 YYYY-MM-DD 直接抽取
+    const m = val.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+    if (m) return m[1] + '-' + m[2].padStart(2,'0') + '-' + m[3].padStart(2,'0');
+    return '';
+  }
+  const y = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return y + '-' + mo + '-' + dd;
+}
+
 function formatCreated(val) {
   if (!val) return '系統預設';
   // Try to parse as date - handles ISO string, full date string, local date string
@@ -1182,44 +1485,56 @@ function formatCreated(val) {
 function renderUsers(){
   const tbody=document.getElementById('user-tbody');
   if(!tbody) return;
-  if (!currentUser) return;  // 尚未登入，不渲染
-  const isS = currentUser && currentUser.level === 'S';
+  if(!currentUser) return;
+  const isS = currentUser.level === 'S';
   const aUsers = getUsers();
   const all = [SUPER_USER, ...aUsers];
-  tbody.innerHTML = all.map(u => `<tr>
-    <td style="font-family:var(--mono);font-size:12px">${u.id}</td>
-    <td>${u.name}</td>
-    <td><span class="badge ${u.level==='S'?'badge-s':'badge-blue'}">${u.level}</span></td>
-    <td style="font-size:12px;color:var(--text3)">${formatCreated(u.created)}</td>
-    <td style="white-space:nowrap">${isS
-      ? (u.level === 'S'
-        ? `<button class="btn btn-sm" onclick="openEditSuperUser()" style="color:var(--accent);border-color:#c5daea">修改密碼</button>`
-        : `<button class="btn btn-sm" onclick="openEditUser('${u.id}')" style="color:var(--accent);border-color:#c5daea;margin-right:4px">編輯</button>
-           <button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}')">刪除</button>`)
-      : '—'}
-    </td>
-  </tr>`).join('');
+  tbody.innerHTML = all.map(u => {
+    const lvlBadge = u.level==='S'?'badge-s':u.level==='A'?'badge-a':u.level==='B'?'badge-b':'badge-v';
+    const canManage = isS && u.level !== 'S';
+    return `<tr>
+      <td style="font-family:var(--mono);font-size:12px">${u.id}</td>
+      <td>${u.name}</td>
+      <td><span class="badge ${lvlBadge}">${u.level}</span>${u.isFirstLogin?'<span style="font-size:10px;color:var(--amber);margin-left:6px">首次登入</span>':''}</td>
+      <td style="font-size:12px;color:var(--text3)">${formatCreated(u.created)||'系統預設'}</td>
+      <td style="white-space:nowrap">${canManage
+        ? `<button class="btn btn-sm" onclick="openEditUser('${u.id}')" style="color:var(--accent);border-color:#c5daea;margin-right:4px">編輯</button>
+           <button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}')">刪除</button>`
+        : u.level==='S' && isS
+          ? `<button class="btn btn-sm" onclick="openEditSuperUser()" style="color:var(--accent);border-color:#c5daea">修改密碼</button>`
+          : '—'}
+      </td>
+    </tr>`;
+  }).join('');
   const addBtn = document.getElementById('btn-add-user');
   if(addBtn) addBtn.style.display = isS ? '' : 'none';
   const cpwSec = document.getElementById('changepw-section');
   if(cpwSec) cpwSec.style.display = isS ? '' : 'none';
   const p5sub = document.getElementById('p5-sub');
   if(p5sub) p5sub.textContent = isS
-    ? '層級 S 專屬：新增、編輯或刪除層級 A 帳號'
+    ? '帳號管理：新增、編輯、刪除 A/B 層帳號'
     : '帳號列表（僅供檢視）';
 }
+
+
 function showAddUserForm(){if(!currentUser||currentUser.level!=='S'){toast('權限不足');return}const f=document.getElementById('add-user-form');f.style.display=f.style.display==='none'?'block':'none'}
 function addUser(){
-  const id=document.getElementById('nu-id').value.trim();
-  const pw=document.getElementById('nu-pw').value.trim();
-  const name=document.getElementById('nu-name').value.trim();
+  const id    = document.getElementById('nu-id').value.trim();
+  const pw    = document.getElementById('nu-pw').value.trim();
+  const name  = document.getElementById('nu-name').value.trim();
+  const level = (document.getElementById('nu-level')||{value:'A'}).value;
   if(!id||!pw||!name){toast('請填寫所有欄位');return}
-  if(id===SUPER_USER.id){toast('此帳號 ID 已被使用');return}
+  if(String(id)===String(SUPER_USER.id)){toast('此帳號 ID 已被使用');return}
   const users=getUsers();
   if(users.find(u=>String(u.id)===String(id))){toast('此帳號 ID 已存在');return}
-  users.push({id,pw,name,level:'A',created:new Date().toLocaleDateString('zh-TW')});
+  users.push({
+    id, pw, name, level,
+    isFirstLogin: true,
+    created: new Date().toLocaleDateString('zh-TW')
+  });
   saveUsers(users);
-  ['nu-id','nu-pw','nu-name'].forEach(i=>document.getElementById(i).value='');
+  ['nu-id','nu-pw','nu-name'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  const nlvl=document.getElementById('nu-level');if(nlvl)nlvl.value='A';
   document.getElementById('add-user-form').style.display='none';
   renderUsers();toast('帳號已新增 ✓');
 }
@@ -1284,9 +1599,13 @@ function saveEditUser(){
   const idx=users.findIndex(u=>String(u.id)===String(id));
   if(idx===-1)return;
   users[idx].name=name;
-  if(pw) users[idx].pw=pw;
+  if(pw){
+    users[idx].pw=pw;
+    users[idx].isFirstLogin=false; // 密碼被修改，清除首次登入標記
+  }
   saveUsers(users);
-  document.getElementById('edit-user-modal').classList.remove('open');
+  const mc=document.getElementById('edit-user-modal');
+  mc.classList.remove('open');mc.style.removeProperty('display');
   renderUsers();toast('帳號已更新 ✓');
 }
 
@@ -1512,7 +1831,10 @@ function showPage(pid, target) {
   const navEl = document.getElementById('nav-' + pid);
   if (navEl) navEl.classList.add('active');
   if (pid === 'p2') { jumpTarget = target || null; renderDetail(); }
-  if (pid === 'p3') renderProjects();
+  if (pid === 'p3') {
+    if (appMode === 'viewer') { toast('此頁面不對訪客開放'); return; }
+    renderProjects();
+  }
   if (pid === 'p4') renderShuWu();
   if (pid === 'p1') {
     renderMain();
@@ -1529,16 +1851,19 @@ function showPage(pid, target) {
     }
   }
   if (pid === 'p5') {
-    const isSuper = currentUser && currentUser.level === 'S';
-    // 每次進入 p5 都重新設定顯示狀態
+    const lv = currentUser ? currentUser.level : 'V';
+    const isS5 = lv === 'S';
+    const isAB = lv === 'A' || lv === 'B';
     const addBtn = document.getElementById('btn-add-user');
-    if (addBtn) addBtn.style.display = isSuper ? '' : 'none';
+    if(addBtn) addBtn.style.display = isS5 ? '' : 'none';
     const cpwSec = document.getElementById('changepw-section');
-    if (cpwSec) cpwSec.style.display = isSuper ? '' : 'none';
+    if(cpwSec) cpwSec.style.display = isS5 ? '' : 'none';
+    const selfCpw = document.getElementById('self-changepw-section');
+    if(selfCpw) selfCpw.style.display = isAB ? '' : 'none';
     const p5sub = document.getElementById('p5-sub');
-    if (p5sub) p5sub.textContent = isSuper
-      ? '層級 S 專屬：新增、編輯或刪除層級 A 帳號'
-      : '帳號列表（僅供檢視）';
+    if(p5sub) p5sub.textContent = isS5
+      ? '帳號管理：新增、編輯、刪除 A/B 層帳號'
+      : '帳號列表與密碼修改';
     renderUsers();
   }
   window.scrollTo(0, 0);
@@ -1688,7 +2013,7 @@ function renderMain() {
         <td style="max-width:120px">${formShort ? `<span class="nas-link" title="${i.formUrl}">${formShort}</span>` : '<span style="color:var(--text3)">—</span>'}</td>
         <td style="font-size:12px;color:var(--text2)">${i.mail || '<span style="color:var(--text3)">—</span>'}</td>
         <td><button class="jump-btn" onclick="showPage('p2',${i.id})">說明 →</button></td>
-        ${appMode==='admin' ? `<td><button class="btn btn-sm" onclick="openEditModal(${i.id})" style="color:var(--accent);border-color:#c5daea">編輯</button></td>` : '<td></td>'}
+        ${(appMode==='admin' && currentUser && currentUser.level==='S') ? `<td class="edit-btn-col"><button class="btn btn-sm" onclick="openEditModal(${i.id})" style="color:var(--accent);border-color:#c5daea">編輯</button></td>` : '<td class="edit-btn-col"></td>'}
       </tr>
     `}).join('');
   }
@@ -1819,6 +2144,14 @@ function renderDetail() {
 
 // ── RENDER PROJECTS ───────────────────────────────────────────
 function renderProjects() {
+  // 訪客不顯示未完成專案
+  if (appMode === 'viewer') {
+    const tbody = document.getElementById('tbody3');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="8"><div class="empty"><div class="empty-icon">🔒</div><div class="empty-text">此功能僅限登入後使用</div></div></td></tr>';
+    const badge = document.getElementById('badge-p3');
+    if (badge) { badge.textContent = ''; badge.className = 'nav-badge'; }
+    return;
+  }
   const fr = document.getElementById('fr3').value;
   const fd = document.getElementById('fd3').value;
   let list = projects.filter(p => {
@@ -1880,8 +2213,8 @@ function renderProjects() {
       </td>
       <td style="font-size:12px;max-width:200px;line-height:1.5;color:var(--text2)">${p.note}</td>
       <td style="font-size:12px">${p.owner}</td>
-      <td style="font-size:12px;font-family:var(--mono);white-space:nowrap">${p.due || '—'}</td>
-      ${appMode==='admin' ? `<td><button class="btn btn-sm" onclick="openProjModal(${p.id})" style="color:var(--accent);border-color:#c5daea">編輯</button></td>` : '<td></td>'}
+      <td style="font-size:12px;font-family:var(--mono);white-space:nowrap">${formatDate(p.due)}</td>
+      ${(appMode==='admin' && currentUser && currentUser.level==='S') ? `<td class="edit-btn-col"><button class="btn btn-sm" onclick="openProjModal(${p.id})" style="color:var(--accent);border-color:#c5daea">編輯</button></td>` : '<td class="edit-btn-col"></td>'}
     </tr>
   `}).join('');
   updateBadges();
@@ -2250,7 +2583,7 @@ function renderShuWu() {
       <td style="font-size:11px;color:var(--text2);max-width:180px;line-height:1.5">${r.reg || '<span style="color:var(--text3)">無</span>'}</td>
       <td style="font-size:12px;color:var(--text2);max-width:200px;line-height:1.6">${r.note}</td>
       <td style="font-size:11px;color:var(--text3);max-width:150px;line-height:1.5">${r.remark || '—'}</td>
-      ${appMode==='admin' ? `<td><button class="btn btn-sm" onclick="openShuwuModal(${r.no})" style="color:var(--accent);border-color:#c5daea">編輯</button></td>` : '<td></td>'}
+      ${(appMode==='admin' && currentUser && currentUser.level==='S') ? `<td class="edit-btn-col"><button class="btn btn-sm" onclick="openShuwuModal(${r.no})" style="color:var(--accent);border-color:#c5daea">編輯</button></td>` : '<td class="edit-btn-col"></td>'}
     </tr>
   `).join('');
 }
@@ -2265,7 +2598,7 @@ function openProjModal(id) {
   document.getElementById('ep-item').value = p.item || '';
   document.getElementById('ep-risk').value = p.risk || '普通';
   document.getElementById('ep-owner').value = p.owner || '';
-  document.getElementById('ep-due').value = p.due || '';
+  document.getElementById('ep-due').value = toDateInput(p.due);
   document.getElementById('ep-pct').value = p.pct ?? 0;
   document.getElementById('ep-note').value = p.note || '';
   const _mo = document.getElementById('proj-modal');
