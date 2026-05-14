@@ -1900,19 +1900,36 @@ document.addEventListener('click', () => {
 
 function applySort(arr, col, dir) {
   if (!dir) return arr;
-  if (col === 'cycle') {
-    const freqOrder = {'每日':0,'每週':1,'每月':2,'每季':3,'每年':4,'不定期':5};
-    return [...arr].sort((a, b) => {
+
+  const catOrder = ['採購及預算','財產及物品管理','公告標誌管理','公文表單歸檔管理','車站違規業務','遺失物中心介面','週轉金管理','查核、檢點作業','上級交辦事項'];
+  const freqOrder = {'每日':0,'每週':1,'每月':2,'每季':3,'每年':4,'不定期':5};
+
+  // 第二道：業務分類（固定順序）
+  function catRank(item) {
+    const i = catOrder.indexOf(item.cat);
+    return i === -1 ? 99 : i;
+  }
+
+  return [...arr].sort((a, b) => {
+    // ── 第一道：使用者選擇的欄位 ──────────────────────────────
+    let cmp = 0;
+    if (col === 'cycle') {
       const va = freqOrder[a.cycle] ?? 9;
       const vb = freqOrder[b.cycle] ?? 9;
-      return dir === 'asc' ? va - vb : vb - va;
-    });
-  }
-  return [...arr].sort((a, b) => {
-    const va = (a[col] || '').toString();
-    const vb = (b[col] || '').toString();
-    const cmp = va.localeCompare(vb, 'zh-TW');
-    return dir === 'asc' ? cmp : -cmp;
+      cmp = dir === 'asc' ? va - vb : vb - va;
+    } else {
+      const va = (a[col] || '').toString();
+      const vb = (b[col] || '').toString();
+      cmp = dir === 'asc' ? va.localeCompare(vb, 'zh-TW') : vb.localeCompare(va, 'zh-TW');
+    }
+    if (cmp !== 0) return cmp;
+
+    // ── 第二道：業務分類（固定分區順序）────────────────────────
+    const catCmp = catRank(a) - catRank(b);
+    if (catCmp !== 0) return catCmp;
+
+    // ── 第三道：新增順序（id）────────────────────────────────
+    return parseInt(a.id) - parseInt(b.id);
   });
 }
 
