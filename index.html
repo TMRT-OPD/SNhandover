@@ -1420,12 +1420,13 @@ function doChangeSelfPw() {
   const errEl    = document.getElementById('sp-error');
   errEl.textContent = '';
 
-  if (!currentUser || currentUser.level !== 'A') { toast('權限不足'); return; }
+  if (!currentUser || (currentUser.level !== 'A' && currentUser.level !== 'B')) { toast('權限不足'); return; }
 
   // 比對目前密碼
   const users = getUsers();
   const me = users.find(u => String(u.id) === String(currentUser.id));
-  if (!me || oldPw !== String(me.pw)) { errEl.textContent = '目前密碼錯誤'; return; }
+  if (!me) { errEl.textContent = '帳號資料尚未從 Sheets 載入，請稍後再試或重新整理頁面'; return; }
+  if (oldPw !== String(me.pw)) { errEl.textContent = '目前密碼錯誤'; return; }
   if (newPw.length < 4) { errEl.textContent = '新密碼至少需要 4 個字元'; return; }
   if (newPw !== confirm2) { errEl.textContent = '兩次輸入的新密碼不一致'; return; }
 
@@ -1643,6 +1644,7 @@ function loadFromSheetsJsonp() {
     if (Array.isArray(d.shuWu) && d.shuWu.length > 0) shuWu = d.shuWu;
     if (d.nextId) nextId = d.nextId;
     if (d.nextPid) nextPid = d.nextPid;
+    if (d.nextShuWuNo) nextShuWuNo = d.nextShuWuNo;
     // 重新渲染所有分頁
     renderMain();
     renderDetail();
@@ -2051,16 +2053,19 @@ function renderMain() {
 function formatNote(note) {
   const COLOR = 'color:var(--text2)';
 
-  if (!note || !note.trim())
+  // 統一清理：全形空格→半形、\r 清除
+  const cleaned = (note || '').replace(/\r/g, '').replace(/\u3000/g, ' ');
+
+  if (!cleaned.trim())
     return `<span style="${COLOR}">尚無說明</span>`;
 
   // 支援真正的換行符、Sheets 回傳的字串 \n、以及中文句號後跟序號的情況
-  const raw = note
+  const raw = cleaned
     .replace(/\\n/g, '\n')          // Sheets 可能回傳字串 "\n"
     .replace(/；\s*(?=\d)/g, '；\n') // 中文分號後接數字視為換行
     .replace(/。\s*(?=\d)/g, '。\n'); // 中文句號後接數字視為換行
 
-  const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+  const lines = raw.split(/\n/).map(l => l.trim()).filter(l => l.length > 0);
 
   if (lines.length === 0)
     return `<span style="${COLOR}">尚無說明</span>`;
@@ -2417,7 +2422,7 @@ function syncToSheets() {
   const allUsers = [SUPER_USER, ...sheetsUsers];
   fetch(APPS_SCRIPT_URL, {
     method: 'POST',
-    body: JSON.stringify({ action: 'save', data: { items, projects, shuWu, users: allUsers, nextId, nextPid } })
+    body: JSON.stringify({ action: 'save', data: { items, projects, shuWu, users: allUsers, nextId, nextPid, nextShuWuNo } })
   })
   .then(r => r.json())
   .then(d => {
@@ -2456,6 +2461,7 @@ function loadFromSheets() {
     if (Array.isArray(d.shuWu) && d.shuWu.length > 0) shuWu = d.shuWu;
     if (d.nextId) nextId = d.nextId;
     if (d.nextPid) nextPid = d.nextPid;
+    if (d.nextShuWuNo) nextShuWuNo = d.nextShuWuNo;
     persistData();
     renderMain();
     updateTimestamp();
