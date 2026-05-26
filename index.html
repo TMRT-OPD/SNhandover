@@ -422,6 +422,7 @@ tbody tr:hover td { background: #fafaf8; }
 .inv-empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px}
 .iz-drag-handle:hover{background:rgba(45,95,128,0.06)}
 .iz-resize-handle:hover{opacity:.8}
+.inv-row-over{background:#e8f0f5 !important;border-top:2px solid var(--accent)}
 </style>
 </head>
 <body>
@@ -913,7 +914,7 @@ tbody tr:hover td { background: #fafaf8; }
             <span class="inv-zone-badge" id="inv403-zlabel" style="background:#f0ede8;color:#6b6860">全部品項</span>
           </div>
           <div style="overflow-x:auto"><table class="inv-tbl">
-            <thead><tr><th style="width:22%">品項</th><th style="width:10%">類別</th><th style="width:8%">數量</th><th style="width:8%">單位</th><th style="width:9%">區域</th><th>備註</th><th style="width:8%"></th></tr></thead>
+            <thead><tr><th style="width:24px"></th><th style="width:22%">品項</th><th style="width:10%">類別</th><th style="width:8%">數量</th><th style="width:8%">單位</th><th style="width:9%">區域</th><th>備註</th><th style="width:8%"></th></tr></thead>
             <tbody id="inv403-tbody"></tbody>
           </table></div>
           <button class="inv-add-row" onclick="invAddRow()">＋ 新增品項</button>
@@ -927,7 +928,7 @@ tbody tr:hover td { background: #fafaf8; }
       <div class="inv-table-card">
         <div class="inv-table-header"><span style="font-size:13px;color:var(--text2)">J1F 406 儲藏室</span><span style="font-size:12px;color:var(--text3)">可於資料完成後新增平面圖</span></div>
         <div style="overflow-x:auto"><table class="inv-tbl">
-          <thead><tr><th style="width:22%">品項</th><th style="width:10%">類別</th><th style="width:8%">數量</th><th style="width:8%">單位</th><th style="width:9%">區域</th><th>備註</th><th style="width:8%"></th></tr></thead>
+          <thead><tr><th style="width:24px"></th><th style="width:22%">品項</th><th style="width:10%">類別</th><th style="width:8%">數量</th><th style="width:8%">單位</th><th style="width:9%">區域</th><th>備註</th><th style="width:8%"></th></tr></thead>
           <tbody id="inv406-tbody"></tbody>
         </table></div>
         <button class="inv-add-row" onclick="invAddRow()">＋ 新增品項</button>
@@ -940,7 +941,7 @@ tbody tr:hover td { background: #fafaf8; }
       <div class="inv-table-card">
         <div class="inv-table-header"><span style="font-size:13px;color:var(--text2)">J1F 412 段辦公室</span><span style="font-size:12px;color:var(--text3)">可於資料完成後新增平面圖</span></div>
         <div style="overflow-x:auto"><table class="inv-tbl">
-          <thead><tr><th style="width:22%">品項</th><th style="width:10%">類別</th><th style="width:8%">數量</th><th style="width:8%">單位</th><th style="width:9%">區域</th><th>備註</th><th style="width:8%"></th></tr></thead>
+          <thead><tr><th style="width:24px"></th><th style="width:22%">品項</th><th style="width:10%">類別</th><th style="width:8%">數量</th><th style="width:8%">單位</th><th style="width:9%">區域</th><th>備註</th><th style="width:8%"></th></tr></thead>
           <tbody id="inv412-tbody"></tbody>
         </table></div>
         <button class="inv-add-row" onclick="invAddRow()">＋ 新增品項</button>
@@ -3227,12 +3228,16 @@ function renderInvZoneList(roomId) {
       <div>
         <div style="font-size:10px;color:var(--text3);margin-bottom:3px">區域名稱</div>
         <input value="${z.label}" style="width:100%;padding:3px 6px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"
-          oninput="invUpdateZone('${roomId}','${z.id}','label',this.value)">
+          data-room="${roomId}" data-zone="${z.id}" data-field="label"
+          onblur="invUpdateZone(this.dataset.room,this.dataset.zone,this.dataset.field,this.value)"
+          oncompositionend="invUpdateZone(this.dataset.room,this.dataset.zone,this.dataset.field,this.value)">
       </div>
       <div>
         <div style="font-size:10px;color:var(--text3);margin-bottom:3px">副標題</div>
         <input value="${z.sub}" style="width:100%;padding:3px 6px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"
-          oninput="invUpdateZone('${roomId}','${z.id}','sub',this.value)">
+          data-room="${roomId}" data-zone="${z.id}" data-field="sub"
+          onblur="invUpdateZone(this.dataset.room,this.dataset.zone,this.dataset.field,this.value)"
+          oncompositionend="invUpdateZone(this.dataset.room,this.dataset.zone,this.dataset.field,this.value)">
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;align-items:center">
         <div style="font-size:10px;color:var(--text3)">顏色</div>
@@ -3354,7 +3359,9 @@ function inv403UpdateCounts() {
   s('inv403-supply', data.filter(r => r.cat === 'supply').length);
 }
 
-// ── 表格渲染 ──────────────────────────────────────────────────────
+// ── 表格渲染（含拖曳排序）────────────────────────────────────────
+let invRowDrag = null;
+
 function renderInvTable(roomId) {
   const canEdit = appMode === 'admin' && currentUser && currentUser.level !== 'B';
   let data = invData[roomId] || [];
@@ -3364,25 +3371,28 @@ function renderInvTable(roomId) {
   const cntEl = document.getElementById(roomId + '-cnt');
   if (cntEl) cntEl.textContent = (invData[roomId]||[]).length;
   if (data.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" class="inv-empty">尚無品項，點選「＋ 新增品項」開始建立</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="inv-empty">尚無品項，點選「＋ 新增品項」開始建立</td></tr>';
     if (roomId === 'inv403') inv403UpdateCounts();
     return;
   }
   const catOpts = (cur) => Object.entries(INV_CATS).map(([k,v]) => `<option value="${k}"${cur===k?' selected':''}>${v}</option>`).join('');
-  const zoneOpts = (roomId, cur) => {
-    const zones = invZones[roomId] || [];
-    return zones.map(z => `<option value="${z.id}"${cur===z.id?' selected':''}>${z.label}</option>`).join('');
-  };
+  const zoneOpts = (rid, cur) => (invZones[rid]||[]).map(z => `<option value="${z.id}"${cur===z.id?' selected':''}>${z.label}</option>`).join('');
   tbody.innerHTML = data.map(row => {
     const cc = INV_CAT_CLS[row.cat]||'icat-misc';
     const cl = INV_CATS[row.cat]||row.cat;
     if (!canEdit) {
-      return `<tr><td>${row.name}</td><td><span class="inv-cat ${cc}">${cl}</span></td><td>${row.qty}</td><td>${row.unit}</td><td>${row.zone||'—'}</td><td style="font-size:11px;color:var(--text2)">${row.note}</td><td></td></tr>`;
+      return `<tr data-id="${row.id}"><td></td><td>${row.name}</td><td><span class="inv-cat ${cc}">${cl}</span></td><td>${row.qty}</td><td>${row.unit}</td><td>${row.zone||'—'}</td><td style="font-size:11px;color:var(--text2)">${row.note}</td><td></td></tr>`;
     }
     const zoneCell = (invZones[roomId]||[]).length > 0
       ? `<select class="inv-sel" onchange="invSet('${roomId}',${row.id},'zone',this.value)">${zoneOpts(roomId, row.zone)}</select>`
       : `<span contenteditable="true" class="inv-editable" onblur="invSet('${roomId}',${row.id},'zone',this.innerText.trim())">${row.zone||''}</span>`;
-    return `<tr>
+    return `<tr draggable="true" data-id="${row.id}" data-room="${roomId}"
+        ondragstart="invRowDragStart(event)"
+        ondragover="invRowDragOver(event)"
+        ondrop="invRowDrop(event)"
+        ondragend="invRowDragEnd(event)"
+        style="cursor:grab">
+      <td style="width:24px;text-align:center;color:var(--text3);cursor:grab;font-size:14px;padding:7px 4px" title="拖曳排序">⠿</td>
       <td contenteditable="true" class="inv-editable" onblur="invSet('${roomId}',${row.id},'name',this.innerText.trim())">${row.name}</td>
       <td><select class="inv-sel" onchange="invSet('${roomId}',${row.id},'cat',this.value)">${catOpts(row.cat)}</select></td>
       <td contenteditable="true" class="inv-editable" onblur="invSet('${roomId}',${row.id},'qty',this.innerText.trim())">${row.qty}</td>
@@ -3393,6 +3403,40 @@ function renderInvTable(roomId) {
     </tr>`;
   }).join('');
   if (roomId === 'inv403') inv403UpdateCounts();
+}
+
+function invRowDragStart(e) {
+  invRowDrag = { id: parseInt(e.currentTarget.dataset.id), room: e.currentTarget.dataset.room };
+  e.currentTarget.style.opacity = '0.4';
+  e.dataTransfer.effectAllowed = 'move';
+}
+function invRowDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  // 拖曳時高亮目標列
+  document.querySelectorAll('.inv-row-over').forEach(el => el.classList.remove('inv-row-over'));
+  e.currentTarget.classList.add('inv-row-over');
+}
+function invRowDrop(e) {
+  e.preventDefault();
+  if (!invRowDrag) return;
+  const targetId = parseInt(e.currentTarget.dataset.id);
+  const roomId = invRowDrag.room;
+  if (targetId === invRowDrag.id) return;
+  const arr = invData[roomId];
+  const fromIdx = arr.findIndex(r => r.id === invRowDrag.id);
+  const toIdx   = arr.findIndex(r => r.id === targetId);
+  if (fromIdx === -1 || toIdx === -1) return;
+  const [moved] = arr.splice(fromIdx, 1);
+  arr.splice(toIdx, 0, moved);
+  persistData(); markDirty();
+  renderInvTable(roomId);
+  if (roomId === 'inv403') { renderInvMap('inv403'); inv403UpdateCounts(); }
+}
+function invRowDragEnd(e) {
+  e.currentTarget.style.opacity = '';
+  document.querySelectorAll('.inv-row-over').forEach(el => el.classList.remove('inv-row-over'));
+  invRowDrag = null;
 }
 
 function invSet(roomId, id, field, val) {
