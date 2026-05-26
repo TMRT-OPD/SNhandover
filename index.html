@@ -339,6 +339,47 @@ tbody tr:hover td { background: #fafaf8; }
 .modal-actions { display:flex; gap:8px; margin-top:18px; justify-content:flex-end; }
 
 
+/* ── INVENTORY ── */
+.inv-tab-bar{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);padding:0 32px}
+.inv-tab{padding:12px 20px;font-size:13px;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;transition:var(--transition);white-space:nowrap}
+.inv-tab:hover{color:var(--text)}
+.inv-tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
+.inv-room{display:none}.inv-room.active{display:block}
+.inv-layout{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start}
+.inv-map-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px}
+.inv-map-title{font-size:11px;font-weight:500;color:var(--text2);letter-spacing:.04em;text-transform:uppercase;margin-bottom:12px}
+.floorplan{position:relative;width:100%;padding-bottom:70%;border:1.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2)}
+.inv-zone{position:absolute;border:1.5px solid;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;transition:opacity .15s}
+.inv-zone:hover{opacity:.8}
+.inv-zone.active{outline:2.5px solid var(--accent)}
+.inv-zone-label{font-size:10px;font-weight:500;text-align:center;line-height:1.3}
+.inv-zone-count{font-size:9px;opacity:.75}
+.inv-door{position:absolute;bottom:0;left:38%;width:20%;height:5%;background:var(--surface);border:1.5px solid var(--border2);border-bottom:none;border-radius:4px 4px 0 0;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text3)}
+.inv-legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.inv-leg{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.inv-leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.inv-table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px}
+.inv-table-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.inv-zone-badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 10px;border-radius:20px;font-weight:500}
+.inv-tbl{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+.inv-tbl th{padding:8px 10px;text-align:left;font-size:11px;font-weight:500;color:var(--text2);background:var(--surface2);border-bottom:1px solid var(--border);white-space:nowrap}
+.inv-tbl td{padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.inv-tbl tbody tr:last-child td{border-bottom:none}
+.inv-tbl tbody tr:hover td{background:#fafaf8}
+.inv-editable{cursor:text}
+.inv-editable:focus{outline:2px solid var(--accent);border-radius:3px;background:var(--surface)}
+.inv-cat{display:inline-block;font-size:10px;padding:1px 7px;border-radius:20px;font-weight:500;white-space:nowrap}
+.icat-fire{background:#fcebeb;color:#a32d2d}
+.icat-equip{background:#e8f0f5;color:#2d5f80}
+.icat-ctrl{background:#eeedfe;color:#534ab7}
+.icat-supply{background:#eaf3de;color:#3b6d11}
+.icat-misc{background:#faeeda;color:#854f0b}
+.inv-del{background:none;border:none;color:var(--text3);cursor:pointer;padding:2px 5px;font-size:13px;border-radius:4px}
+.inv-del:hover{color:var(--red);background:var(--red-light)}
+.inv-add-row{width:100%;margin-top:8px;padding:6px;font-size:12px;color:var(--text3);border:1px dashed var(--border2);border-radius:var(--radius);background:transparent;cursor:pointer;font-family:var(--sans)}
+.inv-add-row:hover{background:var(--surface2);color:var(--text)}
+.inv-sel{font-size:11px;padding:2px 20px 2px 6px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%236b6860'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center}
+.inv-empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px}
 .login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)}
 .login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:40px 44px;width:380px;box-shadow:0 8px 32px rgba(0,0,0,.08)}
 .login-logo{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase}
@@ -416,6 +457,12 @@ tbody tr:hover td { background: #fafaf8; }
     <div class="nav-item" onclick="showPage('p2')" id="nav-p2"><span class="nav-icon">☰</span> 業務解說</div>
     <div class="nav-item" onclick="showPage('p3')" id="nav-p3"><span class="nav-icon">◎</span> 未完成專案<span class="nav-badge red" id="badge-p3">0</span></div>
     <div class="nav-item" onclick="showPage('p4')" id="nav-p4"><span class="nav-icon">□</span> 庶務申請</div>
+    <div class="nav-item" onclick="toggleInventoryNav()" id="nav-p6" style="justify-content:space-between"><span style="display:flex;align-items:center;gap:10px"><span class="nav-icon">▤</span> 庫存管理</span><span id="inv-nav-arrow" style="font-size:10px;transition:transform 0.2s;color:rgba(255,255,255,0.4)">▶</span></div>
+    <div id="inv-subnav" style="display:none;background:rgba(0,0,0,0.15)">
+      <div class="nav-item" onclick="showInventoryRoom('inv403')" id="nav-inv403" style="padding-left:32px;font-size:12px"><span class="nav-icon" style="font-size:12px">◦</span> JIF 403 通風機房</div>
+      <div class="nav-item" onclick="showInventoryRoom('inv406')" id="nav-inv406" style="padding-left:32px;font-size:12px"><span class="nav-icon" style="font-size:12px">◦</span> J1F 406 儲藏室</div>
+      <div class="nav-item" onclick="showInventoryRoom('inv412')" id="nav-inv412" style="padding-left:32px;font-size:12px"><span class="nav-icon" style="font-size:12px">◦</span> J1F 412 段辦公室</div>
+    </div>
     <div id="nav-admin-section" style="display:none">
       <div class="nav-section" style="margin-top:8px">資料儲存</div>
       <div class="nav-item" onclick="syncToSheets()" id="nav-sync"><span class="nav-icon">☁</span> 同步至 Sheets</div>
@@ -806,6 +853,148 @@ tbody tr:hover td { background: #fafaf8; }
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- PAGE 6: 庫存管理 -->
+<div id="p6" class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-title">庫存管理</div>
+      <div class="page-sub" id="p6-sub">空間庫存總覽</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn" onclick="invExportCSV()">↓ 匯出 CSV</button>
+      <button class="btn btn-primary" onclick="invAddRow()">＋ 新增品項</button>
+    </div>
+  </div>
+
+  <div class="inv-tab-bar">
+    <div class="inv-tab active" id="inv-tab-403" onclick="showInventoryRoom('inv403')">JIF 403 通風機房</div>
+    <div class="inv-tab" id="inv-tab-406" onclick="showInventoryRoom('inv406')">J1F 406 儲藏室</div>
+    <div class="inv-tab" id="inv-tab-412" onclick="showInventoryRoom('inv412')">J1F 412 段辦公室</div>
+  </div>
+
+  <div class="page-body">
+
+    <!-- ── 403 通風機房 ── -->
+    <div id="inv403" class="inv-room active">
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-num" id="inv403-cnt">0</div><div class="stat-lbl">品項數</div></div>
+        <div class="stat-card"><div class="stat-num" id="inv403-fire">0</div><div class="stat-lbl">消防設備</div></div>
+        <div class="stat-card"><div class="stat-num" id="inv403-equip">0</div><div class="stat-lbl">設施設備</div></div>
+        <div class="stat-card"><div class="stat-num" id="inv403-supply">0</div><div class="stat-lbl">耗材</div></div>
+      </div>
+      <div class="inv-layout">
+        <div class="inv-map-card">
+          <div class="inv-map-title">平面配置 — 點選區域篩選</div>
+          <div class="floorplan" id="fp403">
+            <div class="inv-zone" id="z403-all" onclick="inv403SelectZone('all')" style="top:2%;left:2%;width:96%;height:96%;border-color:#d0cdc7;background:rgba(244,243,240,0.4);z-index:1"></div>
+            <div class="inv-zone" id="z403-A" onclick="inv403SelectZone('A')" style="top:5%;left:3%;width:32%;height:55%;border-color:#2d5f80;background:rgba(232,240,245,0.7);z-index:2">
+              <span class="inv-zone-label" style="color:#245070">A 區<br>消防設備</span>
+              <span class="inv-zone-count" style="color:#2d5f80" id="z403-cnt-A"></span>
+            </div>
+            <div class="inv-zone" id="z403-B" onclick="inv403SelectZone('B')" style="top:5%;left:36%;width:30%;height:55%;border-color:#534ab7;background:rgba(238,237,254,0.7);z-index:2">
+              <span class="inv-zone-label" style="color:#3c3489">B 區<br>中央走道</span>
+              <span class="inv-zone-count" style="color:#534ab7" id="z403-cnt-B"></span>
+            </div>
+            <div class="inv-zone" id="z403-C" onclick="inv403SelectZone('C')" style="top:5%;left:67%;width:30%;height:55%;border-color:#3b6d11;background:rgba(234,243,222,0.7);z-index:2">
+              <span class="inv-zone-label" style="color:#27500a">C 區<br>右側角落</span>
+              <span class="inv-zone-count" style="color:#3b6d11" id="z403-cnt-C"></span>
+            </div>
+            <div class="inv-zone" id="z403-D" onclick="inv403SelectZone('D')" style="top:61%;left:3%;width:94%;height:33%;border-color:#854f0b;background:rgba(250,238,218,0.7);z-index:2">
+              <span class="inv-zone-label" style="color:#633806">D 區 — 入口／雜項區</span>
+              <span class="inv-zone-count" style="color:#854f0b" id="z403-cnt-D"></span>
+            </div>
+            <div class="inv-door">出入口</div>
+          </div>
+          <div class="inv-legend">
+            <div class="inv-leg"><div class="inv-leg-dot" style="background:#e8f0f5;border:1px solid #2d5f80"></div>A 消防</div>
+            <div class="inv-leg"><div class="inv-leg-dot" style="background:#eeedfe;border:1px solid #534ab7"></div>B 中央</div>
+            <div class="inv-leg"><div class="inv-leg-dot" style="background:#eaf3de;border:1px solid #3b6d11"></div>C 右側</div>
+            <div class="inv-leg"><div class="inv-leg-dot" style="background:#faeeda;border:1px solid #854f0b"></div>D 入口</div>
+          </div>
+        </div>
+
+        <div class="inv-table-card">
+          <div class="inv-table-header">
+            <span class="inv-zone-badge" id="inv403-zone-label" style="background:#f0ede8;color:#6b6860">全部品項</span>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="inv-tbl">
+              <thead><tr>
+                <th style="width:22%">品項</th>
+                <th style="width:11%">類別</th>
+                <th style="width:8%">數量</th>
+                <th style="width:8%">單位</th>
+                <th style="width:9%">區域</th>
+                <th style="width:32%">備註</th>
+                <th style="width:10%"></th>
+              </tr></thead>
+              <tbody id="inv403-tbody"></tbody>
+            </table>
+          </div>
+          <button class="inv-add-row" onclick="invAddRow()">＋ 新增品項</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 406 儲藏室 ── -->
+    <div id="inv406" class="inv-room">
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-num" id="inv406-cnt">0</div><div class="stat-lbl">品項數</div></div>
+      </div>
+      <div class="inv-table-card" style="margin-top:0">
+        <div class="inv-table-header">
+          <span style="font-size:13px;color:var(--text2)">J1F 406 儲藏室</span>
+          <span style="font-size:12px;color:var(--text3)">平面圖可於照片上傳後建立</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="inv-tbl">
+            <thead><tr>
+              <th style="width:22%">品項</th>
+              <th style="width:11%">類別</th>
+              <th style="width:8%">數量</th>
+              <th style="width:8%">單位</th>
+              <th style="width:9%">區域</th>
+              <th style="width:32%">備註</th>
+              <th style="width:10%"></th>
+            </tr></thead>
+            <tbody id="inv406-tbody"></tbody>
+          </table>
+        </div>
+        <button class="inv-add-row" onclick="invAddRow()">＋ 新增品項</button>
+      </div>
+    </div>
+
+    <!-- ── 412 段辦公室 ── -->
+    <div id="inv412" class="inv-room">
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-num" id="inv412-cnt">0</div><div class="stat-lbl">品項數</div></div>
+      </div>
+      <div class="inv-table-card" style="margin-top:0">
+        <div class="inv-table-header">
+          <span style="font-size:13px;color:var(--text2)">J1F 412 段辦公室</span>
+          <span style="font-size:12px;color:var(--text3)">平面圖可於照片上傳後建立</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="inv-tbl">
+            <thead><tr>
+              <th style="width:22%">品項</th>
+              <th style="width:11%">類別</th>
+              <th style="width:8%">數量</th>
+              <th style="width:8%">單位</th>
+              <th style="width:9%">區域</th>
+              <th style="width:32%">備註</th>
+              <th style="width:10%"></th>
+            </tr></thead>
+            <tbody id="inv412-tbody"></tbody>
+          </table>
+        </div>
+        <button class="inv-add-row" onclick="invAddRow()">＋ 新增品項</button>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1869,6 +2058,10 @@ function showPage(pid, target) {
       : '帳號列表與密碼修改';
     renderUsers();
   }
+  if (pid === 'p6') {
+    renderInvTable(currentInvRoom);
+    if (currentInvRoom === 'inv403') inv403UpdateZoneCounts();
+  }
   window.scrollTo(0, 0);
 }
 
@@ -2899,6 +3092,263 @@ function restoreSession() {
 })();
 
 // INIT: triggered by startApp() on login
+
+// ── 庫存管理 ──────────────────────────────────────────────────────
+const INV_CATS = {fire:'消防',equip:'設備',ctrl:'管制',supply:'耗材',misc:'雜項'};
+const INV_CAT_CLS = {fire:'icat-fire',equip:'icat-equip',ctrl:'icat-ctrl',supply:'icat-supply',misc:'icat-misc'};
+const INV_ZONES_403 = {A:'A 消防區',B:'B 中央區',C:'C 右側區',D:'D 入口區'};
+const INV_ZONE_COLORS_403 = {
+  A:{bg:'#e8f0f5',color:'#245070'},B:{bg:'#eeedfe',color:'#3c3489'},
+  C:{bg:'#eaf3de',color:'#27500a'},D:{bg:'#faeeda',color:'#633806'},
+  all:{bg:'#f0ede8',color:'#6b6860'}
+};
+
+let invNextId = 100;
+let inv403SelectedZone = 'all';
+let currentInvRoom = 'inv403';
+
+// ── 初始資料 403 ──
+let invData = {
+  inv403: [
+    {id:1,name:'乾粉滅火器',cat:'fire',qty:'19',unit:'支',zone:'A',note:'訓練用×14、備品×4、報廢/已壞×1'},
+    {id:2,name:'CO₂滅火器',cat:'fire',qty:'8',unit:'支',zone:'A',note:'黑色喇叭型'},
+    {id:3,name:'不鏽鋼隔離柱',cat:'equip',qty:'15',unit:'支',zone:'B',note:'附伸縮繩，已確認數量'},
+    {id:4,name:'摺疊椅（藍色）',cat:'equip',qty:'38',unit:'張',zone:'B',note:'堆疊放置'},
+    {id:5,name:'10層放手欄',cat:'equip',qty:'1',unit:'組',zone:'A',note:'60107-1246'},
+    {id:6,name:'播墩',cat:'equip',qty:'2',unit:'個',zone:'B',note:'60602-003 / 60602-006'},
+    {id:7,name:'輪椅',cat:'equip',qty:'1',unit:'台',zone:'A',note:''},
+    {id:8,name:'電風扇',cat:'equip',qty:'2',unit:'台',zone:'C',note:'立扇'},
+    {id:9,name:'A2 矜架',cat:'equip',qty:'2',unit:'組',zone:'D',note:'60702-1159 / 60702-1158'},
+    {id:10,name:'A1 告示架',cat:'equip',qty:'2',unit:'組',zone:'D',note:'60702-536 / 60702-537'},
+    {id:11,name:'會議桌',cat:'equip',qty:'2',unit:'張',zone:'D',note:'60112-602含延長線×1、60114-×599/×598'},
+    {id:12,name:'白板',cat:'equip',qty:'1',unit:'塊',zone:'B',note:''},
+    {id:13,name:'G9 暫存椅',cat:'equip',qty:'4',unit:'張',zone:'B',note:''},
+    {id:14,name:'錄影架',cat:'equip',qty:'1',unit:'組',zone:'A',note:''},
+    {id:15,name:'晾衣架',cat:'equip',qty:'1',unit:'組',zone:'C',note:'未拆封，靠牆放置'},
+    {id:16,name:'紅絨（隔離繩）',cat:'ctrl',qty:'15',unit:'條',zone:'B',note:''},
+    {id:17,name:'紅閃燈',cat:'ctrl',qty:'5',unit:'支',zone:'D',note:''},
+    {id:18,name:'支架',cat:'ctrl',qty:'9',unit:'支',zone:'D',note:''},
+    {id:19,name:'推車',cat:'ctrl',qty:'6',unit:'台',zone:'D',note:''},
+    {id:20,name:'指導背心',cat:'ctrl',qty:'12',unit:'件',zone:'D',note:''},
+    {id:21,name:'捕蚊燈',cat:'ctrl',qty:'2',unit:'台',zone:'A',note:''},
+    {id:22,name:'捕貓籠',cat:'ctrl',qty:'2',unit:'個',zone:'A',note:''},
+    {id:23,name:'垃圾桶',cat:'ctrl',qty:'2',unit:'個',zone:'D',note:''},
+    {id:24,name:'A4 插牌',cat:'supply',qty:'11',unit:'個',zone:'C',note:''},
+    {id:25,name:'A4 影印紙',cat:'supply',qty:'20',unit:'包',zone:'C',note:'10包×2箱'},
+    {id:26,name:'POS 紙捲',cat:'supply',qty:'47',unit:'捲',zone:'C',note:'30捲×1箱+17捲'},
+    {id:27,name:'AVIM 感熱紙',cat:'supply',qty:'300',unit:'捲',zone:'C',note:'36捲×7箱+18捲+30捲'},
+    {id:28,name:'PAM 感熱紙',cat:'supply',qty:'450',unit:'捲',zone:'C',note:'30捲×15箱'},
+    {id:29,name:'C型夾工具',cat:'misc',qty:'1',unit:'箱',zone:'A',note:'藍紅色C型夾多支'},
+    {id:30,name:'木板（門片）',cat:'misc',qty:'1',unit:'片',zone:'C',note:'木紋板，直立放置'},
+    {id:31,name:'捲筒衛生紙（百花）',cat:'misc',qty:'',unit:'箱',zone:'C',note:'數量待確認'},
+  ],
+  inv406: [],
+  inv412: []
+};
+
+function toggleInventoryNav() {
+  const sub = document.getElementById('inv-subnav');
+  const arrow = document.getElementById('inv-nav-arrow');
+  const isOpen = sub.style.display !== 'none';
+  sub.style.display = isOpen ? 'none' : 'block';
+  arrow.style.transform = isOpen ? '' : 'rotate(90deg)';
+  if (!isOpen) showInventoryRoom('inv403');
+}
+
+function showInventoryRoom(roomId) {
+  currentInvRoom = roomId;
+  // 切換頁面到 p6
+  showPage('p6');
+  // 更新子選單 active
+  ['nav-inv403','nav-inv406','nav-inv412'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  const navMap = {inv403:'nav-inv403',inv406:'nav-inv406',inv412:'nav-inv412'};
+  const navEl = document.getElementById(navMap[roomId]);
+  if (navEl) navEl.classList.add('active');
+  // 展開子選單
+  const sub = document.getElementById('inv-subnav');
+  const arrow = document.getElementById('inv-nav-arrow');
+  if (sub) { sub.style.display = 'block'; }
+  if (arrow) { arrow.style.transform = 'rotate(90deg)'; }
+  // 切換 tab
+  ['inv-tab-403','inv-tab-406','inv-tab-412'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.classList.remove('active');
+  });
+  const tabMap = {inv403:'inv-tab-403',inv406:'inv-tab-406',inv412:'inv-tab-412'};
+  const tabEl = document.getElementById(tabMap[roomId]);
+  if (tabEl) tabEl.classList.add('active');
+  // 切換 room panel
+  ['inv403','inv406','inv412'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('active', id === roomId);
+  });
+  // header 副標題
+  const subMap = {inv403:'JIF 403 通風機房',inv406:'J1F 406 儲藏室',inv412:'J1F 412 段辦公室'};
+  const sub6 = document.getElementById('p6-sub');
+  if (sub6) sub6.textContent = subMap[roomId];
+  // 渲染
+  renderInvTable(roomId);
+  if (roomId === 'inv403') inv403UpdateZoneCounts();
+}
+
+function inv403SelectZone(z) {
+  inv403SelectedZone = z;
+  document.querySelectorAll('.inv-zone[id^="z403-"]').forEach(el => el.classList.remove('active'));
+  if (z !== 'all') {
+    const el = document.getElementById('z403-' + z);
+    if (el) el.classList.add('active');
+  }
+  const zc = INV_ZONE_COLORS_403[z] || INV_ZONE_COLORS_403.all;
+  const lbl = z === 'all' ? '全部品項' : INV_ZONES_403[z];
+  const lb = document.getElementById('inv403-zone-label');
+  if (lb) { lb.textContent = lbl; lb.style.background = zc.bg; lb.style.color = zc.color; }
+  renderInvTable('inv403');
+}
+
+function inv403UpdateZoneCounts() {
+  const data = invData.inv403 || [];
+  ['A','B','C','D'].forEach(z => {
+    const el = document.getElementById('z403-cnt-' + z);
+    if (el) el.textContent = data.filter(r => r.zone === z).length + ' 項';
+  });
+  // stats
+  const setEl = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+  setEl('inv403-cnt', data.length);
+  setEl('inv403-fire', data.filter(r => r.cat === 'fire').length);
+  setEl('inv403-equip', data.filter(r => r.cat === 'equip').length);
+  setEl('inv403-supply', data.filter(r => r.cat === 'supply').length);
+}
+
+function renderInvTable(roomId) {
+  const isEditable = !(appMode === 'viewer' || (currentUser && currentUser.level === 'B'));
+  const data = invData[roomId] || [];
+  let filtered = data;
+  if (roomId === 'inv403' && inv403SelectedZone !== 'all') {
+    filtered = data.filter(r => r.zone === inv403SelectedZone);
+  }
+  const tbodyId = roomId + '-tbody';
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="inv-empty">尚無品項，點選「＋ 新增品項」開始建立</td></tr>`;
+    if (roomId === 'inv403') inv403UpdateZoneCounts();
+    updateInvCnt(roomId);
+    return;
+  }
+  tbody.innerHTML = filtered.map(row => {
+    const catCls = INV_CAT_CLS[row.cat] || 'icat-misc';
+    const catLabel = INV_CATS[row.cat] || row.cat;
+    const zoneOpts = roomId === 'inv403'
+      ? Object.entries(INV_ZONES_403).map(([k,v]) => `<option value="${k}" ${row.zone===k?'selected':''}>${k}</option>`).join('')
+      : `<option value="${row.zone||''}">${row.zone||'—'}</option>`;
+    const catOpts = Object.entries(INV_CATS).map(([k,v]) => `<option value="${k}" ${row.cat===k?'selected':''}>${v}</option>`).join('');
+    if (!isEditable) {
+      return `<tr>
+        <td>${row.name}</td>
+        <td><span class="inv-cat ${catCls}">${catLabel}</span></td>
+        <td>${row.qty}</td><td>${row.unit}</td><td>${row.zone||'—'}</td>
+        <td style="color:var(--text2);font-size:11px">${row.note}</td>
+        <td></td>
+      </tr>`;
+    }
+    return `<tr data-id="${row.id}">
+      <td contenteditable="true" class="inv-editable" onblur="invUpdateCell(this,'${roomId}',${row.id},'name')">${row.name}</td>
+      <td><select class="inv-sel" onchange="invUpdateField('${roomId}',${row.id},'cat',this.value);invRenderCatBadge(this)">${catOpts}</select></td>
+      <td contenteditable="true" class="inv-editable" onblur="invUpdateCell(this,'${roomId}',${row.id},'qty')">${row.qty}</td>
+      <td contenteditable="true" class="inv-editable" onblur="invUpdateCell(this,'${roomId}',${row.id},'unit')">${row.unit}</td>
+      <td>${roomId==='inv403'?`<select class="inv-sel" onchange="invUpdateField('${roomId}',${row.id},'zone',this.value);renderInvTable('${roomId}');inv403UpdateZoneCounts()">${zoneOpts}</select>`:(`<span contenteditable="true" class="inv-editable" onblur="invUpdateCell(this,'${roomId}',${row.id},'zone')">${row.zone||''}</span>`)}</td>
+      <td contenteditable="true" class="inv-editable" style="font-size:11px;color:var(--text2)" onblur="invUpdateCell(this,'${roomId}',${row.id},'note')">${row.note}</td>
+      <td style="text-align:center"><button class="inv-del" onclick="invDeleteRow('${roomId}',${row.id})" title="刪除">✕</button></td>
+    </tr>`;
+  }).join('');
+  if (roomId === 'inv403') inv403UpdateZoneCounts();
+  updateInvCnt(roomId);
+  persistData();
+}
+
+function updateInvCnt(roomId) {
+  const el = document.getElementById(roomId + '-cnt');
+  if (el) el.textContent = (invData[roomId]||[]).length;
+}
+
+function invUpdateCell(el, roomId, id, field) {
+  const row = (invData[roomId]||[]).find(r => r.id === id);
+  if (row) { row[field] = el.innerText.trim(); persistData(); markDirty(); }
+  if (roomId === 'inv403') inv403UpdateZoneCounts();
+}
+
+function invUpdateField(roomId, id, field, val) {
+  const row = (invData[roomId]||[]).find(r => r.id === id);
+  if (row) { row[field] = val; persistData(); markDirty(); }
+}
+
+function invRenderCatBadge(sel) {}
+
+function invDeleteRow(roomId, id) {
+  if (!confirm('確定要刪除此品項嗎？')) return;
+  invData[roomId] = (invData[roomId]||[]).filter(r => r.id !== id);
+  renderInvTable(roomId);
+  toast('已刪除');
+  markDirty();
+}
+
+function invAddRow() {
+  const roomId = currentInvRoom;
+  const zone = (roomId === 'inv403' && inv403SelectedZone !== 'all') ? inv403SelectedZone : (roomId === 'inv403' ? 'D' : '');
+  invData[roomId] = invData[roomId] || [];
+  invData[roomId].push({id: invNextId++, name:'新品項', cat:'misc', qty:'1', unit:'個', zone, note:''});
+  renderInvTable(roomId);
+  toast('已新增品項，請直接點擊欄位編輯');
+  markDirty();
+}
+
+function invExportCSV() {
+  const roomId = currentInvRoom;
+  const nameMap = {inv403:'JIF403_通風機房',inv406:'J1F406_儲藏室',inv412:'J1F412_段辦公室'};
+  const data = invData[roomId] || [];
+  const headers = ['品項','類別','數量','單位','區域','備註'];
+  const rows = data.map(r => [r.name, INV_CATS[r.cat]||r.cat, r.qty, r.unit, r.zone||'', r.note]);
+  const csv = [headers,...rows].map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nameMap[roomId] + '_庫存清單.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// 讓 persistData / restoreData 也存 invData
+const _origPersist = typeof persistData === 'function' ? persistData : null;
+const _origRestore = typeof restoreData === 'function' ? restoreData : null;
+
+// 覆寫 persistData，附加 invData
+const STORE_KEY = 'handover_data_v1';
+const origPersistFn = window.persistData;
+window.persistData = function() {
+  if (origPersistFn) origPersistFn();
+  try {
+    const existing = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
+    existing.invData = invData;
+    existing.invNextId = invNextId;
+    localStorage.setItem(STORE_KEY, JSON.stringify(existing));
+  } catch(e) {}
+};
+
+// 頁面載入時恢復 invData
+(function restoreInvData() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    if (d.invData) {
+      if (d.invData.inv403) invData.inv403 = d.invData.inv403;
+      if (d.invData.inv406) invData.inv406 = d.invData.inv406;
+      if (d.invData.inv412) invData.inv412 = d.invData.inv412;
+    }
+    if (d.invNextId) invNextId = d.invNextId;
+  } catch(e) {}
+})();
 </script>
 </body>
 </html>
