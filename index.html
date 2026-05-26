@@ -2753,7 +2753,7 @@ const STORE_KEY = 'handover_data_v1';
 
 function persistData() {
   try {
-    localStorage.setItem(STORE_KEY, JSON.stringify({ items, projects, nextId, nextPid, shuWu, nextShuWuNo }));
+    localStorage.setItem(STORE_KEY, JSON.stringify({ items, projects, nextId, nextPid, shuWu, nextShuWuNo, invData, invNextId }));
   } catch(e) {}
 }
 
@@ -2769,6 +2769,12 @@ function restoreData() {
     nextPid = d.nextPid || (projects.length + 1);
     if (Array.isArray(d.shuWu) && d.shuWu.length > 0) shuWu = d.shuWu;
     if (d.nextShuWuNo) nextShuWuNo = d.nextShuWuNo;
+    if (d.invData) {
+      if (d.invData.inv403 && d.invData.inv403.length > 0) invData.inv403 = d.invData.inv403;
+      if (d.invData.inv406) invData.inv406 = d.invData.inv406;
+      if (d.invData.inv412) invData.inv412 = d.invData.inv412;
+    }
+    if (d.invNextId) invNextId = d.invNextId;
     return true;
   } catch(e) { return false; }
 }
@@ -3318,31 +3324,14 @@ function invExportCSV() {
   URL.revokeObjectURL(url);
 }
 
-// 讓 persistData / restoreData 也存 invData
-const _origPersist = typeof persistData === 'function' ? persistData : null;
-const _origRestore = typeof restoreData === 'function' ? restoreData : null;
-
-// 覆寫 persistData，附加 invData
-const STORE_KEY = 'handover_data_v1';
-const origPersistFn = window.persistData;
-window.persistData = function() {
-  if (origPersistFn) origPersistFn();
-  try {
-    const existing = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
-    existing.invData = invData;
-    existing.invNextId = invNextId;
-    localStorage.setItem(STORE_KEY, JSON.stringify(existing));
-  } catch(e) {}
-};
-
-// 頁面載入時恢復 invData
+// 頁面載入時恢復 invData（從 localStorage 讀取）
 (function restoreInvData() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
     if (!raw) return;
     const d = JSON.parse(raw);
     if (d.invData) {
-      if (d.invData.inv403) invData.inv403 = d.invData.inv403;
+      if (d.invData.inv403 && d.invData.inv403.length > 0) invData.inv403 = d.invData.inv403;
       if (d.invData.inv406) invData.inv406 = d.invData.inv406;
       if (d.invData.inv412) invData.inv412 = d.invData.inv412;
     }
