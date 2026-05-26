@@ -898,7 +898,7 @@ tbody tr:hover td { background: #fafaf8; }
           <div class="inv-fp" id="fp403">
             <div class="inv-zone" id="z403-bg" onclick="inv403Zone('all')" style="top:0;left:0;width:100%;height:100%;border:none;background:transparent;z-index:1;cursor:default"></div>
             <div id="inv403-zones-wrap" style="position:absolute;inset:0;z-index:2"></div>
-            <div class="inv-door" id="inv403-door">出入口</div>
+            <div class="inv-door" id="inv403-door" style="bottom:0;left:5%;width:16%;height:6%;border-radius:4px 4px 0 0;border-bottom:none">出入口</div>
           </div>
           <div class="inv-legend" id="inv403-legend"></div>
           <!-- 地圖編輯面板 -->
@@ -924,27 +924,85 @@ tbody tr:hover td { background: #fafaf8; }
 
     <!-- 406 -->
     <div id="inv406" class="inv-room">
-      <div class="stats-row"><div class="stat-card"><div class="stat-num" id="inv406-cnt">0</div><div class="stat-lbl">品項數</div></div></div>
-      <div class="inv-table-card">
-        <div class="inv-table-header"><span style="font-size:13px;color:var(--text2)">J1F 406 儲藏室</span><span style="font-size:12px;color:var(--text3)">可於資料完成後新增平面圖</span></div>
-        <div style="overflow-x:auto"><table class="inv-tbl">
-          <thead><tr><th style="width:24px"></th><th style="width:22%">品項</th><th style="width:10%">類別</th><th style="width:8%">數量</th><th style="width:8%">單位</th><th style="width:9%">區域</th><th>備註</th><th style="width:8%"></th></tr></thead>
-          <tbody id="inv406-tbody"></tbody>
-        </table></div>
-        <button class="inv-add-row" onclick="invAddRow()">＋ 新增品項</button>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-num" id="inv406-cnt">0</div><div class="stat-lbl">品項數</div></div>
+      </div>
+      <div class="inv-layout">
+        <div class="inv-map-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div class="inv-map-title" style="margin-bottom:0">平面配置</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <button class="btn btn-sm" id="inv406-all-btn" onclick="invSelectZone('inv406','all')" style="font-size:11px;padding:3px 10px;background:var(--accent-light);color:var(--accent);border-color:#c5daea">全部</button>
+              <button class="btn btn-sm" id="inv406-edit-btn" onclick="invToggleMapEditRoom('inv406')" style="font-size:11px;padding:3px 10px;display:none">✏ 編輯</button>
+            </div>
+          </div>
+          <!-- 直立長條形：padding-bottom:130% 讓高度大於寬度 -->
+          <div class="inv-fp" id="fp406" style="padding-bottom:130%">
+            <div onclick="invSelectZone('inv406','all')" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;background:transparent;z-index:1;cursor:default"></div>
+            <div id="inv406-zones-wrap" style="position:absolute;inset:0;z-index:2"></div>
+            <!-- 出入口：左下方 -->
+            <div class="inv-door" style="bottom:0;left:5%;width:16%;height:4%;border-radius:4px 4px 0 0;border-bottom:none">出入口</div>
+          </div>
+          <div class="inv-legend" id="inv406-legend"></div>
+          <div id="inv406-map-editor" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+            <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em">區域設定</div>
+            <div id="inv406-zone-list" style="display:flex;flex-direction:column;gap:6px"></div>
+            <button class="btn btn-sm" onclick="invAddZone('inv406')" style="margin-top:8px;width:100%;font-size:11px;border-style:dashed">＋ 新增區域</button>
+            <div style="font-size:11px;color:var(--text3);margin-top:8px">拖曳區域可調整位置，拉動右下角可調整大小</div>
+          </div>
+        </div>
+        <div class="inv-table-card">
+          <div class="inv-table-header">
+            <span class="inv-zone-badge" id="inv406-zlabel" style="background:#f0ede8;color:#6b6860">全部品項</span>
+          </div>
+          <div style="overflow-x:auto"><table class="inv-tbl">
+            <thead><tr><th style="width:24px"></th><th style="width:22%">品項</th><th style="width:10%">類別</th><th style="width:8%">數量</th><th style="width:8%">單位</th><th style="width:9%">區域</th><th>備註</th><th style="width:8%"></th></tr></thead>
+            <tbody id="inv406-tbody"></tbody>
+          </table></div>
+          <button class="inv-add-row" onclick="invAddRow()">＋ 新增品項</button>
+        </div>
       </div>
     </div>
 
     <!-- 412 -->
     <div id="inv412" class="inv-room">
-      <div class="stats-row"><div class="stat-card"><div class="stat-num" id="inv412-cnt">0</div><div class="stat-lbl">品項數</div></div></div>
-      <div class="inv-table-card">
-        <div class="inv-table-header"><span style="font-size:13px;color:var(--text2)">J1F 412 段辦公室</span><span style="font-size:12px;color:var(--text3)">可於資料完成後新增平面圖</span></div>
-        <div style="overflow-x:auto"><table class="inv-tbl">
-          <thead><tr><th style="width:24px"></th><th style="width:22%">品項</th><th style="width:10%">類別</th><th style="width:8%">數量</th><th style="width:8%">單位</th><th style="width:9%">區域</th><th>備註</th><th style="width:8%"></th></tr></thead>
-          <tbody id="inv412-tbody"></tbody>
-        </table></div>
-        <button class="inv-add-row" onclick="invAddRow()">＋ 新增品項</button>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-num" id="inv412-cnt">0</div><div class="stat-lbl">品項數</div></div>
+      </div>
+      <div class="inv-layout">
+        <div class="inv-map-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div class="inv-map-title" style="margin-bottom:0">平面配置</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <button class="btn btn-sm" id="inv412-all-btn" onclick="invSelectZone('inv412','all')" style="font-size:11px;padding:3px 10px;background:var(--accent-light);color:var(--accent);border-color:#c5daea">全部</button>
+              <button class="btn btn-sm" id="inv412-edit-btn" onclick="invToggleMapEditRoom('inv412')" style="font-size:11px;padding:3px 10px;display:none">✏ 編輯</button>
+            </div>
+          </div>
+          <!-- 橫立長條形：padding-bottom:45% 讓寬度大於高度 -->
+          <div class="inv-fp" id="fp412" style="padding-bottom:45%">
+            <div onclick="invSelectZone('inv412','all')" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;background:transparent;z-index:1;cursor:default"></div>
+            <div id="inv412-zones-wrap" style="position:absolute;inset:0;z-index:2"></div>
+            <!-- 出入口：左上方 -->
+            <div class="inv-door" style="top:0;left:5%;bottom:auto;width:16%;height:8%;border-radius:0 0 4px 4px;border-top:none;border-bottom:1.5px solid var(--border2)">出入口</div>
+          </div>
+          <div class="inv-legend" id="inv412-legend"></div>
+          <div id="inv412-map-editor" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+            <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em">區域設定</div>
+            <div id="inv412-zone-list" style="display:flex;flex-direction:column;gap:6px"></div>
+            <button class="btn btn-sm" onclick="invAddZone('inv412')" style="margin-top:8px;width:100%;font-size:11px;border-style:dashed">＋ 新增區域</button>
+            <div style="font-size:11px;color:var(--text3);margin-top:8px">拖曳區域可調整位置，拉動右下角可調整大小</div>
+          </div>
+        </div>
+        <div class="inv-table-card">
+          <div class="inv-table-header">
+            <span class="inv-zone-badge" id="inv412-zlabel" style="background:#f0ede8;color:#6b6860">全部品項</span>
+          </div>
+          <div style="overflow-x:auto"><table class="inv-tbl">
+            <thead><tr><th style="width:24px"></th><th style="width:22%">品項</th><th style="width:10%">類別</th><th style="width:8%">數量</th><th style="width:8%">單位</th><th style="width:9%">區域</th><th>備註</th><th style="width:8%"></th></tr></thead>
+            <tbody id="inv412-tbody"></tbody>
+          </table></div>
+          <button class="inv-add-row" onclick="invAddRow()">＋ 新增品項</button>
+        </div>
       </div>
     </div>
 
@@ -3057,9 +3115,10 @@ function restoreSession() {
 
 // ── 庫存管理 ─────────────────────────────────────────────────────
 let invNextId = 100;
-let inv403SelZone = 'all';
+let invSelZone = {inv403:'all', inv406:'all', inv412:'all'};
+let inv403SelZone = 'all'; // 相容舊呼叫，同步用
 let invCurrentRoom = 'inv403';
-let invMapEditMode = false;
+let invMapEditMode = {inv403:false, inv406:false, inv412:false};
 
 // ── 區域定義（可編輯，存入 localStorage）──
 let invZones = {
@@ -3155,32 +3214,38 @@ function showInventoryRoom(roomId) {
   });
   const sm = {inv403:'JIF 403 通風機房',inv406:'J1F 406 儲藏室',inv412:'J1F 412 段辦公室'};
   const se = document.getElementById('p6-sub'); if (se) se.textContent = sm[roomId];
-  // 編輯按鈕只在 403 且有編輯權限時顯示
   const canEdit = appMode === 'admin' && currentUser && currentUser.level !== 'B';
-  const editBtn = document.getElementById('inv403-edit-btn');
-  if (editBtn) editBtn.style.display = (roomId === 'inv403' && canEdit) ? '' : 'none';
-  renderInvMap('inv403');
+  ['inv403','inv406','inv412'].forEach(rid => {
+    const btn = document.getElementById(rid + '-edit-btn');
+    if (btn) btn.style.display = (rid === roomId && canEdit) ? '' : 'none';
+  });
+  renderInvMap(roomId);
   renderInvTable(roomId);
   if (roomId === 'inv403') inv403UpdateCounts();
 }
 
 // ── 地圖渲染 ──────────────────────────────────────────────────────
 function renderInvMap(roomId) {
-  const wrap = document.getElementById(roomId.replace('inv','') === '403' ? 'inv403-zones-wrap' : null);
+  const wrapId = roomId === 'inv403' ? 'inv403-zones-wrap'
+               : roomId === 'inv406' ? 'inv406-zones-wrap'
+               : 'inv412-zones-wrap';
+  const wrap = document.getElementById(wrapId);
   if (!wrap) return;
   const zones = invZones[roomId] || [];
   const canEdit = appMode === 'admin' && currentUser && currentUser.level !== 'B';
+  const selZone = invSelZone[roomId] || 'all';
   wrap.innerHTML = zones.map(z => {
     const col = INV_COLORS.find(c => c.border === z.color) || INV_COLORS[0];
     const cnt = (invData[roomId]||[]).filter(r => r.zone === z.id).length;
-    const isActive = inv403SelZone === z.id;
-    const activeStyle = isActive ? `outline:2.5px solid var(--accent);outline-offset:1px;` : '';
-    const dragHandles = invMapEditMode && canEdit ? `
+    const isActive = selZone === z.id;
+    const activeStyle = isActive ? 'outline:2.5px solid var(--accent);outline-offset:1px;' : '';
+    const editMode = invMapEditMode[roomId];
+    const dragHandles = editMode && canEdit ? `
       <div class="iz-drag-handle" onmousedown="invStartDrag(event,'${roomId}','${z.id}')" title="拖曳移動" style="position:absolute;top:0;left:0;right:0;bottom:0;cursor:move;z-index:1"></div>
       <div class="iz-resize-handle" onmousedown="invStartResize(event,'${roomId}','${z.id}')" title="拖曳調整大小" style="position:absolute;bottom:0;right:0;width:12px;height:12px;cursor:se-resize;background:${z.color};border-radius:2px 0 0 0;z-index:3"></div>` : '';
     return `<div class="inv-zone${isActive?' iz-active':''}" data-zone="${z.id}"
-      style="top:${z.top}%;left:${z.left}%;width:${z.w}%;height:${z.h}%;border-color:${z.color};background:${z.bg};z-index:2;${activeStyle}${invMapEditMode&&canEdit?'':'cursor:pointer;'}"
-      ${!invMapEditMode ? `onclick="inv403Zone('${z.id}')"` : ''}>
+      style="top:${z.top}%;left:${z.left}%;width:${z.w}%;height:${z.h}%;border-color:${z.color};background:${z.bg};z-index:2;${activeStyle}${editMode&&canEdit?'':'cursor:pointer;'}"
+      ${!editMode ? `onclick="invSelectZone('${roomId}','${z.id}')"` : ''}>
       ${dragHandles}
       <span class="inv-zone-label" style="color:${col.text};z-index:2;position:relative">${z.label}<br><span style="font-size:9px;opacity:.8">${z.sub}</span></span>
       <span class="inv-zone-count" style="color:${z.color};z-index:2;position:relative" id="z${roomId.slice(-3)}-cnt-${z.id}">${cnt} 項</span>
@@ -3188,13 +3253,11 @@ function renderInvMap(roomId) {
   }).join('');
   renderInvLegend(roomId);
   renderInvZoneList(roomId);
-  // 更新表格區域下拉選單
   renderInvTable(roomId);
 }
 
 function renderInvLegend(roomId) {
-  const legend = document.getElementById(roomId.replace('inv','inv') + (roomId === 'inv403' ? '403' : '') + '-legend');
-  const el = document.getElementById('inv403-legend');
+  const el = document.getElementById(roomId + '-legend');
   if (!el) return;
   const zones = invZones[roomId] || [];
   el.innerHTML = zones.map(z =>
@@ -3202,24 +3265,25 @@ function renderInvLegend(roomId) {
   ).join('');
 }
 
-// ── 地圖編輯模式 ──────────────────────────────────────────────────
-function invToggleMapEdit() {
-  invMapEditMode = !invMapEditMode;
-  const btn = document.getElementById('inv403-edit-btn');
-  const panel = document.getElementById('inv403-map-editor');
-  if (btn) { btn.textContent = invMapEditMode ? '✓ 完成編輯' : '✏ 編輯'; btn.style.background = invMapEditMode ? 'var(--green-light)' : ''; btn.style.color = invMapEditMode ? 'var(--green)' : ''; }
-  if (panel) panel.style.display = invMapEditMode ? 'block' : 'none';
-  // 編輯模式下取消區域選取
-  if (invMapEditMode) inv403SelZone = 'all';
-  renderInvMap('inv403');
+// ── 地圖編輯模式（通用）──────────────────────────────────────────
+function invToggleMapEditRoom(roomId) {
+  invMapEditMode[roomId] = !invMapEditMode[roomId];
+  const mode = invMapEditMode[roomId];
+  const btn   = document.getElementById(roomId + '-edit-btn');
+  const panel = document.getElementById(roomId + '-map-editor');
+  if (btn)   { btn.textContent = mode ? '✓ 完成編輯' : '✏ 編輯'; btn.style.background = mode ? 'var(--green-light)' : ''; btn.style.color = mode ? 'var(--green)' : ''; }
+  if (panel) panel.style.display = mode ? 'block' : 'none';
+  if (mode) { invSelZone[roomId] = 'all'; if (roomId==='inv403') inv403SelZone='all'; }
+  renderInvMap(roomId);
 }
+function invToggleMapEdit() { invToggleMapEditRoom('inv403'); } // 相容舊呼叫
 
 function renderInvZoneList(roomId) {
-  const list = document.getElementById('inv403-zone-list');
+  const list = document.getElementById(roomId + '-zone-list');
   if (!list) return;
   const zones = invZones[roomId] || [];
   const canEdit = appMode === 'admin' && currentUser && currentUser.level !== 'B';
-  if (!invMapEditMode || !canEdit) { list.innerHTML = ''; return; }
+  if (!invMapEditMode[roomId] || !canEdit) { list.innerHTML = ''; return; }
   list.innerHTML = zones.map((z,i) => {
     const colorOpts = INV_COLORS.map(c =>
       `<option value="${c.border}" ${z.color===c.border?'selected':''}>${c.label}</option>`
@@ -3260,22 +3324,26 @@ function invUpdateZone(roomId, zoneId, field, val) {
 }
 
 function renderInvMapOnly(roomId) {
-  // 只重繪地圖區塊和圖例，不動 zone-list
-  const wrap = document.getElementById('inv403-zones-wrap');
+  const wrapId = roomId === 'inv403' ? 'inv403-zones-wrap'
+               : roomId === 'inv406' ? 'inv406-zones-wrap'
+               : 'inv412-zones-wrap';
+  const wrap = document.getElementById(wrapId);
   if (!wrap) return;
   const zones = invZones[roomId] || [];
   const canEdit = appMode === 'admin' && currentUser && currentUser.level !== 'B';
+  const selZone = invSelZone[roomId] || 'all';
+  const editMode = invMapEditMode[roomId];
   wrap.innerHTML = zones.map(z => {
     const col = INV_COLORS.find(c => c.border === z.color) || INV_COLORS[0];
     const cnt = (invData[roomId]||[]).filter(r => r.zone === z.id).length;
-    const isActive = inv403SelZone === z.id;
+    const isActive = selZone === z.id;
     const activeStyle = isActive ? 'outline:2.5px solid var(--accent);outline-offset:1px;' : '';
-    const dragHandles = invMapEditMode && canEdit ? `
+    const dragHandles = editMode && canEdit ? `
       <div class="iz-drag-handle" onmousedown="invStartDrag(event,'${roomId}','${z.id}')" title="拖曳移動" style="position:absolute;top:0;left:0;right:0;bottom:0;cursor:move;z-index:1"></div>
       <div class="iz-resize-handle" onmousedown="invStartResize(event,'${roomId}','${z.id}')" title="拖曳調整大小" style="position:absolute;bottom:0;right:0;width:12px;height:12px;cursor:se-resize;background:${z.color};border-radius:2px 0 0 0;z-index:3"></div>` : '';
     return `<div class="inv-zone${isActive?' iz-active':''}" data-zone="${z.id}"
-      style="top:${z.top}%;left:${z.left}%;width:${z.w}%;height:${z.h}%;border-color:${z.color};background:${z.bg};z-index:2;${activeStyle}${invMapEditMode&&canEdit?'':'cursor:pointer;'}"
-      ${!invMapEditMode ? `onclick="inv403Zone('${z.id}')"` : ''}>
+      style="top:${z.top}%;left:${z.left}%;width:${z.w}%;height:${z.h}%;border-color:${z.color};background:${z.bg};z-index:2;${activeStyle}${editMode&&canEdit?'':'cursor:pointer;'}"
+      ${!editMode ? `onclick="invSelectZone('${roomId}','${z.id}')"` : ''}>
       ${dragHandles}
       <span class="inv-zone-label" style="color:${col.text};z-index:2;position:relative">${z.label}<br><span style="font-size:9px;opacity:.8">${z.sub}</span></span>
       <span class="inv-zone-count" style="color:${z.color};z-index:2;position:relative" id="z${roomId.slice(-3)}-cnt-${z.id}">${cnt} 項</span>
@@ -3351,28 +3419,33 @@ function invOnDragEnd() {
   document.removeEventListener('mouseup', invOnDragEnd);
 }
 
-// ── 區域篩選 ──────────────────────────────────────────────────────
-function inv403Zone(z) {
-  if (invMapEditMode) return;
-  inv403SelZone = z;
-  const zoneData = (invZones.inv403||[]).find(zd => zd.id === z);
-  const lb = document.getElementById('inv403-zlabel');
+// ── 區域篩選（通用）────────────────────────────────────────────────
+function invSelectZone(roomId, z) {
+  if (invMapEditMode[roomId]) return;
+  invSelZone[roomId] = z;
+  if (roomId === 'inv403') inv403SelZone = z; // 相容
+  const zoneData = (invZones[roomId]||[]).find(zd => zd.id === z);
+  const lb = document.getElementById(roomId + '-zlabel');
   if (lb) {
     if (z === 'all') {
       lb.textContent = '全部品項'; lb.style.background = '#f0ede8'; lb.style.color = '#6b6860';
     } else if (zoneData) {
       const col = INV_COLORS.find(c => c.border === zoneData.color) || INV_COLORS[0];
-      lb.textContent = zoneData.label + ' ' + zoneData.sub;
+      lb.textContent = zoneData.label + (zoneData.sub ? ' ' + zoneData.sub : '');
       lb.style.background = zoneData.bg.replace('0.75','0.5');
       lb.style.color = col.text;
     }
   }
-  // 更新全部按鈕樣式
-  const allBtn = document.getElementById('inv403-all-btn');
-  if (allBtn) { allBtn.style.background = z === 'all' ? 'var(--accent-light)' : ''; allBtn.style.color = z === 'all' ? 'var(--accent)' : ''; allBtn.style.borderColor = z === 'all' ? '#c5daea' : ''; }
-  renderInvMap('inv403');
-  renderInvTable('inv403');
+  const allBtn = document.getElementById(roomId + '-all-btn');
+  if (allBtn) {
+    allBtn.style.background = z === 'all' ? 'var(--accent-light)' : '';
+    allBtn.style.color = z === 'all' ? 'var(--accent)' : '';
+    allBtn.style.borderColor = z === 'all' ? '#c5daea' : '';
+  }
+  renderInvMap(roomId);
+  renderInvTable(roomId);
 }
+function inv403Zone(z) { invSelectZone('inv403', z); } // 相容舊呼叫
 
 function inv403UpdateCounts() {
   const data = invData.inv403 || [];
@@ -3395,6 +3468,8 @@ function renderInvTable(roomId) {
   const canEdit = appMode === 'admin' && currentUser && currentUser.level !== 'B';
   let data = invData[roomId] || [];
   if (roomId === 'inv403' && inv403SelZone !== 'all') data = data.filter(r => r.zone === inv403SelZone);
+  if (roomId === 'inv406' && (invSelZone.inv406||'all') !== 'all') data = data.filter(r => r.zone === invSelZone.inv406);
+  if (roomId === 'inv412' && (invSelZone.inv412||'all') !== 'all') data = data.filter(r => r.zone === invSelZone.inv412);
   const tbody = document.getElementById(roomId + '-tbody');
   if (!tbody) return;
   const cntEl = document.getElementById(roomId + '-cnt');
