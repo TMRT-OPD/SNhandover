@@ -3252,7 +3252,36 @@ function renderInvZoneList(roomId) {
 
 function invUpdateZone(roomId, zoneId, field, val) {
   const z = (invZones[roomId]||[]).find(z => z.id === zoneId);
-  if (z) { z[field] = val; renderInvMap(roomId); persistData(); markDirty(); }
+  if (!z || z[field] === val) return;
+  z[field] = val;
+  // 只更新地圖視覺，不重繪 zone-list（避免 input 被銷毀造成注音中斷）
+  renderInvMapOnly(roomId);
+  persistData(); markDirty();
+}
+
+function renderInvMapOnly(roomId) {
+  // 只重繪地圖區塊和圖例，不動 zone-list
+  const wrap = document.getElementById('inv403-zones-wrap');
+  if (!wrap) return;
+  const zones = invZones[roomId] || [];
+  const canEdit = appMode === 'admin' && currentUser && currentUser.level !== 'B';
+  wrap.innerHTML = zones.map(z => {
+    const col = INV_COLORS.find(c => c.border === z.color) || INV_COLORS[0];
+    const cnt = (invData[roomId]||[]).filter(r => r.zone === z.id).length;
+    const isActive = inv403SelZone === z.id;
+    const activeStyle = isActive ? 'outline:2.5px solid var(--accent);outline-offset:1px;' : '';
+    const dragHandles = invMapEditMode && canEdit ? `
+      <div class="iz-drag-handle" onmousedown="invStartDrag(event,'${roomId}','${z.id}')" title="拖曳移動" style="position:absolute;top:0;left:0;right:0;bottom:0;cursor:move;z-index:1"></div>
+      <div class="iz-resize-handle" onmousedown="invStartResize(event,'${roomId}','${z.id}')" title="拖曳調整大小" style="position:absolute;bottom:0;right:0;width:12px;height:12px;cursor:se-resize;background:${z.color};border-radius:2px 0 0 0;z-index:3"></div>` : '';
+    return `<div class="inv-zone${isActive?' iz-active':''}" data-zone="${z.id}"
+      style="top:${z.top}%;left:${z.left}%;width:${z.w}%;height:${z.h}%;border-color:${z.color};background:${z.bg};z-index:2;${activeStyle}${invMapEditMode&&canEdit?'':'cursor:pointer;'}"
+      ${!invMapEditMode ? `onclick="inv403Zone('${z.id}')"` : ''}>
+      ${dragHandles}
+      <span class="inv-zone-label" style="color:${col.text};z-index:2;position:relative">${z.label}<br><span style="font-size:9px;opacity:.8">${z.sub}</span></span>
+      <span class="inv-zone-count" style="color:${z.color};z-index:2;position:relative" id="z${roomId.slice(-3)}-cnt-${z.id}">${cnt} 項</span>
+    </div>`;
+  }).join('');
+  renderInvLegend(roomId);
 }
 function invUpdateZoneColor(roomId, zoneId, colorBorder) {
   const z = (invZones[roomId]||[]).find(z => z.id === zoneId);
@@ -3381,18 +3410,13 @@ function renderInvTable(roomId) {
     const cc = INV_CAT_CLS[row.cat]||'icat-misc';
     const cl = INV_CATS[row.cat]||row.cat;
     if (!canEdit) {
-      return `<tr data-id="${row.id}"><td></td><td>${row.name}</td><td><span class="inv-cat ${cc}">${cl}</span></td><td>${row.qty}</td><td>${row.unit}</td><td>${row.zone||'—'}</td><td style="font-size:11px;color:var(--text2)">${row.note}</td><td></td></tr>`;
+      return `<tr data-id="${row.id}" data-room="${roomId}"><td></td><td>${row.name}</td><td><span class="inv-cat ${cc}">${cl}</span></td><td>${row.qty}</td><td>${row.unit}</td><td>${row.zone||'—'}</td><td style="font-size:11px;color:var(--text2)">${row.note}</td><td></td></tr>`;
     }
     const zoneCell = (invZones[roomId]||[]).length > 0
       ? `<select class="inv-sel" onchange="invSet('${roomId}',${row.id},'zone',this.value)">${zoneOpts(roomId, row.zone)}</select>`
       : `<span contenteditable="true" class="inv-editable" onblur="invSet('${roomId}',${row.id},'zone',this.innerText.trim())">${row.zone||''}</span>`;
-    return `<tr draggable="true" data-id="${row.id}" data-room="${roomId}"
-        ondragstart="invRowDragStart(event)"
-        ondragover="invRowDragOver(event)"
-        ondrop="invRowDrop(event)"
-        ondragend="invRowDragEnd(event)"
-        style="cursor:grab">
-      <td style="width:24px;text-align:center;color:var(--text3);cursor:grab;font-size:14px;padding:7px 4px" title="拖曳排序">⠿</td>
+    return `<tr data-id="${row.id}" data-room="${roomId}">
+      <td class="inv-row-handle" onmousedown="invRowHandleMousedown(event)" style="width:24px;text-align:center;color:var(--text3);cursor:grab;font-size:14px;padding:7px 4px;user-select:none" title="拖曳排序">⠿</td>
       <td contenteditable="true" class="inv-editable" onblur="invSet('${roomId}',${row.id},'name',this.innerText.trim())">${row.name}</td>
       <td><select class="inv-sel" onchange="invSet('${roomId}',${row.id},'cat',this.value)">${catOpts(row.cat)}</select></td>
       <td contenteditable="true" class="inv-editable" onblur="invSet('${roomId}',${row.id},'qty',this.innerText.trim())">${row.qty}</td>
@@ -3405,38 +3429,65 @@ function renderInvTable(roomId) {
   if (roomId === 'inv403') inv403UpdateCounts();
 }
 
-function invRowDragStart(e) {
-  invRowDrag = { id: parseInt(e.currentTarget.dataset.id), room: e.currentTarget.dataset.room };
-  e.currentTarget.style.opacity = '0.4';
-  e.dataTransfer.effectAllowed = 'move';
-}
-function invRowDragOver(e) {
+function invRowHandleMousedown(e) {
   e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-  // 拖曳時高亮目標列
-  document.querySelectorAll('.inv-row-over').forEach(el => el.classList.remove('inv-row-over'));
-  e.currentTarget.classList.add('inv-row-over');
-}
-function invRowDrop(e) {
-  e.preventDefault();
-  if (!invRowDrag) return;
-  const targetId = parseInt(e.currentTarget.dataset.id);
-  const roomId = invRowDrag.room;
-  if (targetId === invRowDrag.id) return;
-  const arr = invData[roomId];
-  const fromIdx = arr.findIndex(r => r.id === invRowDrag.id);
-  const toIdx   = arr.findIndex(r => r.id === targetId);
-  if (fromIdx === -1 || toIdx === -1) return;
-  const [moved] = arr.splice(fromIdx, 1);
-  arr.splice(toIdx, 0, moved);
-  persistData(); markDirty();
-  renderInvTable(roomId);
-  if (roomId === 'inv403') { renderInvMap('inv403'); inv403UpdateCounts(); }
-}
-function invRowDragEnd(e) {
-  e.currentTarget.style.opacity = '';
-  document.querySelectorAll('.inv-row-over').forEach(el => el.classList.remove('inv-row-over'));
-  invRowDrag = null;
+  const tr = e.currentTarget.closest('tr');
+  if (!tr) return;
+  const roomId = tr.dataset.room;
+  const id = parseInt(tr.dataset.id);
+  const tbody = tr.closest('tbody');
+  const rect = tr.getBoundingClientRect();
+
+  // ghost 跟隨滑鼠
+  const ghost = tr.cloneNode(true);
+  ghost.style.cssText = 'position:fixed;left:' + rect.left + 'px;top:' + rect.top + 'px;width:' + rect.width + 'px;opacity:0.75;background:var(--surface);box-shadow:0 4px 16px rgba(0,0,0,.15);pointer-events:none;z-index:9999;display:table;border-collapse:collapse;border-radius:4px;';
+  document.body.appendChild(ghost);
+  tr.style.opacity = '0.3';
+
+  const offsetY = e.clientY - rect.top;
+  invRowDrag = { id, roomId, tbody, tr, ghost, offsetY };
+
+  function onMove(ev) {
+    ghost.style.top = (ev.clientY - offsetY) + 'px';
+    ghost.style.display = 'none';
+    const el = document.elementFromPoint(ev.clientX, ev.clientY);
+    ghost.style.display = 'table';
+    const overTr = el && el.closest('tr[data-id]');
+    tbody.querySelectorAll('tr').forEach(r => r.classList.remove('inv-row-over'));
+    if (overTr && overTr !== tr) overTr.classList.add('inv-row-over');
+  }
+
+  function onUp(ev) {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    ghost.remove();
+    tbody.querySelectorAll('tr').forEach(r => r.classList.remove('inv-row-over'));
+    tr.style.opacity = '';
+
+    ghost.style.display = 'none';
+    const el = document.elementFromPoint(ev.clientX, ev.clientY);
+    ghost.style.display = 'none';
+    const overTr = el && el.closest('tr[data-id]');
+
+    if (overTr && overTr !== tr) {
+      const targetId = parseInt(overTr.dataset.id);
+      const arr = invData[roomId];
+      const fromIdx = arr.findIndex(r => r.id === id);
+      const toIdx   = arr.findIndex(r => r.id === targetId);
+      if (fromIdx !== -1 && toIdx !== -1 && fromIdx !== toIdx) {
+        const [moved] = arr.splice(fromIdx, 1);
+        arr.splice(toIdx, 0, moved);
+        persistData(); markDirty();
+        renderInvTable(roomId);
+        if (roomId === 'inv403') { renderInvMapOnly('inv403'); inv403UpdateCounts(); }
+        toast('排序已更新');
+      }
+    }
+    invRowDrag = null;
+  }
+
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
 }
 
 function invSet(roomId, id, field, val) {
