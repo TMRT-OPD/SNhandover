@@ -3416,7 +3416,7 @@ function renderInvTable(roomId) {
       ? `<select class="inv-sel" onchange="invSet('${roomId}',${row.id},'zone',this.value)">${zoneOpts(roomId, row.zone)}</select>`
       : `<span contenteditable="true" class="inv-editable" onblur="invSet('${roomId}',${row.id},'zone',this.innerText.trim())">${row.zone||''}</span>`;
     return `<tr data-id="${row.id}" data-room="${roomId}">
-      <td class="inv-row-handle" onmousedown="invRowHandleMousedown(event)" style="width:24px;text-align:center;color:var(--text3);cursor:grab;font-size:14px;padding:7px 4px;user-select:none" title="拖曳排序">⠿</td>
+      <td style="width:24px;text-align:center;padding:7px 4px"><span class="inv-row-handle" onmousedown="invRowHandleMousedown(event)" style="color:var(--text3);cursor:grab;font-size:16px;user-select:none;-webkit-user-select:none;display:inline-block;line-height:1;padding:2px 4px" title="拖曳排序">⠿</span></td>
       <td contenteditable="true" class="inv-editable" onblur="invSet('${roomId}',${row.id},'name',this.innerText.trim())">${row.name}</td>
       <td><select class="inv-sel" onchange="invSet('${roomId}',${row.id},'cat',this.value)">${catOpts(row.cat)}</select></td>
       <td contenteditable="true" class="inv-editable" onblur="invSet('${roomId}',${row.id},'qty',this.innerText.trim())">${row.qty}</td>
@@ -3431,42 +3431,69 @@ function renderInvTable(roomId) {
 
 function invRowHandleMousedown(e) {
   e.preventDefault();
-  const tr = e.currentTarget.closest('tr');
+  e.stopPropagation();
+
+  const handle = e.currentTarget;
+  const tr = handle.closest('tr');
   if (!tr) return;
   const roomId = tr.dataset.room;
   const id = parseInt(tr.dataset.id);
   const tbody = tr.closest('tbody');
   const rect = tr.getBoundingClientRect();
 
-  // ghost 跟隨滑鼠
+  // 拖曳中禁止選字
+  function blockSelect(ev) { ev.preventDefault(); }
+  document.addEventListener('selectstart', blockSelect);
+
+  // ghost
   const ghost = tr.cloneNode(true);
-  ghost.style.cssText = 'position:fixed;left:' + rect.left + 'px;top:' + rect.top + 'px;width:' + rect.width + 'px;opacity:0.75;background:var(--surface);box-shadow:0 4px 16px rgba(0,0,0,.15);pointer-events:none;z-index:9999;display:table;border-collapse:collapse;border-radius:4px;';
+  ghost.style.cssText = [
+    'position:fixed',
+    'left:' + rect.left + 'px',
+    'top:' + rect.top + 'px',
+    'width:' + rect.width + 'px',
+    'opacity:0.8',
+    'background:var(--surface)',
+    'box-shadow:0 4px 20px rgba(0,0,0,.18)',
+    'pointer-events:none',
+    'z-index:9999',
+    'display:table',
+    'border-collapse:collapse',
+    'border-radius:4px',
+    'outline:2px solid var(--accent)'
+  ].join(';');
   document.body.appendChild(ghost);
-  tr.style.opacity = '0.3';
+  tr.style.opacity = '0.25';
+  handle.style.cursor = 'grabbing';
 
   const offsetY = e.clientY - rect.top;
-  invRowDrag = { id, roomId, tbody, tr, ghost, offsetY };
+  let lastOverTr = null;
 
   function onMove(ev) {
     ghost.style.top = (ev.clientY - offsetY) + 'px';
-    ghost.style.display = 'none';
+    // 暫時隱藏 ghost 才能 elementFromPoint
+    ghost.style.visibility = 'hidden';
     const el = document.elementFromPoint(ev.clientX, ev.clientY);
-    ghost.style.display = 'table';
+    ghost.style.visibility = '';
     const overTr = el && el.closest('tr[data-id]');
-    tbody.querySelectorAll('tr').forEach(r => r.classList.remove('inv-row-over'));
-    if (overTr && overTr !== tr) overTr.classList.add('inv-row-over');
+    if (overTr !== lastOverTr) {
+      tbody.querySelectorAll('tr.inv-row-over').forEach(r => r.classList.remove('inv-row-over'));
+      if (overTr && overTr !== tr) overTr.classList.add('inv-row-over');
+      lastOverTr = overTr;
+    }
   }
 
   function onUp(ev) {
     document.removeEventListener('mousemove', onMove);
     document.removeEventListener('mouseup', onUp);
+    document.removeEventListener('selectstart', blockSelect);
     ghost.remove();
-    tbody.querySelectorAll('tr').forEach(r => r.classList.remove('inv-row-over'));
+    tbody.querySelectorAll('tr.inv-row-over').forEach(r => r.classList.remove('inv-row-over'));
     tr.style.opacity = '';
+    handle.style.cursor = 'grab';
 
-    ghost.style.display = 'none';
+    // 找放下位置（ghost 已移除，直接 elementFromPoint）
     const el = document.elementFromPoint(ev.clientX, ev.clientY);
-    ghost.style.display = 'none';
     const overTr = el && el.closest('tr[data-id]');
 
     if (overTr && overTr !== tr) {
