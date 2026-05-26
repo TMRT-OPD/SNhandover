@@ -898,7 +898,16 @@ tbody tr:hover td { background: #fafaf8; }
           <div class="inv-fp" id="fp403">
             <div class="inv-zone" id="z403-bg" onclick="inv403Zone('all')" style="top:0;left:0;width:100%;height:100%;border:none;background:transparent;z-index:1;cursor:default"></div>
             <div id="inv403-zones-wrap" style="position:absolute;inset:0;z-index:2"></div>
-            <div class="inv-door" id="inv403-door" style="bottom:0;left:5%;width:16%;height:6%;border-radius:4px 4px 0 0;border-bottom:none">出入口</div>
+            <!-- 出入口：左下方，SVG 開門符號 -->
+            <div style="position:absolute;bottom:0;left:3%;width:16%;height:8%;z-index:3">
+              <svg width="100%" height="100%" viewBox="0 0 50 20" preserveAspectRatio="none" style="display:block">
+                <line x1="0" y1="0" x2="50" y2="0" stroke="var(--border2)" stroke-width="1.5"/>
+                <line x1="0" y1="0" x2="0" y2="20" stroke="var(--border2)" stroke-width="1.5"/>
+                <line x1="50" y1="0" x2="50" y2="20" stroke="var(--border2)" stroke-width="1.5"/>
+                <path d="M 0 0 A 50 20 0 0 1 50 0" fill="none" stroke="var(--text3)" stroke-width="0.8" stroke-dasharray="2,1.5"/>
+                <line x1="0" y1="0" x2="50" y2="0" stroke="var(--text3)" stroke-width="1"/>
+              </svg>
+            </div>
           </div>
           <div class="inv-legend" id="inv403-legend"></div>
           <!-- 地圖編輯面板 -->
@@ -940,8 +949,16 @@ tbody tr:hover td { background: #fafaf8; }
           <div class="inv-fp" id="fp406" style="padding-bottom:130%">
             <div onclick="invSelectZone('inv406','all')" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;background:transparent;z-index:1;cursor:default"></div>
             <div id="inv406-zones-wrap" style="position:absolute;inset:0;z-index:2"></div>
-            <!-- 出入口：左下方 -->
-            <div class="inv-door" style="bottom:0;left:5%;width:16%;height:4%;border-radius:4px 4px 0 0;border-bottom:none">出入口</div>
+            <!-- 出入口：左下方，SVG 開門符號 -->
+            <div style="position:absolute;bottom:0;left:3%;width:16%;height:5%;z-index:3">
+              <svg width="100%" height="100%" viewBox="0 0 50 20" preserveAspectRatio="none" style="display:block">
+                <line x1="0" y1="0" x2="50" y2="0" stroke="var(--border2)" stroke-width="1.5"/>
+                <line x1="0" y1="0" x2="0" y2="20" stroke="var(--border2)" stroke-width="1.5"/>
+                <line x1="50" y1="0" x2="50" y2="20" stroke="var(--border2)" stroke-width="1.5"/>
+                <path d="M 0 0 A 50 20 0 0 1 50 0" fill="none" stroke="var(--text3)" stroke-width="0.8" stroke-dasharray="2,1.5"/>
+                <line x1="0" y1="0" x2="50" y2="0" stroke="var(--text3)" stroke-width="1"/>
+              </svg>
+            </div>
           </div>
           <div class="inv-legend" id="inv406-legend"></div>
           <div id="inv406-map-editor" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
@@ -982,8 +999,21 @@ tbody tr:hover td { background: #fafaf8; }
           <div class="inv-fp" id="fp412" style="padding-bottom:45%">
             <div onclick="invSelectZone('inv412','all')" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;background:transparent;z-index:1;cursor:default"></div>
             <div id="inv412-zones-wrap" style="position:absolute;inset:0;z-index:2"></div>
-            <!-- 出入口：左側牆面偏上方（垂直條） -->
-            <div class="inv-door" style="top:8%;left:0;bottom:auto;width:4%;height:22%;border-radius:0 4px 4px 0;border-left:none;border-right:1.5px solid var(--border2);writing-mode:vertical-rl;font-size:8px;letter-spacing:0.05em">出入口</div>
+            <!-- 出入口：左側牆面偏上方，SVG 開門符號 -->
+            <div style="position:absolute;top:6%;left:0;width:6%;height:22%;z-index:3">
+              <svg width="100%" height="100%" viewBox="0 0 20 50" preserveAspectRatio="none" style="display:block">
+                <!-- 門框缺口（左牆留空） -->
+                <line x1="20" y1="0" x2="20" y2="50" stroke="var(--border2)" stroke-width="1.5"/>
+                <!-- 門板 -->
+                <line x1="20" y1="0" x2="20" y2="50" stroke="none"/>
+                <line x1="1" y1="0" x2="20" y2="0" stroke="var(--border2)" stroke-width="1.5"/>
+                <line x1="1" y1="50" x2="20" y2="50" stroke="var(--border2)" stroke-width="1.5"/>
+                <!-- 門弧 -->
+                <path d="M 20 0 A 19 50 0 0 0 1 50" fill="none" stroke="var(--text3)" stroke-width="0.8" stroke-dasharray="2,1.5"/>
+                <!-- 門板線 -->
+                <line x1="20" y1="0" x2="1" y2="50" stroke="var(--text3)" stroke-width="1"/>
+              </svg>
+            </div>
           </div>
           <div class="inv-legend" id="inv412-legend"></div>
           <div id="inv412-map-editor" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
