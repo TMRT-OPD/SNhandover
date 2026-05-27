@@ -2844,6 +2844,9 @@ function exportCSV() {
 // 部署 Apps Script 後，將 Web App 網址貼於此
 function syncToSheets() {
   if (!APPS_SCRIPT_URL) { toast('請先填入 Apps Script 網址'); return; }
+  // 推送前先清理亂碼 zone 值
+  sanitizeInvZones();
+  persistData();
   const nav = document.getElementById('nav-sync');
   nav.style.opacity = '0.5'; nav.style.pointerEvents = 'none';
   document.getElementById('sync-status').textContent = '同步中…';
@@ -3599,8 +3602,10 @@ function invUpdateZoneColor(roomId, zoneId, colorBorder) {
   if (z && col) { z.color = col.border; z.bg = col.bg; renderInvMap(roomId); persistData(); markDirty(); }
 }
 function invDelZone(roomId, zoneId) {
-  if (!confirm('刪除此區域？已分配到此區域的品項將顯示為未分類。')) return;
+  if (!confirm('刪除此區域？已分配到此區域的品項將移至第一個區域。')) return;
   invZones[roomId] = (invZones[roomId]||[]).filter(z => z.id !== zoneId);
+  // 刪除區域後立即清理該區域的品項 zone 值
+  sanitizeInvZones();
   renderInvMap(roomId); persistData(); markDirty(); toast('區域已刪除');
 }
 function invAddZone(roomId) {
