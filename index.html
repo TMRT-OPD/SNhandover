@@ -1522,11 +1522,12 @@ function getUsers(){ return sheetsUsers; }
 
 function saveUsers(arr){
   sheetsUsers = arr;
-  // 同步寫回 Sheets
+  // 同步寫回 Sheets（走完整 save，確保 users 分頁正確更新）
   if(!APPS_SCRIPT_URL) return;
+  const allUsers = [SUPER_USER, ...sheetsUsers];
   fetch(APPS_SCRIPT_URL, {
     method:'POST',
-    body: JSON.stringify({action:'saveUsers', users: arr})
+    body: JSON.stringify({ action: 'save', data: { items, projects, shuWu, users: allUsers, nextId, nextPid, nextShuWuNo, invData, invZones, invNextId } })
   }).then(r=>r.json()).then(d=>{
     if(d.ok) toast('帳號已更新至 Sheets ✓');
     else toast('帳號寫入失敗：' + (d.error||''));
