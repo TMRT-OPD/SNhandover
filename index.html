@@ -2852,6 +2852,20 @@ function restoreData() {
       if (Array.isArray(d.invZones.inv406)) invZones.inv406 = d.invZones.inv406;
       if (Array.isArray(d.invZones.inv412)) invZones.inv412 = d.invZones.inv412;
     }
+    // zone 欄位清理：把舊格式（如 'A 消防區'）對齊成 zone ID
+    ['inv403','inv406','inv412'].forEach(rid => {
+      const zones = invZones[rid] || [];
+      (invData[rid]||[]).forEach(row => {
+        if (!row.zone) return;
+        // 如果 zone 值直接是有效 ID 就跳過
+        if (zones.find(z => z.id === row.zone)) return;
+        // 否則嘗試比對 label 或 label+sub
+        const match = zones.find(z =>
+          row.zone === z.label || row.zone === (z.label + ' ' + z.sub) || row.zone.startsWith(z.id)
+        );
+        if (match) row.zone = match.id;
+      });
+    });
     return true;
   } catch(e) { return false; }
 }
@@ -3576,15 +3590,19 @@ function renderInvTable(roomId) {
       let va = a[sort.field] || '';
       let vb = b[sort.field] || '';
       if (sort.field === 'zone') {
-        va = zoneOrder[va] !== undefined ? zoneOrder[va] : 999;
-        vb = zoneOrder[vb] !== undefined ? zoneOrder[vb] : 999;
-        return (va - vb) * sort.dir;
+        // 優先用 zoneOrder（ID對應），找不到才用字串比較
+        const oa = zoneOrder[va] !== undefined ? zoneOrder[va] : va;
+        const ob = zoneOrder[vb] !== undefined ? zoneOrder[vb] : vb;
+        if (typeof oa === 'number' && typeof ob === 'number') return (oa - ob) * sort.dir;
+        if (typeof oa === 'number') return -1 * sort.dir;
+        if (typeof ob === 'number') return 1 * sort.dir;
+        return String(oa).localeCompare(String(ob), 'zh-TW') * sort.dir;
       }
       if (sort.field === 'cat') {
         const catOrder = {fire:0, equip:1, ctrl:2, supply:3, misc:4};
-        va = catOrder[va] !== undefined ? catOrder[va] : 9;
-        vb = catOrder[vb] !== undefined ? catOrder[vb] : 9;
-        return (va - vb) * sort.dir;
+        const oa = catOrder[va] !== undefined ? catOrder[va] : 9;
+        const ob = catOrder[vb] !== undefined ? catOrder[vb] : 9;
+        return (oa - ob) * sort.dir;
       }
       return va.localeCompare(vb, 'zh-TW') * sort.dir;
     });
