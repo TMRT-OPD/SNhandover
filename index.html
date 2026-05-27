@@ -428,6 +428,7 @@ tbody tr:hover td { background: #fafaf8; }
 .inv-sort-icon.asc,.inv-sort-icon.desc{opacity:1}
 .iz-resize-handle:hover{opacity:.8}
 .inv-row-over{background:#e8f0f5 !important;border-top:2px solid var(--accent)}
+.inv-row-deny{background:#fdf0f0 !important;border-top:2px solid #e8a0a0;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -930,11 +931,11 @@ tbody tr:hover td { background: #fafaf8; }
           <div style="overflow-x:auto"><table class="inv-tbl">
             <thead><tr>
   <th style="width:24px"></th>
-  <th style="width:22%;cursor:pointer;user-select:none" onclick="invSort(this,'name')" data-field="name">品項 <span class="inv-sort-icon">⇅</span></th>
+  <th style="width:22%">品項</th>
   <th style="width:10%;cursor:pointer;user-select:none" onclick="invSort(this,'cat')" data-field="cat">類別 <span class="inv-sort-icon">⇅</span></th>
   <th style="width:8%">數量</th>
   <th style="width:8%">單位</th>
-  <th style="width:9%;cursor:pointer;user-select:none" onclick="invSort(this,'zone')" data-field="zone">區域 <span class="inv-sort-icon">⇅</span></th>
+  <th style="width:9%;cursor:pointer;user-select:none" onclick="invSort(this,'zone')" data-field="zone">區域 <span class="inv-sort-icon asc"></span></th>
   <th>備註</th>
   <th style="width:8%"></th>
 </tr></thead>
@@ -989,11 +990,11 @@ tbody tr:hover td { background: #fafaf8; }
           <div style="overflow-x:auto"><table class="inv-tbl">
             <thead><tr>
   <th style="width:24px"></th>
-  <th style="width:22%;cursor:pointer;user-select:none" onclick="invSort(this,'name')" data-field="name">品項 <span class="inv-sort-icon">⇅</span></th>
+  <th style="width:22%">品項</th>
   <th style="width:10%;cursor:pointer;user-select:none" onclick="invSort(this,'cat')" data-field="cat">類別 <span class="inv-sort-icon">⇅</span></th>
   <th style="width:8%">數量</th>
   <th style="width:8%">單位</th>
-  <th style="width:9%;cursor:pointer;user-select:none" onclick="invSort(this,'zone')" data-field="zone">區域 <span class="inv-sort-icon">⇅</span></th>
+  <th style="width:9%;cursor:pointer;user-select:none" onclick="invSort(this,'zone')" data-field="zone">區域 <span class="inv-sort-icon asc"></span></th>
   <th>備註</th>
   <th style="width:8%"></th>
 </tr></thead>
@@ -1053,11 +1054,11 @@ tbody tr:hover td { background: #fafaf8; }
           <div style="overflow-x:auto"><table class="inv-tbl">
             <thead><tr>
   <th style="width:24px"></th>
-  <th style="width:22%;cursor:pointer;user-select:none" onclick="invSort(this,'name')" data-field="name">品項 <span class="inv-sort-icon">⇅</span></th>
+  <th style="width:22%">品項</th>
   <th style="width:10%;cursor:pointer;user-select:none" onclick="invSort(this,'cat')" data-field="cat">類別 <span class="inv-sort-icon">⇅</span></th>
   <th style="width:8%">數量</th>
   <th style="width:8%">單位</th>
-  <th style="width:9%;cursor:pointer;user-select:none" onclick="invSort(this,'zone')" data-field="zone">區域 <span class="inv-sort-icon">⇅</span></th>
+  <th style="width:9%;cursor:pointer;user-select:none" onclick="invSort(this,'zone')" data-field="zone">區域 <span class="inv-sort-icon asc"></span></th>
   <th>備註</th>
   <th style="width:8%"></th>
 </tr></thead>
@@ -3195,7 +3196,12 @@ let invSelZone = {inv403:'all', inv406:'all', inv412:'all'};
 let inv403SelZone = 'all';
 let invCurrentRoom = 'inv403';
 let invMapEditMode = {inv403:false, inv406:false, inv412:false};
-let invSortState = {inv403:{field:null,dir:1}, inv406:{field:null,dir:1}, inv412:{field:null,dir:1}};
+// 預設排序：區域升冪
+let invSortState = {
+  inv403:{field:'zone',dir:1},
+  inv406:{field:'zone',dir:1},
+  inv412:{field:'zone',dir:1}
+};
 
 // ── 區域定義（可編輯，存入 localStorage）──
 let invZones = {
@@ -3548,18 +3554,15 @@ function inv403UpdateCounts() {
 
 // ── 表格排序 ──────────────────────────────────────────────────────
 function invSort(thEl, field) {
-  const tbody = thEl.closest('table').querySelector('tbody');
-  if (!tbody) return;
   const roomId = invCurrentRoom;
   const state = invSortState[roomId];
-  // 切換方向
   if (state.field === field) {
     state.dir = state.dir * -1;
   } else {
     state.field = field;
     state.dir = 1;
   }
-  // 更新所有排序圖示
+  // 重置所有圖示
   thEl.closest('thead').querySelectorAll('.inv-sort-icon').forEach(el => {
     el.className = 'inv-sort-icon';
     el.textContent = '⇅';
@@ -3683,14 +3686,23 @@ function invRowHandleMousedown(e) {
 
   function onMove(ev) {
     ghost.style.top = (ev.clientY - offsetY) + 'px';
-    // 暫時隱藏 ghost 才能 elementFromPoint
     ghost.style.visibility = 'hidden';
     const el = document.elementFromPoint(ev.clientX, ev.clientY);
     ghost.style.visibility = '';
     const overTr = el && el.closest('tr[data-id]');
     if (overTr !== lastOverTr) {
-      tbody.querySelectorAll('tr.inv-row-over').forEach(r => r.classList.remove('inv-row-over'));
-      if (overTr && overTr !== tr) overTr.classList.add('inv-row-over');
+      tbody.querySelectorAll('tr.inv-row-over, tr.inv-row-deny').forEach(r => {
+        r.classList.remove('inv-row-over','inv-row-deny');
+      });
+      if (overTr && overTr !== tr) {
+        const fromRow = invData[roomId] && invData[roomId].find(r => r.id === id);
+        const toRow   = invData[roomId] && invData[roomId].find(r => r.id === parseInt(overTr.dataset.id));
+        if (fromRow && toRow && fromRow.zone === toRow.zone) {
+          overTr.classList.add('inv-row-over');
+        } else {
+          overTr.classList.add('inv-row-deny');
+        }
+      }
       lastOverTr = overTr;
     }
   }
@@ -3711,19 +3723,22 @@ function invRowHandleMousedown(e) {
     if (overTr && overTr !== tr) {
       const targetId = parseInt(overTr.dataset.id);
       const arr = invData[roomId];
-      const fromIdx = arr.findIndex(r => r.id === id);
-      const toIdx   = arr.findIndex(r => r.id === targetId);
-      if (fromIdx !== -1 && toIdx !== -1 && fromIdx !== toIdx) {
-        const [moved] = arr.splice(fromIdx, 1);
-        arr.splice(toIdx, 0, moved);
-        // 拖曳後清除排序狀態
-        invSortState[roomId] = {field:null, dir:1};
-        const table = document.querySelector('#' + roomId + '-tbody')?.closest('table');
-        if (table) table.querySelectorAll('.inv-sort-icon').forEach(el => { el.className='inv-sort-icon'; el.textContent='⇅'; });
-        persistData(); markDirty();
-        renderInvTable(roomId);
-        if (roomId === 'inv403') { renderInvMapOnly('inv403'); inv403UpdateCounts(); }
-        toast('排序已更新');
+      const fromRow = arr.find(r => r.id === id);
+      const toRow   = arr.find(r => r.id === targetId);
+      // 僅允許同區域內拖曳
+      if (fromRow && toRow && fromRow.zone === toRow.zone) {
+        const fromIdx = arr.indexOf(fromRow);
+        const toIdx   = arr.indexOf(toRow);
+        if (fromIdx !== -1 && toIdx !== -1 && fromIdx !== toIdx) {
+          const [moved] = arr.splice(fromIdx, 1);
+          arr.splice(toIdx, 0, moved);
+          persistData(); markDirty();
+          renderInvTable(roomId);
+          if (roomId === 'inv403') { renderInvMapOnly('inv403'); inv403UpdateCounts(); }
+          toast('排序已更新');
+        }
+      } else if (fromRow && toRow && fromRow.zone !== toRow.zone) {
+        toast('只能在相同區域內調整排序');
       }
     }
     invRowDrag = null;
