@@ -1676,7 +1676,7 @@ function startApp(){
           }
           saveSession();
         }
-        // B 層：同時更新庫存資料（以 Sheets 為主）
+        // B 層：同時更新庫存資料（以 Sheets 為主，清除舊快取）
         if(isB && d.invData && d.invZones) {
           if(Array.isArray(d.invData.inv403) && d.invData.inv403.length > 0) invData.inv403 = d.invData.inv403;
           if(Array.isArray(d.invData.inv406)) invData.inv406 = d.invData.inv406;
@@ -1687,8 +1687,12 @@ function startApp(){
           if(d.invNextId) invNextId = d.invNextId;
           sanitizeInvZones();
           persistData();
-          // 若目前在庫存頁則重新渲染
-          if(invCurrentRoom) { renderInvMap(invCurrentRoom); renderInvTable(invCurrentRoom); if(invCurrentRoom==='inv403') inv403UpdateCounts(); }
+          // 重新渲染庫存（不管現在在哪頁）
+          ['inv403','inv406','inv412'].forEach(rid => {
+            renderInvTable(rid);
+            renderInvMap(rid);
+          });
+          inv403UpdateCounts();
         }
         renderUsers();
       }).catch(()=>renderUsers());
