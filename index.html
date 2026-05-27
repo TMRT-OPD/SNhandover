@@ -421,6 +421,11 @@ tbody tr:hover td { background: #fafaf8; }
 .inv-sel{font-size:11px;padding:2px 20px 2px 6px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%236b6860'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center}
 .inv-empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px}
 .iz-drag-handle:hover{background:rgba(45,95,128,0.06)}
+.inv-tbl th[data-field]:hover{background:var(--surface2);color:var(--text)}
+.inv-sort-icon{font-size:10px;opacity:.45;margin-left:2px}
+.inv-sort-icon.asc::after{content:'↑';opacity:1}
+.inv-sort-icon.desc::after{content:'↓';opacity:1}
+.inv-sort-icon.asc,.inv-sort-icon.desc{opacity:1}
 .iz-resize-handle:hover{opacity:.8}
 .inv-row-over{background:#e8f0f5 !important;border-top:2px solid var(--accent)}
 </style>
@@ -923,7 +928,16 @@ tbody tr:hover td { background: #fafaf8; }
             <span class="inv-zone-badge" id="inv403-zlabel" style="background:#f0ede8;color:#6b6860">全部品項</span>
           </div>
           <div style="overflow-x:auto"><table class="inv-tbl">
-            <thead><tr><th style="width:24px"></th><th style="width:22%">品項</th><th style="width:10%">類別</th><th style="width:8%">數量</th><th style="width:8%">單位</th><th style="width:9%">區域</th><th>備註</th><th style="width:8%"></th></tr></thead>
+            <thead><tr>
+  <th style="width:24px"></th>
+  <th style="width:22%;cursor:pointer;user-select:none" onclick="invSort(this,'name')" data-field="name">品項 <span class="inv-sort-icon">⇅</span></th>
+  <th style="width:10%;cursor:pointer;user-select:none" onclick="invSort(this,'cat')" data-field="cat">類別 <span class="inv-sort-icon">⇅</span></th>
+  <th style="width:8%">數量</th>
+  <th style="width:8%">單位</th>
+  <th style="width:9%;cursor:pointer;user-select:none" onclick="invSort(this,'zone')" data-field="zone">區域 <span class="inv-sort-icon">⇅</span></th>
+  <th>備註</th>
+  <th style="width:8%"></th>
+</tr></thead>
             <tbody id="inv403-tbody"></tbody>
           </table></div>
           <button class="inv-add-row" onclick="invAddRow()">＋ 新增品項</button>
@@ -973,7 +987,16 @@ tbody tr:hover td { background: #fafaf8; }
             <span class="inv-zone-badge" id="inv406-zlabel" style="background:#f0ede8;color:#6b6860">全部品項</span>
           </div>
           <div style="overflow-x:auto"><table class="inv-tbl">
-            <thead><tr><th style="width:24px"></th><th style="width:22%">品項</th><th style="width:10%">類別</th><th style="width:8%">數量</th><th style="width:8%">單位</th><th style="width:9%">區域</th><th>備註</th><th style="width:8%"></th></tr></thead>
+            <thead><tr>
+  <th style="width:24px"></th>
+  <th style="width:22%;cursor:pointer;user-select:none" onclick="invSort(this,'name')" data-field="name">品項 <span class="inv-sort-icon">⇅</span></th>
+  <th style="width:10%;cursor:pointer;user-select:none" onclick="invSort(this,'cat')" data-field="cat">類別 <span class="inv-sort-icon">⇅</span></th>
+  <th style="width:8%">數量</th>
+  <th style="width:8%">單位</th>
+  <th style="width:9%;cursor:pointer;user-select:none" onclick="invSort(this,'zone')" data-field="zone">區域 <span class="inv-sort-icon">⇅</span></th>
+  <th>備註</th>
+  <th style="width:8%"></th>
+</tr></thead>
             <tbody id="inv406-tbody"></tbody>
           </table></div>
           <button class="inv-add-row" onclick="invAddRow()">＋ 新增品項</button>
@@ -1028,7 +1051,16 @@ tbody tr:hover td { background: #fafaf8; }
             <span class="inv-zone-badge" id="inv412-zlabel" style="background:#f0ede8;color:#6b6860">全部品項</span>
           </div>
           <div style="overflow-x:auto"><table class="inv-tbl">
-            <thead><tr><th style="width:24px"></th><th style="width:22%">品項</th><th style="width:10%">類別</th><th style="width:8%">數量</th><th style="width:8%">單位</th><th style="width:9%">區域</th><th>備註</th><th style="width:8%"></th></tr></thead>
+            <thead><tr>
+  <th style="width:24px"></th>
+  <th style="width:22%;cursor:pointer;user-select:none" onclick="invSort(this,'name')" data-field="name">品項 <span class="inv-sort-icon">⇅</span></th>
+  <th style="width:10%;cursor:pointer;user-select:none" onclick="invSort(this,'cat')" data-field="cat">類別 <span class="inv-sort-icon">⇅</span></th>
+  <th style="width:8%">數量</th>
+  <th style="width:8%">單位</th>
+  <th style="width:9%;cursor:pointer;user-select:none" onclick="invSort(this,'zone')" data-field="zone">區域 <span class="inv-sort-icon">⇅</span></th>
+  <th>備註</th>
+  <th style="width:8%"></th>
+</tr></thead>
             <tbody id="inv412-tbody"></tbody>
           </table></div>
           <button class="inv-add-row" onclick="invAddRow()">＋ 新增品項</button>
@@ -3146,9 +3178,10 @@ function restoreSession() {
 // ── 庫存管理 ─────────────────────────────────────────────────────
 let invNextId = 100;
 let invSelZone = {inv403:'all', inv406:'all', inv412:'all'};
-let inv403SelZone = 'all'; // 相容舊呼叫，同步用
+let inv403SelZone = 'all';
 let invCurrentRoom = 'inv403';
 let invMapEditMode = {inv403:false, inv406:false, inv412:false};
+let invSortState = {inv403:{field:null,dir:1}, inv406:{field:null,dir:1}, inv412:{field:null,dir:1}};
 
 // ── 區域定義（可編輯，存入 localStorage）──
 let invZones = {
@@ -3499,15 +3532,63 @@ function inv403UpdateCounts() {
   s('inv403-supply', data.filter(r => r.cat === 'supply').length);
 }
 
+// ── 表格排序 ──────────────────────────────────────────────────────
+function invSort(thEl, field) {
+  const tbody = thEl.closest('table').querySelector('tbody');
+  if (!tbody) return;
+  const roomId = invCurrentRoom;
+  const state = invSortState[roomId];
+  // 切換方向
+  if (state.field === field) {
+    state.dir = state.dir * -1;
+  } else {
+    state.field = field;
+    state.dir = 1;
+  }
+  // 更新所有排序圖示
+  thEl.closest('thead').querySelectorAll('.inv-sort-icon').forEach(el => {
+    el.className = 'inv-sort-icon';
+    el.textContent = '⇅';
+  });
+  const icon = thEl.querySelector('.inv-sort-icon');
+  if (icon) {
+    icon.textContent = '';
+    icon.className = 'inv-sort-icon ' + (state.dir === 1 ? 'asc' : 'desc');
+  }
+  renderInvTable(roomId);
+}
+
 // ── 表格渲染（含拖曳排序）────────────────────────────────────────
 let invRowDrag = null;
 
 function renderInvTable(roomId) {
   const canEdit = appMode === 'admin' && currentUser && currentUser.level !== 'B';
-  let data = invData[roomId] || [];
+  let data = [...(invData[roomId] || [])];
   if (roomId === 'inv403' && inv403SelZone !== 'all') data = data.filter(r => r.zone === inv403SelZone);
   if (roomId === 'inv406' && (invSelZone.inv406||'all') !== 'all') data = data.filter(r => r.zone === invSelZone.inv406);
   if (roomId === 'inv412' && (invSelZone.inv412||'all') !== 'all') data = data.filter(r => r.zone === invSelZone.inv412);
+
+  // 套用排序
+  const sort = invSortState[roomId];
+  if (sort && sort.field) {
+    const zoneOrder = (invZones[roomId]||[]).reduce((acc,z,i)=>{ acc[z.id]=i; return acc; }, {});
+    data.sort((a, b) => {
+      let va = a[sort.field] || '';
+      let vb = b[sort.field] || '';
+      if (sort.field === 'zone') {
+        va = zoneOrder[va] !== undefined ? zoneOrder[va] : 999;
+        vb = zoneOrder[vb] !== undefined ? zoneOrder[vb] : 999;
+        return (va - vb) * sort.dir;
+      }
+      if (sort.field === 'cat') {
+        const catOrder = {fire:0, equip:1, ctrl:2, supply:3, misc:4};
+        va = catOrder[va] !== undefined ? catOrder[va] : 9;
+        vb = catOrder[vb] !== undefined ? catOrder[vb] : 9;
+        return (va - vb) * sort.dir;
+      }
+      return va.localeCompare(vb, 'zh-TW') * sort.dir;
+    });
+  }
   const tbody = document.getElementById(roomId + '-tbody');
   if (!tbody) return;
   const cntEl = document.getElementById(roomId + '-cnt');
@@ -3617,6 +3698,10 @@ function invRowHandleMousedown(e) {
       if (fromIdx !== -1 && toIdx !== -1 && fromIdx !== toIdx) {
         const [moved] = arr.splice(fromIdx, 1);
         arr.splice(toIdx, 0, moved);
+        // 拖曳後清除排序狀態
+        invSortState[roomId] = {field:null, dir:1};
+        const table = document.querySelector('#' + roomId + '-tbody')?.closest('table');
+        if (table) table.querySelectorAll('.inv-sort-icon').forEach(el => { el.className='inv-sort-icon'; el.textContent='⇅'; });
         persistData(); markDirty();
         renderInvTable(roomId);
         if (roomId === 'inv403') { renderInvMapOnly('inv403'); inv403UpdateCounts(); }
