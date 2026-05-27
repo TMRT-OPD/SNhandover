@@ -960,8 +960,6 @@ tbody tr:hover td { background: #fafaf8; }
       <div class="page-sub" id="p6-sub">空間庫存總覽</div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn" id="inv-edit-map-btn" onclick="invToggleMapEdit()" style="display:none">✏ 編輯地圖</button>
-      <button class="btn" onclick="invExportCSV()">↓ 匯出 CSV</button>
       <button class="btn btn-primary" onclick="invAddRow()">＋ 新增品項</button>
     </div>
   </div>
@@ -2411,7 +2409,7 @@ function renderMain() {
         <td style="max-width:120px">${formShort ? `<span class="nas-link" title="${i.formUrl}">${formShort}</span>` : '<span style="color:var(--text3)">—</span>'}</td>
         <td style="font-size:12px;color:var(--text2)">${i.mail || '<span style="color:var(--text3)">—</span>'}</td>
         <td><button class="jump-btn" onclick="showPage('p2',${i.id})">說明 →</button></td>
-        ${(appMode==='admin' && currentUser && currentUser.level==='S') ? `<td class="edit-btn-col"><button class="btn btn-sm" onclick="openEditModal(${i.id})" style="color:var(--accent);border-color:#c5daea">編輯</button></td>` : '<td class="edit-btn-col"></td>'}
+        ${(appMode==='admin' && currentUser && currentUser.level!=='B') ? `<td class="edit-btn-col"><button class="btn btn-sm" onclick="openEditModal(${i.id})" style="color:var(--accent);border-color:#c5daea">編輯</button></td>` : '<td class="edit-btn-col"></td>'}
       </tr>
     `}).join('');
   }
@@ -2605,7 +2603,7 @@ function renderProjects() {
   });
 
   const tbody = document.getElementById('tbody3');
-  const editCol = (id) => (appMode==='admin' && currentUser && currentUser.level==='S')
+  const editCol = (id) => (appMode==='admin' && currentUser && currentUser.level!=='B')
     ? `<td class="edit-btn-col"><button class="btn btn-sm" onclick="openProjModal(${id})" style="color:var(--accent);border-color:#c5daea">編輯</button></td>`
     : '<td class="edit-btn-col"></td>';
 
@@ -3078,7 +3076,7 @@ function renderShuWu() {
       <td style="font-size:11px;color:var(--text2);max-width:180px;line-height:1.5">${r.reg || '<span style="color:var(--text3)">無</span>'}</td>
       <td style="font-size:12px;color:var(--text2);max-width:200px;line-height:1.6">${r.note}</td>
       <td style="font-size:11px;color:var(--text3);max-width:150px;line-height:1.5">${r.remark || '—'}</td>
-      ${(appMode==='admin' && currentUser && currentUser.level==='S') ? `<td class="edit-btn-col"><button class="btn btn-sm" onclick="openShuwuModal(${r.no})" style="color:var(--accent);border-color:#c5daea">編輯</button></td>` : '<td class="edit-btn-col"></td>'}
+      ${(appMode==='admin' && currentUser && currentUser.level!=='B') ? `<td class="edit-btn-col"><button class="btn btn-sm" onclick="openShuwuModal(${r.no})" style="color:var(--accent);border-color:#c5daea">編輯</button></td>` : '<td class="edit-btn-col"></td>'}
     </tr>
   `).join('');
 }
