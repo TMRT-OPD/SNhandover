@@ -2010,10 +2010,9 @@ function loadFromSheetsJsonp() {
       if (Array.isArray(d.invZones.inv412) && d.invZones.inv412.length > 0) invZones.inv412 = d.invZones.inv412;
     }
     if (d.invNextId) invNextId = d.invNextId;
+    sanitizeInvZones();
     // 重新渲染所有分頁
     renderMain();
-    renderDetail();
-    renderProjects();
     if (typeof renderShuWu === 'function') renderShuWu();
     updateTimestamp();
     const ts = new Date().toLocaleString('zh-TW', {hour:'2-digit', minute:'2-digit'});
@@ -2891,6 +2890,7 @@ function loadFromSheets() {
       if (Array.isArray(d.invZones.inv412) && d.invZones.inv412.length > 0) invZones.inv412 = d.invZones.inv412;
     }
     if (d.invNextId) invNextId = d.invNextId;
+    sanitizeInvZones();
     persistData();
     renderMain();
     updateTimestamp();
@@ -2960,6 +2960,24 @@ function loadData(e) {
 // ── localStorage 自動儲存 ──────────────────────────────────────
 const STORE_KEY = 'handover_data_v1';
 
+// zone 值清理：凡不在 invZones ID 列表裡的都修正
+function sanitizeInvZones() {
+  const catFallback = {fire:'A', equip:'B', ctrl:'B', supply:'C', misc:'D'};
+  ['inv403','inv406','inv412'].forEach(rid => {
+    const validIds = (invZones[rid] || []).map(z => z.id);
+    if (!validIds.length) return;
+    const defaultZone = validIds[0];
+    (invData[rid] || []).forEach(row => {
+      if (!row.zone || validIds.indexOf(row.zone) === -1) {
+        // 嘗試用類別推斷，否則用第一個區域
+        row.zone = catFallback[row.cat] && validIds.indexOf(catFallback[row.cat]) !== -1
+          ? catFallback[row.cat]
+          : defaultZone;
+      }
+    });
+  });
+}
+
 function persistData() {
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify({ items, projects, nextId, nextPid, shuWu, nextShuWuNo, invData, invNextId, invZones }));
@@ -2989,20 +3007,7 @@ function restoreData() {
       if (Array.isArray(d.invZones.inv406)) invZones.inv406 = d.invZones.inv406;
       if (Array.isArray(d.invZones.inv412)) invZones.inv412 = d.invZones.inv412;
     }
-    // zone 欄位清理：把舊格式（如 'A 消防區'）對齊成 zone ID
-    ['inv403','inv406','inv412'].forEach(rid => {
-      const zones = invZones[rid] || [];
-      (invData[rid]||[]).forEach(row => {
-        if (!row.zone) return;
-        // 如果 zone 值直接是有效 ID 就跳過
-        if (zones.find(z => z.id === row.zone)) return;
-        // 否則嘗試比對 label 或 label+sub
-        const match = zones.find(z =>
-          row.zone === z.label || row.zone === (z.label + ' ' + z.sub) || row.zone.startsWith(z.id)
-        );
-        if (match) row.zone = match.id;
-      });
-    });
+    sanitizeInvZones();
     return true;
   } catch(e) { return false; }
 }
