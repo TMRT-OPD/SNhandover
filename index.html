@@ -3538,11 +3538,27 @@ function invOnDragMove(e) {
     z.w = Math.max(10, Math.min(100 - z.left, ds.origW + dx));
     z.h = Math.max(10, Math.min(100 - z.top,  ds.origH + dy));
   }
-  renderInvMap(ds.roomId);
+  // 只更新該區域的 CSS，不重新渲染整個地圖
+  const wrapId = ds.roomId === 'inv403' ? 'inv403-zones-wrap'
+               : ds.roomId === 'inv406' ? 'inv406-zones-wrap' : 'inv412-zones-wrap';
+  const wrap = document.getElementById(wrapId);
+  if (wrap) {
+    const el = wrap.querySelector('[data-zone="' + ds.zoneId + '"]');
+    if (el) {
+      el.style.top    = z.top  + '%';
+      el.style.left   = z.left + '%';
+      el.style.width  = z.w    + '%';
+      el.style.height = z.h    + '%';
+    }
+  }
 }
 
 function invOnDragEnd() {
-  if (invDragState) { persistData(); markDirty(); }
+  if (invDragState) {
+    // 放開後才完整重新渲染
+    renderInvMap(invDragState.roomId);
+    persistData(); markDirty();
+  }
   invDragState = null;
   document.removeEventListener('mousemove', invOnDragMove);
   document.removeEventListener('mouseup', invOnDragEnd);
