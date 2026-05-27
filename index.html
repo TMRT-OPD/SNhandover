@@ -1314,7 +1314,7 @@ tbody tr:hover td { background: #fafaf8; }
 
 <script>
 
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyAOpTEyQWjPIt3k5TEtXuDTlonvu9eTE8mWXPcV9S-3my7yZRXMYX1DBcHbiUk2K9VEg/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzD55NSycUMoXSxoecPYGFSc4d7G1hCEmZtbmNr_P9qYCwKblVeKhzhowZodqelF644kQ/exec';
 // 層級 S 帳號（可透過修改密碼功能更新，存於 Sheets users 分頁）
 let SUPER_USER = {id:'110219', pw:'SNnorth2025', name:'\u6797\u7dad\u8fb0', level:'S'};
 
@@ -1937,7 +1937,7 @@ function loadFromSheetsJsonp() {
   const script = document.createElement('script');
   script.id = 'jsonp-script';
   // 加上時間戳避免瀏覽器快取舊資料
-  script.src = 'https://script.google.com/macros/s/AKfycbyAOpTEyQWjPIt3k5TEtXuDTlonvu9eTE8mWXPcV9S-3my7yZRXMYX1DBcHbiUk2K9VEg/exec?action=load&callback=' + cbName + '&t=' + Date.now();
+  script.src = 'https://script.google.com/macros/s/AKfycbzD55NSycUMoXSxoecPYGFSc4d7G1hCEmZtbmNr_P9qYCwKblVeKhzhowZodqelF644kQ/exec?action=load&callback=' + cbName + '&t=' + Date.now();
   script.onerror = () => {
     clearTimeout(timer);
     if (script.parentNode) script.remove();
