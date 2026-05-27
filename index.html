@@ -2977,20 +2977,25 @@ function loadData(e) {
 // ── localStorage 自動儲存 ──────────────────────────────────────
 const STORE_KEY = 'handover_data_v1';
 
-// zone 值清理：凡不在 invZones ID 列表裡的都修正
+// zone 值清理：凡不在 invZones ID 列表裡的都修正（大小寫不敏感）
 function sanitizeInvZones() {
   const catFallback = {fire:'A', equip:'B', ctrl:'B', supply:'C', misc:'D'};
   ['inv403','inv406','inv412'].forEach(rid => {
-    const validIds = (invZones[rid] || []).map(z => z.id);
-    if (!validIds.length) return;
+    const zones = invZones[rid] || [];
+    if (!zones.length) return;
+    const validIds = zones.map(z => z.id);
     const defaultZone = validIds[0];
     (invData[rid] || []).forEach(row => {
-      if (!row.zone || validIds.indexOf(row.zone) === -1) {
-        // 嘗試用類別推斷，否則用第一個區域
-        row.zone = catFallback[row.cat] && validIds.indexOf(catFallback[row.cat]) !== -1
-          ? catFallback[row.cat]
-          : defaultZone;
-      }
+      if (!row.zone) { row.zone = defaultZone; return; }
+      // 先嘗試完全匹配
+      if (validIds.indexOf(row.zone) !== -1) return;
+      // 嘗試大小寫不敏感匹配
+      const upper = row.zone.toUpperCase();
+      const match = validIds.find(id => id.toUpperCase() === upper);
+      if (match) { row.zone = match; return; }
+      // 找不到：用類別推斷
+      const fallback = catFallback[row.cat];
+      row.zone = (fallback && validIds.indexOf(fallback) !== -1) ? fallback : defaultZone;
     });
   });
 }
