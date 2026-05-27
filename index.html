@@ -1903,6 +1903,18 @@ function loadFromSheetsJsonp() {
     if (d.nextId) nextId = d.nextId;
     if (d.nextPid) nextPid = d.nextPid;
     if (d.nextShuWuNo) nextShuWuNo = d.nextShuWuNo;
+    // 還原庫存資料
+    if (d.invData) {
+      if (Array.isArray(d.invData.inv403) && d.invData.inv403.length > 0) invData.inv403 = d.invData.inv403;
+      if (Array.isArray(d.invData.inv406)) invData.inv406 = d.invData.inv406;
+      if (Array.isArray(d.invData.inv412)) invData.inv412 = d.invData.inv412;
+    }
+    if (d.invZones) {
+      if (Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
+      if (Array.isArray(d.invZones.inv406) && d.invZones.inv406.length > 0) invZones.inv406 = d.invZones.inv406;
+      if (Array.isArray(d.invZones.inv412) && d.invZones.inv412.length > 0) invZones.inv412 = d.invZones.inv412;
+    }
+    if (d.invNextId) invNextId = d.invNextId;
     // 重新渲染所有分頁
     renderMain();
     renderDetail();
@@ -2727,7 +2739,7 @@ function syncToSheets() {
   const allUsers = [SUPER_USER, ...sheetsUsers];
   fetch(APPS_SCRIPT_URL, {
     method: 'POST',
-    body: JSON.stringify({ action: 'save', data: { items, projects, shuWu, users: allUsers, nextId, nextPid, nextShuWuNo } })
+    body: JSON.stringify({ action: 'save', data: { items, projects, shuWu, users: allUsers, nextId, nextPid, nextShuWuNo, invData, invZones, invNextId } })
   })
   .then(r => r.json())
   .then(d => {
@@ -2767,6 +2779,18 @@ function loadFromSheets() {
     if (d.nextId) nextId = d.nextId;
     if (d.nextPid) nextPid = d.nextPid;
     if (d.nextShuWuNo) nextShuWuNo = d.nextShuWuNo;
+    // 還原庫存資料
+    if (d.invData) {
+      if (Array.isArray(d.invData.inv403) && d.invData.inv403.length > 0) invData.inv403 = d.invData.inv403;
+      if (Array.isArray(d.invData.inv406)) invData.inv406 = d.invData.inv406;
+      if (Array.isArray(d.invData.inv412)) invData.inv412 = d.invData.inv412;
+    }
+    if (d.invZones) {
+      if (Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
+      if (Array.isArray(d.invZones.inv406) && d.invZones.inv406.length > 0) invZones.inv406 = d.invZones.inv406;
+      if (Array.isArray(d.invZones.inv412) && d.invZones.inv412.length > 0) invZones.inv412 = d.invZones.inv412;
+    }
+    if (d.invNextId) invNextId = d.invNextId;
     persistData();
     renderMain();
     updateTimestamp();
@@ -2782,7 +2806,7 @@ function loadFromSheets() {
 }
 
 function saveData() {
-  const payload = JSON.stringify({ items, projects, nextId, nextPid, shuWu, nextShuWuNo }, null, 2);
+  const payload = JSON.stringify({ items, projects, nextId, nextPid, shuWu, nextShuWuNo, invData, invZones, invNextId }, null, 2);
   const a = document.createElement('a');
   const ts = new Date().toISOString().slice(0,10);
   a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(payload);
@@ -2805,6 +2829,18 @@ function loadData(e) {
       nextId = d.nextId || (items.length + 1);
       nextPid = d.nextPid || (projects.length + 1);
       if (Array.isArray(d.shuWu) && d.shuWu.length > 0) shuWu = d.shuWu;
+      // 還原庫存資料
+      if (d.invData) {
+        if (Array.isArray(d.invData.inv403) && d.invData.inv403.length > 0) invData.inv403 = d.invData.inv403;
+        if (Array.isArray(d.invData.inv406)) invData.inv406 = d.invData.inv406;
+        if (Array.isArray(d.invData.inv412)) invData.inv412 = d.invData.inv412;
+      }
+      if (d.invZones) {
+        if (Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
+        if (Array.isArray(d.invZones.inv406) && d.invZones.inv406.length > 0) invZones.inv406 = d.invZones.inv406;
+        if (Array.isArray(d.invZones.inv412) && d.invZones.inv412.length > 0) invZones.inv412 = d.invZones.inv412;
+      }
+      if (d.invNextId) invNextId = d.invNextId;
       persistData();
       // 重新渲染所有分頁
       renderMain();
