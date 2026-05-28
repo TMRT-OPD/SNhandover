@@ -469,9 +469,9 @@ tbody tr:hover td { background: #fafaf8; }
     <div class="nav-item" onclick="showPage('p4')" id="nav-p4"><span class="nav-icon">□</span> 庶務申請</div>
     <div class="nav-item" onclick="toggleInventoryNav()" id="nav-p6" style="justify-content:space-between"><span style="display:flex;align-items:center;gap:10px"><span class="nav-icon">&#9636;</span> 庫存管理</span><span id="inv-nav-arrow" style="font-size:10px;transition:transform 0.2s;color:rgba(255,255,255,0.4)">&#9658;</span></div>
     <div id="inv-subnav" style="display:none;background:rgba(0,0,0,0.15)">
-      <div class="nav-item" onclick="showPage('p6');switchInvRoom('inv403')" id="nav-inv403" style="padding-left:32px;font-size:12px"><span class="nav-icon" style="font-size:11px">&#9702;</span> JIF 403 通風機房</div>
-      <div class="nav-item" onclick="showPage('p6');switchInvRoom('inv406')" id="nav-inv406" style="padding-left:32px;font-size:12px"><span class="nav-icon" style="font-size:11px">&#9702;</span> J1F 406 儲藏室</div>
-      <div class="nav-item" onclick="showPage('p6');switchInvRoom('inv412')" id="nav-inv412" style="padding-left:32px;font-size:12px"><span class="nav-icon" style="font-size:11px">&#9702;</span> J1F 412 段辦公室</div>
+      <div class="nav-item" onclick="switchInvRoom('inv403');showPage('p6')" id="nav-inv403" style="padding-left:32px;font-size:12px"><span class="nav-icon" style="font-size:11px">&#9702;</span> JIF 403 通風機房</div>
+      <div class="nav-item" onclick="switchInvRoom('inv406');showPage('p6')" id="nav-inv406" style="padding-left:32px;font-size:12px"><span class="nav-icon" style="font-size:11px">&#9702;</span> J1F 406 儲藏室</div>
+      <div class="nav-item" onclick="switchInvRoom('inv412');showPage('p6')" id="nav-inv412" style="padding-left:32px;font-size:12px"><span class="nav-icon" style="font-size:11px">&#9702;</span> J1F 412 段辦公室</div>
     </div>
     <div id="nav-admin-section" style="display:none">
       <div class="nav-section" style="margin-top:8px">資料儲存</div>
@@ -2936,7 +2936,21 @@ function loadData(e) {
 }
 
 // ── localStorage 自動儲存 ──────────────────────────────────────
-const STORE_KEY = 'handover_data_v1';
+const STORE_KEY = 'handover_data_v2';  // v2: 新扁平結構，清除舊 v1
+
+// 清除舊版本的 localStorage（一次性遷移）
+try {
+  if (localStorage.getItem('handover_data_v1')) {
+    const old = JSON.parse(localStorage.getItem('handover_data_v1'));
+    // 如果舊資料有 invData（舊格式），需要遷移
+    if (old && old.invData) {
+      if (Array.isArray(old.invData.inv403) && old.invData.inv403.length > 0) inv403 = old.invData.inv403;
+      if (Array.isArray(old.invData.inv406) && old.invData.inv406.length > 0) inv406 = old.invData.inv406;
+      if (Array.isArray(old.invData.inv412) && old.invData.inv412.length > 0) inv412 = old.invData.inv412;
+    }
+    localStorage.removeItem('handover_data_v1');
+  }
+} catch(e) {}
 
 // zone 值清理：凡不在 invZones ID 列表裡的都修正（大小寫不敏感）
 function sanitizeInvZones() {
