@@ -1654,8 +1654,8 @@ function startApp(){
           }
           // 庫存資料（新扁平結構）
           if(Array.isArray(d.inv403) && d.inv403.length > 0) inv403 = d.inv403;
-          if(Array.isArray(d.inv406)) inv406 = d.inv406;
-          if(Array.isArray(d.inv412)) inv412 = d.inv412;
+          if(Array.isArray(d.inv406) && d.inv406.length > 0) inv406 = d.inv406;
+          if(Array.isArray(d.inv412) && d.inv412.length > 0) inv412 = d.inv412;
           if(d.invNextId) invNextId = parseInt(d.invNextId)||invNextId;
           if(d.invZones) {
             if(Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
@@ -1974,8 +1974,8 @@ function loadFromSheetsJsonp() {
     if (d.nextShuWuNo) nextShuWuNo = d.nextShuWuNo;
     // 還原庫存資料
     if (Array.isArray(d.inv403) && d.inv403.length > 0) inv403 = d.inv403;
-    if (Array.isArray(d.inv406)) inv406 = d.inv406;
-    if (Array.isArray(d.inv412)) inv412 = d.inv412;
+    if (Array.isArray(d.inv406) && d.inv406.length > 0) inv406 = d.inv406;
+    if (Array.isArray(d.inv412) && d.inv412.length > 0) inv412 = d.inv412;
     if (d.invNextId) invNextId = parseInt(d.invNextId)||invNextId;
     if (d.invZones) {
       if (Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
@@ -2863,7 +2863,7 @@ function loadFromSheets() {
     // 庫存資料
     if (Array.isArray(d.inv403) && d.inv403.length > 0) inv403 = d.inv403;
     if (Array.isArray(d.inv406) && d.inv406.length > 0) inv406 = d.inv406;
-    if (Array.isArray(d.inv412)) inv412 = d.inv412;
+    if (Array.isArray(d.inv412) && d.inv412.length > 0) inv412 = d.inv412;
     if (d.invNextId) invNextId = parseInt(d.invNextId)||invNextId;
     invSanitizeAll();
     persistData();
@@ -2909,9 +2909,9 @@ function loadData(e) {
       // 還原庫存資料（支援新舊格式）
       if (Array.isArray(d.inv403) && d.inv403.length > 0) inv403 = d.inv403;
       else if (d.invData && Array.isArray(d.invData.inv403) && d.invData.inv403.length > 0) inv403 = d.invData.inv403;
-      if (Array.isArray(d.inv406)) inv406 = d.inv406;
+      if (Array.isArray(d.inv406) && d.inv406.length > 0) inv406 = d.inv406;
       else if (d.invData && Array.isArray(d.invData.inv406)) inv406 = d.invData.inv406;
-      if (Array.isArray(d.inv412)) inv412 = d.inv412;
+      if (Array.isArray(d.inv412) && d.inv412.length > 0) inv412 = d.inv412;
       else if (d.invData && Array.isArray(d.invData.inv412)) inv412 = d.invData.inv412;
       if (d.invZones) {
         if (Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
@@ -3000,7 +3000,7 @@ function restoreData() {
     // 庫存（扁平結構）
     if (Array.isArray(d.inv403) && d.inv403.length > 0) inv403 = d.inv403;
     if (Array.isArray(d.inv406) && d.inv406.length > 0) inv406 = d.inv406;
-    if (Array.isArray(d.inv412)) inv412 = d.inv412;
+    if (Array.isArray(d.inv412) && d.inv412.length > 0) inv412 = d.inv412;
     if (d.invNextId) invNextId = d.invNextId;
     if (d.invZones) {
       if (Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
@@ -3302,8 +3302,8 @@ function restoreSession() {
         // S 密碼不從 Sheets 讀回（密碼只在 HTML 和 localStorage 管理）
         // 庫存資料（新扁平結構）
         if (Array.isArray(d.inv403) && d.inv403.length > 0) inv403 = d.inv403;
-        if (Array.isArray(d.inv406)) inv406 = d.inv406;
-        if (Array.isArray(d.inv412)) inv412 = d.inv412;
+        if (Array.isArray(d.inv406) && d.inv406.length > 0) inv406 = d.inv406;
+        if (Array.isArray(d.inv412) && d.inv412.length > 0) inv412 = d.inv412;
         if (d.invNextId) invNextId = parseInt(d.invNextId)||invNextId;
         if (d.invZones) {
           if (Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
