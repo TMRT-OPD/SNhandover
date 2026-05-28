@@ -416,7 +416,10 @@ tbody tr:hover td { background: #fafaf8; }
 .icat-misc{background:#faeeda;color:#854f0b}
 .inv-del{background:none;border:none;color:var(--text3);cursor:pointer;padding:2px 5px;font-size:13px;border-radius:4px;font-family:var(--sans)}
 .inv-del:hover{color:var(--red);background:var(--red-light)}
-.inv-add-row{width:100%;margin-top:8px;padding:6px;font-size:12px;color:var(--text3);border:1px dashed var(--border2);border-radius:var(--radius);background:transparent;cursor:pointer;font-family:var(--sans)}
+.inv-stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;min-width:80px;text-align:center}
+.inv-stat-num{font-size:22px;font-weight:700;color:var(--text);line-height:1.2}
+.inv-stat-label{font-size:11px;color:var(--text3);margin-top:3px}
+.inv-zone-badge{display:inline-block;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:500}
 .inv-add-row:hover{background:var(--surface2);color:var(--text)}
 .inv-sel{font-size:11px;padding:2px 20px 2px 6px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%236b6860'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center}
 .inv-empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px}
@@ -466,9 +469,9 @@ tbody tr:hover td { background: #fafaf8; }
     <div class="nav-item" onclick="showPage('p4')" id="nav-p4"><span class="nav-icon">□</span> 庶務申請</div>
     <div class="nav-item" onclick="toggleInventoryNav()" id="nav-p6" style="justify-content:space-between"><span style="display:flex;align-items:center;gap:10px"><span class="nav-icon">&#9636;</span> 庫存管理</span><span id="inv-nav-arrow" style="font-size:10px;transition:transform 0.2s;color:rgba(255,255,255,0.4)">&#9658;</span></div>
     <div id="inv-subnav" style="display:none;background:rgba(0,0,0,0.15)">
-      <div class="nav-item" onclick="showInventoryRoom('inv403')" id="nav-inv403" style="padding-left:32px;font-size:12px"><span class="nav-icon" style="font-size:11px">&#9702;</span> JIF 403 通風機房</div>
-      <div class="nav-item" onclick="showInventoryRoom('inv406')" id="nav-inv406" style="padding-left:32px;font-size:12px"><span class="nav-icon" style="font-size:11px">&#9702;</span> J1F 406 儲藏室</div>
-      <div class="nav-item" onclick="showInventoryRoom('inv412')" id="nav-inv412" style="padding-left:32px;font-size:12px"><span class="nav-icon" style="font-size:11px">&#9702;</span> J1F 412 段辦公室</div>
+      <div class="nav-item" onclick="showPage('p6');switchInvRoom('inv403')" id="nav-inv403" style="padding-left:32px;font-size:12px"><span class="nav-icon" style="font-size:11px">&#9702;</span> JIF 403 通風機房</div>
+      <div class="nav-item" onclick="showPage('p6');switchInvRoom('inv406')" id="nav-inv406" style="padding-left:32px;font-size:12px"><span class="nav-icon" style="font-size:11px">&#9702;</span> J1F 406 儲藏室</div>
+      <div class="nav-item" onclick="showPage('p6');switchInvRoom('inv412')" id="nav-inv412" style="padding-left:32px;font-size:12px"><span class="nav-icon" style="font-size:11px">&#9702;</span> J1F 412 段辦公室</div>
     </div>
     <div id="nav-admin-section" style="display:none">
       <div class="nav-section" style="margin-top:8px">資料儲存</div>
@@ -957,205 +960,169 @@ tbody tr:hover td { background: #fafaf8; }
   <div class="page-header">
     <div>
       <div class="page-title">庫存管理</div>
-      <div class="page-sub" id="p6-sub">空間庫存總覽</div>
+      <div class="page-sub">三個空間的庫存品項總覽</div>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-primary" onclick="invAddRow()">＋ 新增品項</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary edit-only" id="inv-add-btn" onclick="invAddRow(invCurrentRoom)">＋ 新增品項</button>
     </div>
   </div>
+
+  <!-- 分頁 Tab -->
   <div class="inv-tab-bar">
-    <div class="inv-tab active" id="inv-tab-403" onclick="showInventoryRoom('inv403')">JIF 403 通風機房</div>
-    <div class="inv-tab" id="inv-tab-406" onclick="showInventoryRoom('inv406')">J1F 406 儲藏室</div>
-    <div class="inv-tab" id="inv-tab-412" onclick="showInventoryRoom('inv412')">J1F 412 段辦公室</div>
+    <div class="inv-tab active" id="inv-tab-inv403" onclick="switchInvRoom('inv403')">JIF 403 通風機房</div>
+    <div class="inv-tab" id="inv-tab-inv406" onclick="switchInvRoom('inv406')">J1F 406 儲藏室</div>
+    <div class="inv-tab" id="inv-tab-inv412" onclick="switchInvRoom('inv412')">J1F 412 段辦公室</div>
   </div>
-  <div class="page-body">
 
-    <!-- 403 -->
-    <div id="inv403" class="inv-room active">
-      <div class="stats-row">
-        <div class="stat-card"><div class="stat-num" id="inv403-cnt">0</div><div class="stat-lbl">品項數</div></div>
-        <div class="stat-card"><div class="stat-num" id="inv403-fire">0</div><div class="stat-lbl">消防設備</div></div>
-        <div class="stat-card"><div class="stat-num" id="inv403-equip">0</div><div class="stat-lbl">設施設備</div></div>
-        <div class="stat-card"><div class="stat-num" id="inv403-supply">0</div><div class="stat-lbl">耗材</div></div>
+  <!-- 403 通風機房 -->
+  <div id="inv-room-inv403" class="inv-room active">
+    <!-- 統計列 -->
+    <div id="inv403-stats" style="display:flex;gap:10px;flex-wrap:wrap;padding:16px 0 8px"></div>
+    <div class="inv-layout">
+      <!-- 地圖 -->
+      <div class="inv-map-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div class="inv-map-title">平面配置</div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-sm" onclick="invSelectZoneAll('inv403')" style="font-size:11px;padding:3px 10px">全部</button>
+            <button class="btn btn-sm edit-only" id="inv403-edit-btn" onclick="invToggleEdit('inv403')" style="font-size:11px;padding:3px 10px;display:none">✏ 編輯</button>
+          </div>
+        </div>
+        <!-- 403 平面圖：橫向長方形 -->
+        <div id="fp403" style="position:relative;width:100%;padding-bottom:70%;border:1.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2)">
+          <div id="inv403-zones-wrap" style="position:absolute;inset:0;z-index:2"></div>
+          <!-- 出入口 SVG -->
+          <div style="position:absolute;bottom:0;left:3%;width:16%;height:8%;z-index:3">
+            <svg width="100%" height="100%" viewBox="0 0 50 20" preserveAspectRatio="none">
+              <line x1="0" y1="0" x2="50" y2="0" stroke="var(--border2)" stroke-width="1.5"/>
+              <line x1="0" y1="0" x2="0" y2="20" stroke="var(--border2)" stroke-width="1.5"/>
+              <line x1="50" y1="0" x2="50" y2="20" stroke="var(--border2)" stroke-width="1.5"/>
+              <path d="M 0 0 A 50 20 0 0 1 50 0" fill="none" stroke="var(--text3)" stroke-width="0.8" stroke-dasharray="2,1.5"/>
+            </svg>
+          </div>
+        </div>
+        <div id="inv403-legend" class="inv-legend"></div>
+        <div id="inv403-zone-editor"></div>
       </div>
-      <div class="inv-layout">
-        <div class="inv-map-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <div class="inv-map-title" style="margin-bottom:0">平面配置</div>
-            <div style="display:flex;gap:6px;align-items:center" id="inv403-map-toolbar">
-              <button class="btn btn-sm" id="inv403-all-btn" onclick="inv403Zone('all')" style="font-size:11px;padding:3px 10px;background:var(--accent-light);color:var(--accent);border-color:#c5daea">全部</button>
-              <button class="btn btn-sm" id="inv403-edit-btn" onclick="invToggleMapEdit()" style="font-size:11px;padding:3px 10px;display:none">✏ 編輯</button>
-            </div>
-          </div>
-          <div class="inv-fp" id="fp403">
-            <div class="inv-zone" id="z403-bg" onclick="inv403Zone('all')" style="top:0;left:0;width:100%;height:100%;border:none;background:transparent;z-index:1;cursor:default"></div>
-            <div id="inv403-zones-wrap" style="position:absolute;inset:0;z-index:2"></div>
-            <!-- 出入口：左下方，SVG 開門符號 -->
-            <div style="position:absolute;bottom:0;left:3%;width:16%;height:8%;z-index:3">
-              <svg width="100%" height="100%" viewBox="0 0 50 20" preserveAspectRatio="none" style="display:block">
-                <line x1="0" y1="0" x2="50" y2="0" stroke="var(--border2)" stroke-width="1.5"/>
-                <line x1="0" y1="0" x2="0" y2="20" stroke="var(--border2)" stroke-width="1.5"/>
-                <line x1="50" y1="0" x2="50" y2="20" stroke="var(--border2)" stroke-width="1.5"/>
-                <path d="M 0 0 A 50 20 0 0 1 50 0" fill="none" stroke="var(--text3)" stroke-width="0.8" stroke-dasharray="2,1.5"/>
-                <line x1="0" y1="0" x2="50" y2="0" stroke="var(--text3)" stroke-width="1"/>
-              </svg>
-            </div>
-          </div>
-          <div class="inv-legend" id="inv403-legend"></div>
-          <!-- 地圖編輯面板 -->
-          <div id="inv403-map-editor" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
-            <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em">區域設定</div>
-            <div id="inv403-zone-list" style="display:flex;flex-direction:column;gap:6px"></div>
-            <button class="btn btn-sm" onclick="invAddZone('inv403')" style="margin-top:8px;width:100%;font-size:11px;border-style:dashed">＋ 新增區域</button>
-            <div style="font-size:11px;color:var(--text3);margin-top:8px">拖曳區域可調整位置，拉動右下角可調整大小</div>
-          </div>
+      <!-- 表格 -->
+      <div class="inv-table-card">
+        <div class="inv-table-header">
+          <span class="inv-zone-badge" id="inv403-zlabel" style="background:#f0ede8;color:#6b6860">全部品項</span>
         </div>
-        <div class="inv-table-card">
-          <div class="inv-table-header">
-            <span class="inv-zone-badge" id="inv403-zlabel" style="background:#f0ede8;color:#6b6860">全部品項</span>
-          </div>
-          <div style="overflow-x:auto"><table class="inv-tbl">
-            <thead><tr>
-  <th style="width:24px"></th>
-  <th style="width:22%">品項</th>
-  <th style="width:10%;cursor:pointer;user-select:none" onclick="invSort(this,'cat')" data-field="cat">類別 <span class="inv-sort-icon">⇅</span></th>
-  <th style="width:8%">數量</th>
-  <th style="width:8%">單位</th>
-  <th style="width:9%;cursor:pointer;user-select:none" onclick="invSort(this,'zone')" data-field="zone">區域 <span class="inv-sort-icon asc"></span></th>
-  <th>備註</th>
-  <th style="width:8%"></th>
-</tr></thead>
-            <tbody id="inv403-tbody"></tbody>
-          </table></div>
-          <button class="inv-add-row" onclick="invAddRow()">＋ 新增品項</button>
-        </div>
+        <div style="overflow-x:auto"><table class="inv-tbl" id="inv403-tbl">
+          <thead><tr>
+            <th class="edit-only" style="width:24px"></th>
+            <th style="width:28%;cursor:pointer" onclick="invSort('inv403','name')" data-field="name">品項 <span class="inv-sort-icon">⇅</span></th>
+            <th style="width:10%;cursor:pointer" onclick="invSort('inv403','cat')" data-field="cat">類別 <span class="inv-sort-icon">⇅</span></th>
+            <th style="width:8%">數量</th>
+            <th style="width:7%">單位</th>
+            <th style="width:10%;cursor:pointer" onclick="invSort('inv403','zone')" data-field="zone">區域 <span class="inv-sort-icon asc"></span></th>
+            <th>備註</th>
+            <th class="edit-only" style="width:30px"></th>
+          </tr></thead>
+          <tbody id="inv403-tbody"></tbody>
+        </table></div>
       </div>
     </div>
-
-    <!-- 406 -->
-    <div id="inv406" class="inv-room">
-      <div class="stats-row">
-        <div class="stat-card"><div class="stat-num" id="inv406-cnt">0</div><div class="stat-lbl">品項數</div></div>
-      </div>
-      <div class="inv-layout">
-        <div class="inv-map-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <div class="inv-map-title" style="margin-bottom:0">平面配置</div>
-            <div style="display:flex;gap:6px;align-items:center">
-              <button class="btn btn-sm" id="inv406-all-btn" onclick="invSelectZone('inv406','all')" style="font-size:11px;padding:3px 10px;background:var(--accent-light);color:var(--accent);border-color:#c5daea">全部</button>
-              <button class="btn btn-sm" id="inv406-edit-btn" onclick="invToggleMapEditRoom('inv406')" style="font-size:11px;padding:3px 10px;display:none">✏ 編輯</button>
-            </div>
-          </div>
-          <!-- 直立長條形：padding-bottom:130% 讓高度大於寬度 -->
-          <div class="inv-fp" id="fp406" style="padding-bottom:130%">
-            <div onclick="invSelectZone('inv406','all')" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;background:transparent;z-index:1;cursor:default"></div>
-            <div id="inv406-zones-wrap" style="position:absolute;inset:0;z-index:2"></div>
-            <!-- 出入口：左下方，SVG 開門符號 -->
-            <div style="position:absolute;bottom:0;left:3%;width:16%;height:5%;z-index:3">
-              <svg width="100%" height="100%" viewBox="0 0 50 20" preserveAspectRatio="none" style="display:block">
-                <line x1="0" y1="0" x2="50" y2="0" stroke="var(--border2)" stroke-width="1.5"/>
-                <line x1="0" y1="0" x2="0" y2="20" stroke="var(--border2)" stroke-width="1.5"/>
-                <line x1="50" y1="0" x2="50" y2="20" stroke="var(--border2)" stroke-width="1.5"/>
-                <path d="M 0 0 A 50 20 0 0 1 50 0" fill="none" stroke="var(--text3)" stroke-width="0.8" stroke-dasharray="2,1.5"/>
-                <line x1="0" y1="0" x2="50" y2="0" stroke="var(--text3)" stroke-width="1"/>
-              </svg>
-            </div>
-          </div>
-          <div class="inv-legend" id="inv406-legend"></div>
-          <div id="inv406-map-editor" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
-            <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em">區域設定</div>
-            <div id="inv406-zone-list" style="display:flex;flex-direction:column;gap:6px"></div>
-            <button class="btn btn-sm" onclick="invAddZone('inv406')" style="margin-top:8px;width:100%;font-size:11px;border-style:dashed">＋ 新增區域</button>
-            <div style="font-size:11px;color:var(--text3);margin-top:8px">拖曳區域可調整位置，拉動右下角可調整大小</div>
-          </div>
-        </div>
-        <div class="inv-table-card">
-          <div class="inv-table-header">
-            <span class="inv-zone-badge" id="inv406-zlabel" style="background:#f0ede8;color:#6b6860">全部品項</span>
-          </div>
-          <div style="overflow-x:auto"><table class="inv-tbl">
-            <thead><tr>
-  <th style="width:24px"></th>
-  <th style="width:22%">品項</th>
-  <th style="width:10%;cursor:pointer;user-select:none" onclick="invSort(this,'cat')" data-field="cat">類別 <span class="inv-sort-icon">⇅</span></th>
-  <th style="width:8%">數量</th>
-  <th style="width:8%">單位</th>
-  <th style="width:9%;cursor:pointer;user-select:none" onclick="invSort(this,'zone')" data-field="zone">區域 <span class="inv-sort-icon asc"></span></th>
-  <th>備註</th>
-  <th style="width:8%"></th>
-</tr></thead>
-            <tbody id="inv406-tbody"></tbody>
-          </table></div>
-          <button class="inv-add-row" onclick="invAddRow()">＋ 新增品項</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 412 -->
-    <div id="inv412" class="inv-room">
-      <div class="stats-row">
-        <div class="stat-card"><div class="stat-num" id="inv412-cnt">0</div><div class="stat-lbl">品項數</div></div>
-      </div>
-      <div class="inv-layout">
-        <div class="inv-map-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <div class="inv-map-title" style="margin-bottom:0">平面配置</div>
-            <div style="display:flex;gap:6px;align-items:center">
-              <button class="btn btn-sm" id="inv412-all-btn" onclick="invSelectZone('inv412','all')" style="font-size:11px;padding:3px 10px;background:var(--accent-light);color:var(--accent);border-color:#c5daea">全部</button>
-              <button class="btn btn-sm" id="inv412-edit-btn" onclick="invToggleMapEditRoom('inv412')" style="font-size:11px;padding:3px 10px;display:none">✏ 編輯</button>
-            </div>
-          </div>
-          <!-- 橫立長條形：padding-bottom:45% 讓寬度大於高度 -->
-          <div class="inv-fp" id="fp412" style="padding-bottom:45%">
-            <div onclick="invSelectZone('inv412','all')" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;background:transparent;z-index:1;cursor:default"></div>
-            <div id="inv412-zones-wrap" style="position:absolute;inset:0;z-index:2"></div>
-            <!-- 出入口：左側牆面偏上方，SVG 開門符號 -->
-            <div style="position:absolute;top:6%;left:0;width:6%;height:22%;z-index:3">
-              <svg width="100%" height="100%" viewBox="0 0 20 50" preserveAspectRatio="none" style="display:block">
-                <!-- 門框缺口（左牆留空） -->
-                <line x1="20" y1="0" x2="20" y2="50" stroke="var(--border2)" stroke-width="1.5"/>
-                <!-- 門板 -->
-                <line x1="20" y1="0" x2="20" y2="50" stroke="none"/>
-                <line x1="1" y1="0" x2="20" y2="0" stroke="var(--border2)" stroke-width="1.5"/>
-                <line x1="1" y1="50" x2="20" y2="50" stroke="var(--border2)" stroke-width="1.5"/>
-                <!-- 門弧 -->
-                <path d="M 20 0 A 19 50 0 0 0 1 50" fill="none" stroke="var(--text3)" stroke-width="0.8" stroke-dasharray="2,1.5"/>
-                <!-- 門板線 -->
-                <line x1="20" y1="0" x2="1" y2="50" stroke="var(--text3)" stroke-width="1"/>
-              </svg>
-            </div>
-          </div>
-          <div class="inv-legend" id="inv412-legend"></div>
-          <div id="inv412-map-editor" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
-            <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em">區域設定</div>
-            <div id="inv412-zone-list" style="display:flex;flex-direction:column;gap:6px"></div>
-            <button class="btn btn-sm" onclick="invAddZone('inv412')" style="margin-top:8px;width:100%;font-size:11px;border-style:dashed">＋ 新增區域</button>
-            <div style="font-size:11px;color:var(--text3);margin-top:8px">拖曳區域可調整位置，拉動右下角可調整大小</div>
-          </div>
-        </div>
-        <div class="inv-table-card">
-          <div class="inv-table-header">
-            <span class="inv-zone-badge" id="inv412-zlabel" style="background:#f0ede8;color:#6b6860">全部品項</span>
-          </div>
-          <div style="overflow-x:auto"><table class="inv-tbl">
-            <thead><tr>
-  <th style="width:24px"></th>
-  <th style="width:22%">品項</th>
-  <th style="width:10%;cursor:pointer;user-select:none" onclick="invSort(this,'cat')" data-field="cat">類別 <span class="inv-sort-icon">⇅</span></th>
-  <th style="width:8%">數量</th>
-  <th style="width:8%">單位</th>
-  <th style="width:9%;cursor:pointer;user-select:none" onclick="invSort(this,'zone')" data-field="zone">區域 <span class="inv-sort-icon asc"></span></th>
-  <th>備註</th>
-  <th style="width:8%"></th>
-</tr></thead>
-            <tbody id="inv412-tbody"></tbody>
-          </table></div>
-          <button class="inv-add-row" onclick="invAddRow()">＋ 新增品項</button>
-        </div>
-      </div>
-    </div>
-
   </div>
+
+  <!-- 406 儲藏室 -->
+  <div id="inv-room-inv406" class="inv-room">
+    <div id="inv406-stats" style="display:flex;gap:10px;flex-wrap:wrap;padding:16px 0 8px"></div>
+    <div class="inv-layout">
+      <div class="inv-map-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div class="inv-map-title">平面配置</div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-sm" onclick="invSelectZoneAll('inv406')" style="font-size:11px;padding:3px 10px">全部</button>
+            <button class="btn btn-sm edit-only" id="inv406-edit-btn" onclick="invToggleEdit('inv406')" style="font-size:11px;padding:3px 10px;display:none">✏ 編輯</button>
+          </div>
+        </div>
+        <!-- 406 平面圖：直立長條形 -->
+        <div id="fp406" style="position:relative;width:100%;padding-bottom:130%;border:1.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2)">
+          <div id="inv406-zones-wrap" style="position:absolute;inset:0;z-index:2"></div>
+          <div style="position:absolute;bottom:0;left:3%;width:16%;height:5%;z-index:3">
+            <svg width="100%" height="100%" viewBox="0 0 50 20" preserveAspectRatio="none">
+              <line x1="0" y1="0" x2="50" y2="0" stroke="var(--border2)" stroke-width="1.5"/>
+              <line x1="0" y1="0" x2="0" y2="20" stroke="var(--border2)" stroke-width="1.5"/>
+              <line x1="50" y1="0" x2="50" y2="20" stroke="var(--border2)" stroke-width="1.5"/>
+              <path d="M 0 0 A 50 20 0 0 1 50 0" fill="none" stroke="var(--text3)" stroke-width="0.8" stroke-dasharray="2,1.5"/>
+            </svg>
+          </div>
+        </div>
+        <div id="inv406-legend" class="inv-legend"></div>
+        <div id="inv406-zone-editor"></div>
+      </div>
+      <div class="inv-table-card">
+        <div class="inv-table-header">
+          <span class="inv-zone-badge" id="inv406-zlabel" style="background:#f0ede8;color:#6b6860">全部品項</span>
+        </div>
+        <div style="overflow-x:auto"><table class="inv-tbl" id="inv406-tbl">
+          <thead><tr>
+            <th class="edit-only" style="width:24px"></th>
+            <th style="width:28%;cursor:pointer" onclick="invSort('inv406','name')" data-field="name">品項 <span class="inv-sort-icon">⇅</span></th>
+            <th style="width:10%;cursor:pointer" onclick="invSort('inv406','cat')" data-field="cat">類別 <span class="inv-sort-icon">⇅</span></th>
+            <th style="width:8%">數量</th>
+            <th style="width:7%">單位</th>
+            <th style="width:10%;cursor:pointer" onclick="invSort('inv406','zone')" data-field="zone">區域 <span class="inv-sort-icon asc"></span></th>
+            <th>備註</th>
+            <th class="edit-only" style="width:30px"></th>
+          </tr></thead>
+          <tbody id="inv406-tbody"></tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 412 段辦公室 -->
+  <div id="inv-room-inv412" class="inv-room">
+    <div id="inv412-stats" style="display:flex;gap:10px;flex-wrap:wrap;padding:16px 0 8px"></div>
+    <div class="inv-layout">
+      <div class="inv-map-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div class="inv-map-title">平面配置</div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-sm" onclick="invSelectZoneAll('inv412')" style="font-size:11px;padding:3px 10px">全部</button>
+            <button class="btn btn-sm edit-only" id="inv412-edit-btn" onclick="invToggleEdit('inv412')" style="font-size:11px;padding:3px 10px;display:none">✏ 編輯</button>
+          </div>
+        </div>
+        <!-- 412 平面圖：橫向長條形 -->
+        <div id="fp412" style="position:relative;width:100%;padding-bottom:45%;border:1.5px solid var(--border2);border-radius:var(--radius);background:var(--surface2)">
+          <div id="inv412-zones-wrap" style="position:absolute;inset:0;z-index:2"></div>
+          <div style="position:absolute;top:6%;left:0;width:6%;height:22%;z-index:3">
+            <svg width="100%" height="100%" viewBox="0 0 20 50" preserveAspectRatio="none">
+              <line x1="20" y1="0" x2="20" y2="50" stroke="var(--border2)" stroke-width="1.5"/>
+              <line x1="1" y1="0" x2="20" y2="0" stroke="var(--border2)" stroke-width="1.5"/>
+              <line x1="1" y1="50" x2="20" y2="50" stroke="var(--border2)" stroke-width="1.5"/>
+              <path d="M 20 0 A 19 50 0 0 0 1 50" fill="none" stroke="var(--text3)" stroke-width="0.8" stroke-dasharray="2,1.5"/>
+              <line x1="20" y1="0" x2="1" y2="50" stroke="var(--text3)" stroke-width="1"/>
+            </svg>
+          </div>
+        </div>
+        <div id="inv412-legend" class="inv-legend"></div>
+        <div id="inv412-zone-editor"></div>
+      </div>
+      <div class="inv-table-card">
+        <div class="inv-table-header">
+          <span class="inv-zone-badge" id="inv412-zlabel" style="background:#f0ede8;color:#6b6860">全部品項</span>
+        </div>
+        <div style="overflow-x:auto"><table class="inv-tbl" id="inv412-tbl">
+          <thead><tr>
+            <th class="edit-only" style="width:24px"></th>
+            <th style="width:28%;cursor:pointer" onclick="invSort('inv412','name')" data-field="name">品項 <span class="inv-sort-icon">⇅</span></th>
+            <th style="width:10%;cursor:pointer" onclick="invSort('inv412','cat')" data-field="cat">類別 <span class="inv-sort-icon">⇅</span></th>
+            <th style="width:8%">數量</th>
+            <th style="width:7%">單位</th>
+            <th style="width:10%;cursor:pointer" onclick="invSort('inv412','zone')" data-field="zone">區域 <span class="inv-sort-icon asc"></span></th>
+            <th>備註</th>
+            <th class="edit-only" style="width:30px"></th>
+          </tr></thead>
+          <tbody id="inv412-tbody"></tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+
 </div>
 </div><!-- /main -->
 </div><!-- /app-screen -->
@@ -1491,22 +1458,26 @@ function doChangePw() {
 
   SUPER_USER = { ...SUPER_USER, pw: newPw };
   if (currentUser && currentUser.level === 'S') currentUser = { ...currentUser, pw: newPw };
-  saveSession(); // 更新 session 中的密碼
+  saveSession();
+  persistData();
 
-  // 同步寫回 Sheets
-  // 直接存純密碼（Sheets 為主，不需前綴）
-  const allUsers = [SUPER_USER, ...getUsers()];
+  // 同步 superPw 到 Sheets meta（走 syncToSheets，帶上新密碼）
   if (APPS_SCRIPT_URL) {
+    const allUsers = [SUPER_USER, ...sheetsUsers];
     fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      body: JSON.stringify({ action: 'saveUsers', users: allUsers })
+      body: JSON.stringify({ action: 'save', data: {
+        items, projects, shuWu, users: allUsers,
+        nextId, nextPid, nextShuWuNo,
+        inv403, inv406, inv412, invNextId,
+        superPw: newPw
+      }})
     }).then(r => r.json()).then(d => {
-      toast(d.ok ? '密碼已修改並同步至 Sheets ✓' : '密碼修改失敗：' + (d.error||''));
-    }).catch(() => toast('網路錯誤，密碼暫時更新但未同步'));
+      toast(d.ok ? '密碼已修改並同步至 Sheets ✓' : '密碼已修改，但同步失敗：' + (d.error||''));
+    }).catch(() => toast('密碼已修改，但網路錯誤未同步至 Sheets'));
   } else {
     toast('密碼已修改 ✓');
   }
-  // 關閉 modal
   var modal = document.getElementById('changepw-modal');
   if(modal){ modal.style.display='none'; modal.classList.remove('open'); }
   clearChangePwForm();
@@ -1525,7 +1496,11 @@ function saveUsers(arr){
   const allUsers = [SUPER_USER, ...sheetsUsers];
   fetch(APPS_SCRIPT_URL, {
     method:'POST',
-    body: JSON.stringify({ action: 'save', data: { items, projects, shuWu, users: allUsers, nextId, nextPid, nextShuWuNo, invData, invZones, invNextId } })
+    body: JSON.stringify({ action: 'save', data: {
+      items, projects, shuWu, users: allUsers,
+      nextId, nextPid, nextShuWuNo,
+      inv403, inv406, inv412, invNextId, superPw: SUPER_USER.pw
+    }})
   }).then(r=>r.json()).then(d=>{
     if(d.ok) toast('帳號已更新至 Sheets ✓');
     else toast('帳號寫入失敗：' + (d.error||''));
@@ -1656,43 +1631,38 @@ function startApp(){
     renderMain();renderDetail();renderProjects();renderShuWu();updateTimestamp();
     if(restored) toast('已自動還原上次資料 ✓');
 
-    // 從 Sheets 載入最新帳號及 S 密碼，B 層同時載入完整資料（含庫存）
+    // 從 Sheets 載入最新帳號、S 密碼、庫存資料
     if(APPS_SCRIPT_URL){
       fetch(APPS_SCRIPT_URL+'?action=load').then(r=>r.json()).then(d=>{
-        if(Array.isArray(d.users)){
-          sheetsUsers = d.users.filter(u=>u.level!=='S');
-          const savedS = d.users.find(u=>u.level==='S'&&String(u.id)===String(SUPER_USER.id));
-          // Sheets 有任何密碼就採用（以 Sheets 為主）
-          if(savedS&&savedS.pw){
-            const sheetsPw=savedS.pw.startsWith('UC:')?savedS.pw.slice(3):savedS.pw;
-            SUPER_USER={...SUPER_USER, pw:sheetsPw};
-            if(currentUser&&isS) currentUser={...currentUser,pw:sheetsPw};
+        if(d.ok) {
+          // A/B 層帳號
+          if(Array.isArray(d.users)) sheetsUsers = d.users.filter(u=>u.level!=='S');
+          // S 密碼從 meta.superPw 取（穩定）
+          if(d.superPw) {
+            SUPER_USER = {...SUPER_USER, pw: String(d.superPw)};
+            if(currentUser && currentUser.level==='S') currentUser = {...currentUser, pw: String(d.superPw)};
+            saveSession();
           }
           // 確認 A/B 帳號仍有效
           if(appMode==='admin'&&currentUser&&(isA||isB)){
             const valid=sheetsUsers.find(u=>String(u.id)===String(currentUser.id));
             if(!valid){ doLogout(); toast('帳號已失效，請重新登入'); return; }
             currentUser={...valid};
+            saveSession();
           }
-          saveSession();
-        }
-        // B 層：同時更新庫存資料（以 Sheets 為主，清除舊快取）
-        if(isB && d.invData && d.invZones) {
-          if(Array.isArray(d.invData.inv403) && d.invData.inv403.length > 0) invData.inv403 = d.invData.inv403;
-          if(Array.isArray(d.invData.inv406)) invData.inv406 = d.invData.inv406;
-          if(Array.isArray(d.invData.inv412)) invData.inv412 = d.invData.inv412;
-          if(Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
-          if(Array.isArray(d.invZones.inv406) && d.invZones.inv406.length > 0) invZones.inv406 = d.invZones.inv406;
-          if(Array.isArray(d.invZones.inv412) && d.invZones.inv412.length > 0) invZones.inv412 = d.invZones.inv412;
-          if(d.invNextId) invNextId = d.invNextId;
-          sanitizeInvZones();
+          // 庫存資料（新扁平結構）
+          if(Array.isArray(d.inv403) && d.inv403.length > 0) inv403 = d.inv403;
+          if(Array.isArray(d.inv406)) inv406 = d.inv406;
+          if(Array.isArray(d.inv412)) inv412 = d.inv412;
+          if(d.invNextId) invNextId = parseInt(d.invNextId)||invNextId;
+          if(d.invZones) {
+            if(Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
+            if(Array.isArray(d.invZones.inv406) && d.invZones.inv406.length > 0) invZones.inv406 = d.invZones.inv406;
+            if(Array.isArray(d.invZones.inv412) && d.invZones.inv412.length > 0) invZones.inv412 = d.invZones.inv412;
+          }
+          invSanitizeAll();
           persistData();
-          // 重新渲染庫存（不管現在在哪頁）
-          ['inv403','inv406','inv412'].forEach(rid => {
-            renderInvTable(rid);
-            renderInvMap(rid);
-          });
-          inv403UpdateCounts();
+          if(document.getElementById('inv-room-inv403')) renderInvPage(invCurrentRoom);
         }
         renderUsers();
       }).catch(()=>renderUsers());
@@ -2017,18 +1987,16 @@ function loadFromSheetsJsonp() {
     if (d.nextPid) nextPid = d.nextPid;
     if (d.nextShuWuNo) nextShuWuNo = d.nextShuWuNo;
     // 還原庫存資料
-    if (d.invData) {
-      if (Array.isArray(d.invData.inv403) && d.invData.inv403.length > 0) invData.inv403 = d.invData.inv403;
-      if (Array.isArray(d.invData.inv406)) invData.inv406 = d.invData.inv406;
-      if (Array.isArray(d.invData.inv412)) invData.inv412 = d.invData.inv412;
-    }
+    if (Array.isArray(d.inv403) && d.inv403.length > 0) inv403 = d.inv403;
+    if (Array.isArray(d.inv406)) inv406 = d.inv406;
+    if (Array.isArray(d.inv412)) inv412 = d.inv412;
+    if (d.invNextId) invNextId = parseInt(d.invNextId)||invNextId;
     if (d.invZones) {
       if (Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
       if (Array.isArray(d.invZones.inv406) && d.invZones.inv406.length > 0) invZones.inv406 = d.invZones.inv406;
       if (Array.isArray(d.invZones.inv412) && d.invZones.inv412.length > 0) invZones.inv412 = d.invZones.inv412;
     }
-    if (d.invNextId) invNextId = d.invNextId;
-    sanitizeInvZones();
+    invSanitizeAll();
     // 重新渲染所有分頁
     renderMain();
     if (typeof renderShuWu === 'function') renderShuWu();
@@ -2240,8 +2208,7 @@ function showPage(pid, target) {
     }
   }
   if (pid === 'p6') {
-    renderInvTable(invCurrentRoom);
-    if (invCurrentRoom === 'inv403') inv403UpdateCounts();
+    initInvPage();
   }
   if (pid === 'p5') {
     const lv = currentUser ? currentUser.level : 'V';
@@ -2848,8 +2815,7 @@ function exportCSV() {
 // 部署 Apps Script 後，將 Web App 網址貼於此
 function syncToSheets() {
   if (!APPS_SCRIPT_URL) { toast('請先填入 Apps Script 網址'); return; }
-  // 推送前先清理亂碼 zone 值
-  sanitizeInvZones();
+  invSanitizeAll();
   persistData();
   const nav = document.getElementById('nav-sync');
   nav.style.opacity = '0.5'; nav.style.pointerEvents = 'none';
@@ -2857,7 +2823,12 @@ function syncToSheets() {
   const allUsers = [SUPER_USER, ...sheetsUsers];
   fetch(APPS_SCRIPT_URL, {
     method: 'POST',
-    body: JSON.stringify({ action: 'save', data: { items, projects, shuWu, users: allUsers, nextId, nextPid, nextShuWuNo, invData, invZones, invNextId } })
+    body: JSON.stringify({ action: 'save', data: {
+      items, projects, shuWu, users: allUsers,
+      nextId, nextPid, nextShuWuNo,
+      inv403, inv406, inv412, invNextId,
+      superPw: SUPER_USER.pw
+    }})
   })
   .then(r => r.text())
   .then(text => {
@@ -2900,18 +2871,16 @@ function loadFromSheets() {
     if (d.nextPid) nextPid = d.nextPid;
     if (d.nextShuWuNo) nextShuWuNo = d.nextShuWuNo;
     // 還原庫存資料
-    if (d.invData) {
-      if (Array.isArray(d.invData.inv403) && d.invData.inv403.length > 0) invData.inv403 = d.invData.inv403;
-      if (Array.isArray(d.invData.inv406)) invData.inv406 = d.invData.inv406;
-      if (Array.isArray(d.invData.inv412)) invData.inv412 = d.invData.inv412;
-    }
+    if (Array.isArray(d.inv403) && d.inv403.length > 0) inv403 = d.inv403;
+    if (Array.isArray(d.inv406)) inv406 = d.inv406;
+    if (Array.isArray(d.inv412)) inv412 = d.inv412;
+    if (d.invNextId) invNextId = parseInt(d.invNextId)||invNextId;
     if (d.invZones) {
       if (Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
       if (Array.isArray(d.invZones.inv406) && d.invZones.inv406.length > 0) invZones.inv406 = d.invZones.inv406;
       if (Array.isArray(d.invZones.inv412) && d.invZones.inv412.length > 0) invZones.inv412 = d.invZones.inv412;
     }
-    if (d.invNextId) invNextId = d.invNextId;
-    sanitizeInvZones();
+    invSanitizeAll();
     persistData();
     renderMain();
     updateTimestamp();
@@ -3006,7 +2975,11 @@ function sanitizeInvZones() {
 
 function persistData() {
   try {
-    localStorage.setItem(STORE_KEY, JSON.stringify({ items, projects, nextId, nextPid, shuWu, nextShuWuNo, invData, invNextId, invZones }));
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      items, projects, nextId, nextPid,
+      shuWu, nextShuWuNo,
+      inv403, inv406, inv412, invNextId, invZones
+    }));
   } catch(e) {}
 }
 
@@ -3022,18 +2995,17 @@ function restoreData() {
     nextPid = d.nextPid || (projects.length + 1);
     if (Array.isArray(d.shuWu) && d.shuWu.length > 0) shuWu = d.shuWu;
     if (d.nextShuWuNo) nextShuWuNo = d.nextShuWuNo;
-    if (d.invData) {
-      if (Array.isArray(d.invData.inv403) && d.invData.inv403.length > 0) invData.inv403 = d.invData.inv403;
-      if (Array.isArray(d.invData.inv406)) invData.inv406 = d.invData.inv406;
-      if (Array.isArray(d.invData.inv412)) invData.inv412 = d.invData.inv412;
-    }
+    // 庫存（扁平結構）
+    if (Array.isArray(d.inv403) && d.inv403.length > 0) inv403 = d.inv403;
+    if (Array.isArray(d.inv406) && d.inv406.length > 0) inv406 = d.inv406;
+    if (Array.isArray(d.inv412)) inv412 = d.inv412;
     if (d.invNextId) invNextId = d.invNextId;
     if (d.invZones) {
       if (Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
-      if (Array.isArray(d.invZones.inv406)) invZones.inv406 = d.invZones.inv406;
-      if (Array.isArray(d.invZones.inv412)) invZones.inv412 = d.invZones.inv412;
+      if (Array.isArray(d.invZones.inv406) && d.invZones.inv406.length > 0) invZones.inv406 = d.invZones.inv406;
+      if (Array.isArray(d.invZones.inv412) && d.invZones.inv412.length > 0) invZones.inv412 = d.invZones.inv412;
     }
-    sanitizeInvZones();
+    invSanitizeAll();
     return true;
   } catch(e) { return false; }
 }
@@ -3322,15 +3294,22 @@ function restoreSession() {
       const s = document.getElementById('jsonp-init');
       if (s) s.remove();
       delete window[cbName];
-      if (d && d.ok && Array.isArray(d.users)) {
-        sheetsUsers = d.users.filter(u => u.level !== 'S');
-        const savedS = d.users.find(u => u.level === 'S' && String(u.id) === String(SUPER_USER.id));
-        // Sheets 有任何密碼就採用（以 Sheets 為主）
-        if (savedS && savedS.pw) {
-          const sheetsPw = savedS.pw.startsWith('UC:') ? savedS.pw.slice(3) : savedS.pw;
-          SUPER_USER = { ...SUPER_USER, pw: sheetsPw };
-          if(currentUser&&isS) currentUser={...currentUser, pw: sheetsPw};
+      if (d && d.ok) {
+        // A/B 層帳號
+        if (Array.isArray(d.users)) sheetsUsers = d.users.filter(u => u.level !== 'S');
+        // S 密碼從 meta.superPw 取（穩定，不從 users 分頁讀）
+        if (d.superPw) SUPER_USER = { ...SUPER_USER, pw: String(d.superPw) };
+        // 庫存資料（新扁平結構）
+        if (Array.isArray(d.inv403) && d.inv403.length > 0) inv403 = d.inv403;
+        if (Array.isArray(d.inv406)) inv406 = d.inv406;
+        if (Array.isArray(d.inv412)) inv412 = d.inv412;
+        if (d.invNextId) invNextId = parseInt(d.invNextId)||invNextId;
+        if (d.invZones) {
+          if (Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
+          if (Array.isArray(d.invZones.inv406) && d.invZones.inv406.length > 0) invZones.inv406 = d.invZones.inv406;
+          if (Array.isArray(d.invZones.inv412) && d.invZones.inv412.length > 0) invZones.inv412 = d.invZones.inv412;
         }
+        invSanitizeAll();
       }
       initAfterLoad();
     };
@@ -3357,586 +3336,371 @@ function restoreSession() {
 })();
 
 
-// ── 庫存管理 ─────────────────────────────────────────────────────
-let invNextId = 100;
-let invSelZone = {inv403:'all', inv406:'all', inv412:'all'};
-let inv403SelZone = 'all';
+// ── 庫存管理（重構版）─────────────────────────────────────────────
+// 扁平結構：inv403/inv406/inv412 直接是品項陣列
+// 區域定義：invZones403/406/412 固定不變，只能改名稱和顏色
+// 不依賴 meta JSON，直接對應 Sheets 分頁
+
+let invNextId = 300;
 let invCurrentRoom = 'inv403';
-let invMapEditMode = {inv403:false, inv406:false, inv412:false};
-// 預設排序：區域升冪
+let invSelZone = {inv403:'all', inv406:'all', inv412:'all'};
+let invEditMode = false; // 單一編輯模式旗標
 let invSortState = {
   inv403:{field:'zone',dir:1},
   inv406:{field:'zone',dir:1},
   inv412:{field:'zone',dir:1}
 };
 
-// ── 區域定義（可編輯，存入 localStorage）──
-let invZones = {
-  inv403: [
-    {id:'A', label:'A 區', sub:'消防設備', color:'#2d5f80', bg:'rgba(232,240,245,0.75)', top:5, left:3, w:32, h:55},
-    {id:'B', label:'B 區', sub:'中央走道', color:'#534ab7', bg:'rgba(238,237,254,0.75)', top:5, left:36, w:30, h:55},
-    {id:'C', label:'C 區', sub:'右側角落', color:'#3b6d11', bg:'rgba(234,243,222,0.75)', top:5, left:67, w:30, h:55},
-    {id:'D', label:'D 區', sub:'入口／雜項', color:'#854f0b', bg:'rgba(250,238,218,0.75)', top:61, left:3, w:94, h:33},
-  ],
-  inv406: [{"id": 200, "name": "二孔拱型夾", "cat": "supply", "qty": "13", "unit": "箱", "zone": "A", "note": "12入×4箱+12入×1箱"}, {"id": 201, "name": "抽取式衛生紙", "cat": "supply", "qty": "2", "unit": "箱", "zone": "A", "note": "6串×12包×2箱"}, {"id": 202, "name": "PP夾鏈袋", "cat": "supply", "qty": "1", "unit": "箱", "zone": "A", "note": ""}, {"id": 203, "name": "遺失物現金袋", "cat": "supply", "qty": "1", "unit": "箱", "zone": "A", "note": ""}, {"id": 204, "name": "遺失物吊牌", "cat": "supply", "qty": "1", "unit": "箱", "zone": "A", "note": ""}, {"id": 205, "name": "零錢盒", "cat": "supply", "qty": "1", "unit": "箱", "zone": "A", "note": ""}, {"id": 206, "name": "紙杯", "cat": "supply", "qty": "1", "unit": "箱", "zone": "A", "note": ""}, {"id": 207, "name": "吹風機", "cat": "equip", "qty": "2", "unit": "台", "zone": "A", "note": ""}, {"id": 208, "name": "中間彈力夾", "cat": "supply", "qty": "2", "unit": "箱", "zone": "A", "note": "12入×2箱"}, {"id": 209, "name": "除膠劑", "cat": "supply", "qty": "11", "unit": "罐", "zone": "A", "note": ""}, {"id": 210, "name": "A3護貝膠膜", "cat": "supply", "qty": "1", "unit": "箱", "zone": "A", "note": "10盒入×1箱"}, {"id": 211, "name": "黃黑警示膠帶", "cat": "supply", "qty": "52", "unit": "捲", "zone": "A", "note": ""}, {"id": 212, "name": "訪客臨時證+掛繩", "cat": "equip", "qty": "若干", "unit": "組", "zone": "A", "note": ""}, {"id": 213, "name": "哨子", "cat": "supply", "qty": "7", "unit": "盒", "zone": "A", "note": "12入×7盒+6個"}, {"id": 214, "name": "面紙盒", "cat": "supply", "qty": "2", "unit": "盒", "zone": "A", "note": ""}, {"id": 215, "name": "磁鐵條", "cat": "supply", "qty": "13", "unit": "組", "zone": "A", "note": ""}, {"id": 216, "name": "衛生棉", "cat": "supply", "qty": "1", "unit": "箱", "zone": "A", "note": "8包入×1箱+3包"}, {"id": 217, "name": "配重水帶", "cat": "equip", "qty": "1", "unit": "條", "zone": "A", "note": ""}, {"id": 218, "name": "電蚊拍", "cat": "equip", "qty": "1", "unit": "台", "zone": "A", "note": ""}, {"id": 219, "name": "花車帶（10尺）", "cat": "supply", "qty": "9", "unit": "個", "zone": "A", "note": ""}, {"id": 220, "name": "捲尺", "cat": "supply", "qty": "5", "unit": "個", "zone": "A", "note": ""}, {"id": 221, "name": "門擋（木）", "cat": "equip", "qty": "1", "unit": "個", "zone": "A", "note": ""}, {"id": 222, "name": "TETRA耳機", "cat": "equip", "qty": "5", "unit": "個", "zone": "A", "note": ""}, {"id": 223, "name": "變壓器（反針孔用 5V/500mA）", "cat": "equip", "qty": "5", "unit": "個", "zone": "A", "note": ""}, {"id": 224, "name": "變壓器（大聲公用 12V/2A）", "cat": "equip", "qty": "6", "unit": "個", "zone": "A", "note": ""}, {"id": 225, "name": "膠帶切割器", "cat": "supply", "qty": "10", "unit": "個", "zone": "A", "note": ""}, {"id": 226, "name": "8號夾鏈袋", "cat": "supply", "qty": "22", "unit": "包", "zone": "A", "note": ""}, {"id": 227, "name": "10號夾鏈袋", "cat": "supply", "qty": "37", "unit": "包", "zone": "A", "note": "10包+27包"}, {"id": 228, "name": "12號夾鏈袋", "cat": "supply", "qty": "10", "unit": "包", "zone": "A", "note": ""}, {"id": 229, "name": "健診手套（L）", "cat": "supply", "qty": "2", "unit": "箱", "zone": "A", "note": "10盒入×2箱+3盒"}, {"id": 230, "name": "健診手套（M）", "cat": "supply", "qty": "1", "unit": "箱", "zone": "A", "note": "10盒入×1箱+7盒"}, {"id": 231, "name": "殺蟲劑", "cat": "supply", "qty": "4", "unit": "罐", "zone": "A", "note": ""}, {"id": 232, "name": "5號夾鏈袋", "cat": "supply", "qty": "7", "unit": "包", "zone": "A", "note": ""}, {"id": 233, "name": "4號夾鏈袋", "cat": "supply", "qty": "6", "unit": "包", "zone": "A", "note": ""}, {"id": 234, "name": "汰換皮革手套（舊）", "cat": "misc", "qty": "若干", "unit": "雙", "zone": "A", "note": "髒舊待處理"}, {"id": 235, "name": "皮革手套", "cat": "equip", "qty": "49", "unit": "雙", "zone": "A", "note": "31雙+18雙"}, {"id": 236, "name": "橡膠手套", "cat": "equip", "qty": "1", "unit": "雙", "zone": "A", "note": ""}, {"id": 237, "name": "科技沙包", "cat": "equip", "qty": "35", "unit": "個", "zone": "A", "note": ""}, {"id": 238, "name": "頭燈", "cat": "equip", "qty": "4", "unit": "個", "zone": "A", "note": "含充電器、電池"}, {"id": 239, "name": "手電筒", "cat": "equip", "qty": "6", "unit": "組", "zone": "A", "note": ""}, {"id": 240, "name": "耳塞", "cat": "supply", "qty": "1", "unit": "盒", "zone": "A", "note": ""}, {"id": 241, "name": "標示站名綠色帆布袋", "cat": "equip", "qty": "9", "unit": "個", "zone": "A", "note": ""}, {"id": 242, "name": "4公升酒精", "cat": "supply", "qty": "12", "unit": "瓶", "zone": "A", "note": "6瓶入×2箱"}, {"id": 243, "name": "防護衣", "cat": "equip", "qty": "2", "unit": "件", "zone": "B", "note": ""}, {"id": 244, "name": "防護鞋", "cat": "equip", "qty": "2", "unit": "雙", "zone": "B", "note": ""}, {"id": 245, "name": "防護手套", "cat": "equip", "qty": "2", "unit": "雙", "zone": "B", "note": ""}, {"id": 246, "name": "小垃圾桶（塑膠）", "cat": "equip", "qty": "1", "unit": "個", "zone": "B", "note": ""}, {"id": 247, "name": "膠帶台", "cat": "supply", "qty": "10", "unit": "個", "zone": "B", "note": ""}, {"id": 248, "name": "20頁資料夾", "cat": "supply", "qty": "36", "unit": "冊", "zone": "B", "note": ""}, {"id": 249, "name": "防毒面罩", "cat": "equip", "qty": "2", "unit": "個", "zone": "B", "note": "含濾罐×2"}, {"id": 250, "name": "護目鏡", "cat": "equip", "qty": "2", "unit": "個", "zone": "B", "note": ""}, {"id": 251, "name": "防疫面罩", "cat": "equip", "qty": "9", "unit": "組", "zone": "B", "note": ""}, {"id": 252, "name": "防割手套", "cat": "equip", "qty": "14", "unit": "雙", "zone": "B", "note": ""}, {"id": 253, "name": "束帶", "cat": "supply", "qty": "12", "unit": "包", "zone": "B", "note": ""}, {"id": 254, "name": "事務帶", "cat": "supply", "qty": "19", "unit": "包", "zone": "B", "note": ""}, {"id": 255, "name": "哨子（黑）", "cat": "equip", "qty": "99", "unit": "個", "zone": "B", "note": ""}, {"id": 256, "name": "哨子掛繩", "cat": "equip", "qty": "97", "unit": "條", "zone": "B", "note": ""}, {"id": 257, "name": "哨子（銀）+掛繩", "cat": "equip", "qty": "2", "unit": "組", "zone": "B", "note": ""}, {"id": 258, "name": "三合一充電線", "cat": "supply", "qty": "25", "unit": "條", "zone": "B", "note": ""}, {"id": 259, "name": "A4影印紙", "cat": "supply", "qty": "20", "unit": "箱", "zone": "B", "note": ""}, {"id": 260, "name": "拾物網", "cat": "equip", "qty": "4", "unit": "個", "zone": "B", "note": ""}, {"id": 261, "name": "梯子", "cat": "equip", "qty": "1", "unit": "架", "zone": "B", "note": ""}, {"id": 262, "name": "小型數幣機", "cat": "equip", "qty": "2", "unit": "台", "zone": "B", "note": ""}, {"id": 263, "name": "服務人員背心", "cat": "equip", "qty": "20", "unit": "件", "zone": "B", "note": ""}, {"id": 264, "name": "小行李箱", "cat": "equip", "qty": "1", "unit": "個", "zone": "B", "note": ""}, {"id": 265, "name": "大行李箱", "cat": "equip", "qty": "1", "unit": "個", "zone": "B", "note": ""}, {"id": 266, "name": "滅火器底座", "cat": "equip", "qty": "5", "unit": "個", "zone": "B", "note": ""}, {"id": 267, "name": "延長線", "cat": "supply", "qty": "2", "unit": "箱", "zone": "B", "note": ""}, {"id": 268, "name": "10層效率櫃", "cat": "equip", "qty": "2", "unit": "台", "zone": "B", "note": ""}, {"id": 269, "name": "新值勤包", "cat": "equip", "qty": "1", "unit": "個", "zone": "C", "note": ""}, {"id": 270, "name": "舊值勤包", "cat": "equip", "qty": "17", "unit": "個", "zone": "C", "note": ""}, {"id": 271, "name": "開放式雜誌架", "cat": "equip", "qty": "1", "unit": "個", "zone": "C", "note": ""}, {"id": 272, "name": "小心地滑牌", "cat": "equip", "qty": "若干", "unit": "個", "zone": "C", "note": ""}, {"id": 273, "name": "裝訂膠圈（彩色）", "cat": "supply", "qty": "1", "unit": "盒", "zone": "C", "note": ""}, {"id": 274, "name": "裝訂膠圈（黑小）", "cat": "supply", "qty": "1", "unit": "盒", "zone": "C", "note": ""}, {"id": 275, "name": "裝訂膠圈（黑大）", "cat": "supply", "qty": "2", "unit": "盒", "zone": "C", "note": ""}, {"id": 276, "name": "裝訂機", "cat": "equip", "qty": "1", "unit": "台", "zone": "C", "note": ""}, {"id": 277, "name": "A4護貝膠膜", "cat": "supply", "qty": "2", "unit": "包", "zone": "C", "note": ""}, {"id": 278, "name": "紅閃燈", "cat": "ctrl", "qty": "3", "unit": "支", "zone": "C", "note": ""}, {"id": 279, "name": "數據線", "cat": "supply", "qty": "1", "unit": "捲", "zone": "C", "note": ""}, {"id": 280, "name": "省電燈泡", "cat": "supply", "qty": "17", "unit": "個", "zone": "C", "note": ""}, {"id": 281, "name": "財務袋", "cat": "supply", "qty": "55", "unit": "個", "zone": "C", "note": ""}, {"id": 282, "name": "封籤", "cat": "supply", "qty": "40", "unit": "排", "zone": "C", "note": ""}, {"id": 283, "name": "1號電池", "cat": "supply", "qty": "240", "unit": "顆", "zone": "C", "note": ""}, {"id": 284, "name": "票證袋", "cat": "supply", "qty": "34", "unit": "個", "zone": "C", "note": ""}, {"id": 285, "name": "聖誕裝飾", "cat": "misc", "qty": "1", "unit": "批", "zone": "C", "note": ""}, {"id": 286, "name": "微波爐備品", "cat": "misc", "qty": "1", "unit": "批", "zone": "C", "note": ""}, {"id": 287, "name": "數據線（箱裝）", "cat": "supply", "qty": "1", "unit": "箱", "zone": "C", "note": ""}, {"id": 288, "name": "三色指揮棒", "cat": "equip", "qty": "5", "unit": "支", "zone": "C", "note": ""}, {"id": 289, "name": "手提整理箱", "cat": "equip", "qty": "4", "unit": "個", "zone": "D", "note": ""}, {"id": 290, "name": "大聲公", "cat": "equip", "qty": "4", "unit": "台", "zone": "D", "note": ""}, {"id": 291, "name": "雨傘", "cat": "equip", "qty": "2", "unit": "把", "zone": "D", "note": ""}, {"id": 292, "name": "待水銷簿冊", "cat": "misc", "qty": "若干", "unit": "批", "zone": "D", "note": "待水銷處理"}, {"id": 293, "name": "SCD備品", "cat": "equip", "qty": "1", "unit": "個", "zone": "D", "note": ""}, {"id": 294, "name": "電線壓條", "cat": "supply", "qty": "8", "unit": "條", "zone": "A", "note": ""}],
-  inv412: [
-    {id:'A', label:'A 區', sub:'左側', color:'#2d5f80', bg:'rgba(232,240,245,0.75)', top:15, left:3, w:30, h:75},
-    {id:'B', label:'B 區', sub:'中間', color:'#534ab7', bg:'rgba(238,237,254,0.75)', top:15, left:35, w:30, h:75},
-    {id:'C', label:'C 區', sub:'右側', color:'#3b6d11', bg:'rgba(234,243,222,0.75)', top:15, left:67, w:30, h:75},
-  ]
+// 固定區域定義（id 永遠是大寫字母，不可新增刪除）
+const INV_ZONES_DEFAULT = {
+  inv403: [{"id": "A", "label": "A 區", "sub": "消防設備", "color": "#2d5f80", "bg": "rgba(232,240,245,0.75)", "top": 5, "left": 3, "w": 32, "h": 55}, {"id": "B", "label": "B 區", "sub": "中央走道", "color": "#534ab7", "bg": "rgba(238,237,254,0.75)", "top": 5, "left": 36, "w": 30, "h": 55}, {"id": "C", "label": "C 區", "sub": "右側角落", "color": "#3b6d11", "bg": "rgba(234,243,222,0.75)", "top": 5, "left": 67, "w": 30, "h": 55}, {"id": "D", "label": "D 區", "sub": "入口雜項", "color": "#854f0b", "bg": "rgba(250,238,218,0.75)", "top": 61, "left": 3, "w": 94, "h": 33}],
+  inv406: [{"id": "A", "label": "A 區", "sub": "耗材雜物", "color": "#a32d2d", "bg": "rgba(252,235,235,0.75)", "top": 5, "left": 3, "w": 44, "h": 58}, {"id": "B", "label": "B 區", "sub": "防護設備", "color": "#854f0b", "bg": "rgba(250,238,218,0.75)", "top": 5, "left": 52, "w": 44, "h": 58}, {"id": "C", "label": "C 區", "sub": "G9物品", "color": "#3b6d11", "bg": "rgba(234,243,222,0.75)", "top": 68, "left": 3, "w": 44, "h": 27}, {"id": "D", "label": "D 區", "sub": "門口區", "color": "#534ab7", "bg": "rgba(238,237,254,0.75)", "top": 68, "left": 52, "w": 44, "h": 27}],
+  inv412: [{"id": "A", "label": "A 區", "sub": "左側", "color": "#2d5f80", "bg": "rgba(232,240,245,0.75)", "top": 15, "left": 3, "w": 30, "h": 75}, {"id": "B", "label": "B 區", "sub": "中間", "color": "#534ab7", "bg": "rgba(238,237,254,0.75)", "top": 15, "left": 35, "w": 30, "h": 75}, {"id": "C", "label": "C 區", "sub": "右側", "color": "#3b6d11", "bg": "rgba(234,243,222,0.75)", "top": 15, "left": 67, "w": 30, "h": 75}],
 };
+let invZones = JSON.parse(JSON.stringify(INV_ZONES_DEFAULT));
 
-let invData = {
-  inv403: [
-    {id:1,name:'乾粉滅火器',cat:'fire',qty:'19',unit:'支',zone:'A',note:'訓練用×14、備品×4、報廢/已壞×1'},
-    {id:2,name:'CO₂滅火器',cat:'fire',qty:'8',unit:'支',zone:'A',note:'黑色喇叭型'},
-    {id:3,name:'不鏽鋼隔離柱',cat:'equip',qty:'15',unit:'支',zone:'B',note:'附伸縮繩，已確認數量'},
-    {id:4,name:'摺疊椅（藍色）',cat:'equip',qty:'38',unit:'張',zone:'B',note:'堆疊放置'},
-    {id:5,name:'10層放手欄',cat:'equip',qty:'1',unit:'組',zone:'A',note:'60107-1246'},
-    {id:6,name:'播墩',cat:'equip',qty:'2',unit:'個',zone:'B',note:'60602-003 / 60602-006'},
-    {id:7,name:'輪椅',cat:'equip',qty:'1',unit:'台',zone:'A',note:''},
-    {id:8,name:'電風扇',cat:'equip',qty:'2',unit:'台',zone:'C',note:'立扇'},
-    {id:9,name:'A2 矜架',cat:'equip',qty:'2',unit:'組',zone:'D',note:'60702-1159 / 60702-1158'},
-    {id:10,name:'A1 告示架',cat:'equip',qty:'2',unit:'組',zone:'D',note:'60702-536 / 60702-537'},
-    {id:11,name:'會議桌',cat:'equip',qty:'2',unit:'張',zone:'D',note:'60112-602含延長線×1、60114-×599/×598'},
-    {id:12,name:'白板',cat:'equip',qty:'1',unit:'塊',zone:'B',note:''},
-    {id:13,name:'G9 暫存椅',cat:'equip',qty:'4',unit:'張',zone:'B',note:''},
-    {id:14,name:'錄影架',cat:'equip',qty:'1',unit:'組',zone:'A',note:''},
-    {id:15,name:'晾衣架',cat:'equip',qty:'1',unit:'組',zone:'C',note:'未拆封，靠牆放置'},
-    {id:16,name:'紅絨（隔離繩）',cat:'ctrl',qty:'15',unit:'條',zone:'B',note:''},
-    {id:17,name:'紅閃燈',cat:'ctrl',qty:'5',unit:'支',zone:'D',note:''},
-    {id:18,name:'支架',cat:'ctrl',qty:'9',unit:'支',zone:'D',note:''},
-    {id:19,name:'推車',cat:'ctrl',qty:'6',unit:'台',zone:'D',note:''},
-    {id:20,name:'指導背心',cat:'ctrl',qty:'12',unit:'件',zone:'D',note:''},
-    {id:21,name:'捕蚊燈',cat:'ctrl',qty:'2',unit:'台',zone:'A',note:''},
-    {id:22,name:'捕貓籠',cat:'ctrl',qty:'2',unit:'個',zone:'A',note:''},
-    {id:23,name:'垃圾桶',cat:'ctrl',qty:'2',unit:'個',zone:'D',note:''},
-    {id:24,name:'A4 插牌',cat:'supply',qty:'11',unit:'個',zone:'C',note:''},
-    {id:25,name:'A4 影印紙',cat:'supply',qty:'20',unit:'包',zone:'C',note:'10包×2箱'},
-    {id:26,name:'POS 紙捲',cat:'supply',qty:'47',unit:'捲',zone:'C',note:'30捲×1箱+17捲'},
-    {id:27,name:'AVIM 感熱紙',cat:'supply',qty:'300',unit:'捲',zone:'C',note:'36捲×7箱+18捲+30捲'},
-    {id:28,name:'PAM 感熱紙',cat:'supply',qty:'450',unit:'捲',zone:'C',note:'30捲×15箱'},
-    {id:29,name:'C型夾工具',cat:'misc',qty:'1',unit:'箱',zone:'A',note:'藍紅色C型夾多支'},
-    {id:30,name:'木板（門片）',cat:'misc',qty:'1',unit:'片',zone:'C',note:'木紋板，直立放置'},
-    {id:31,name:'捲筒衛生紙（百花）',cat:'misc',qty:'',unit:'箱',zone:'C',note:'數量待確認'},
-  ],
-  inv406: [{"id": 200, "name": "二孔拱型夾", "cat": "supply", "qty": "13", "unit": "箱", "zone": "A", "note": "12入×4箱+12入×1箱"}, {"id": 201, "name": "抽取式衛生紙", "cat": "supply", "qty": "2", "unit": "箱", "zone": "A", "note": "6串×12包×2箱"}, {"id": 202, "name": "PP夾鏈袋", "cat": "supply", "qty": "1", "unit": "箱", "zone": "A", "note": ""}, {"id": 203, "name": "遺失物現金袋", "cat": "supply", "qty": "1", "unit": "箱", "zone": "A", "note": ""}, {"id": 204, "name": "遺失物吊牌", "cat": "supply", "qty": "1", "unit": "箱", "zone": "A", "note": ""}, {"id": 205, "name": "零錢盒", "cat": "supply", "qty": "1", "unit": "箱", "zone": "A", "note": ""}, {"id": 206, "name": "紙杯", "cat": "supply", "qty": "1", "unit": "箱", "zone": "A", "note": ""}, {"id": 207, "name": "吹風機", "cat": "equip", "qty": "2", "unit": "台", "zone": "A", "note": ""}, {"id": 208, "name": "中間彈力夾", "cat": "supply", "qty": "2", "unit": "箱", "zone": "A", "note": "12入×2箱"}, {"id": 209, "name": "除膠劑", "cat": "supply", "qty": "11", "unit": "罐", "zone": "A", "note": ""}, {"id": 210, "name": "A3護貝膠膜", "cat": "supply", "qty": "1", "unit": "箱", "zone": "A", "note": "10盒入×1箱"}, {"id": 211, "name": "黃黑警示膠帶", "cat": "supply", "qty": "52", "unit": "捲", "zone": "A", "note": ""}, {"id": 212, "name": "訪客臨時證+掛繩", "cat": "equip", "qty": "若干", "unit": "組", "zone": "A", "note": ""}, {"id": 213, "name": "哨子", "cat": "supply", "qty": "7", "unit": "盒", "zone": "A", "note": "12入×7盒+6個"}, {"id": 214, "name": "面紙盒", "cat": "supply", "qty": "2", "unit": "盒", "zone": "A", "note": ""}, {"id": 215, "name": "磁鐵條", "cat": "supply", "qty": "13", "unit": "組", "zone": "A", "note": ""}, {"id": 216, "name": "衛生棉", "cat": "supply", "qty": "1", "unit": "箱", "zone": "A", "note": "8包入×1箱+3包"}, {"id": 217, "name": "配重水帶", "cat": "equip", "qty": "1", "unit": "條", "zone": "A", "note": ""}, {"id": 218, "name": "電蚊拍", "cat": "equip", "qty": "1", "unit": "台", "zone": "A", "note": ""}, {"id": 219, "name": "花車帶（10尺）", "cat": "supply", "qty": "9", "unit": "個", "zone": "A", "note": ""}, {"id": 220, "name": "捲尺", "cat": "supply", "qty": "5", "unit": "個", "zone": "A", "note": ""}, {"id": 221, "name": "門擋（木）", "cat": "equip", "qty": "1", "unit": "個", "zone": "A", "note": ""}, {"id": 222, "name": "TETRA耳機", "cat": "equip", "qty": "5", "unit": "個", "zone": "A", "note": ""}, {"id": 223, "name": "變壓器（反針孔用 5V/500mA）", "cat": "equip", "qty": "5", "unit": "個", "zone": "A", "note": ""}, {"id": 224, "name": "變壓器（大聲公用 12V/2A）", "cat": "equip", "qty": "6", "unit": "個", "zone": "A", "note": ""}, {"id": 225, "name": "膠帶切割器", "cat": "supply", "qty": "10", "unit": "個", "zone": "A", "note": ""}, {"id": 226, "name": "8號夾鏈袋", "cat": "supply", "qty": "22", "unit": "包", "zone": "A", "note": ""}, {"id": 227, "name": "10號夾鏈袋", "cat": "supply", "qty": "37", "unit": "包", "zone": "A", "note": "10包+27包"}, {"id": 228, "name": "12號夾鏈袋", "cat": "supply", "qty": "10", "unit": "包", "zone": "A", "note": ""}, {"id": 229, "name": "健診手套（L）", "cat": "supply", "qty": "2", "unit": "箱", "zone": "A", "note": "10盒入×2箱+3盒"}, {"id": 230, "name": "健診手套（M）", "cat": "supply", "qty": "1", "unit": "箱", "zone": "A", "note": "10盒入×1箱+7盒"}, {"id": 231, "name": "殺蟲劑", "cat": "supply", "qty": "4", "unit": "罐", "zone": "A", "note": ""}, {"id": 232, "name": "5號夾鏈袋", "cat": "supply", "qty": "7", "unit": "包", "zone": "A", "note": ""}, {"id": 233, "name": "4號夾鏈袋", "cat": "supply", "qty": "6", "unit": "包", "zone": "A", "note": ""}, {"id": 234, "name": "汰換皮革手套（舊）", "cat": "misc", "qty": "若干", "unit": "雙", "zone": "A", "note": "髒舊待處理"}, {"id": 235, "name": "皮革手套", "cat": "equip", "qty": "49", "unit": "雙", "zone": "A", "note": "31雙+18雙"}, {"id": 236, "name": "橡膠手套", "cat": "equip", "qty": "1", "unit": "雙", "zone": "A", "note": ""}, {"id": 237, "name": "科技沙包", "cat": "equip", "qty": "35", "unit": "個", "zone": "A", "note": ""}, {"id": 238, "name": "頭燈", "cat": "equip", "qty": "4", "unit": "個", "zone": "A", "note": "含充電器、電池"}, {"id": 239, "name": "手電筒", "cat": "equip", "qty": "6", "unit": "組", "zone": "A", "note": ""}, {"id": 240, "name": "耳塞", "cat": "supply", "qty": "1", "unit": "盒", "zone": "A", "note": ""}, {"id": 241, "name": "標示站名綠色帆布袋", "cat": "equip", "qty": "9", "unit": "個", "zone": "A", "note": ""}, {"id": 242, "name": "4公升酒精", "cat": "supply", "qty": "12", "unit": "瓶", "zone": "A", "note": "6瓶入×2箱"}, {"id": 243, "name": "防護衣", "cat": "equip", "qty": "2", "unit": "件", "zone": "B", "note": ""}, {"id": 244, "name": "防護鞋", "cat": "equip", "qty": "2", "unit": "雙", "zone": "B", "note": ""}, {"id": 245, "name": "防護手套", "cat": "equip", "qty": "2", "unit": "雙", "zone": "B", "note": ""}, {"id": 246, "name": "小垃圾桶（塑膠）", "cat": "equip", "qty": "1", "unit": "個", "zone": "B", "note": ""}, {"id": 247, "name": "膠帶台", "cat": "supply", "qty": "10", "unit": "個", "zone": "B", "note": ""}, {"id": 248, "name": "20頁資料夾", "cat": "supply", "qty": "36", "unit": "冊", "zone": "B", "note": ""}, {"id": 249, "name": "防毒面罩", "cat": "equip", "qty": "2", "unit": "個", "zone": "B", "note": "含濾罐×2"}, {"id": 250, "name": "護目鏡", "cat": "equip", "qty": "2", "unit": "個", "zone": "B", "note": ""}, {"id": 251, "name": "防疫面罩", "cat": "equip", "qty": "9", "unit": "組", "zone": "B", "note": ""}, {"id": 252, "name": "防割手套", "cat": "equip", "qty": "14", "unit": "雙", "zone": "B", "note": ""}, {"id": 253, "name": "束帶", "cat": "supply", "qty": "12", "unit": "包", "zone": "B", "note": ""}, {"id": 254, "name": "事務帶", "cat": "supply", "qty": "19", "unit": "包", "zone": "B", "note": ""}, {"id": 255, "name": "哨子（黑）", "cat": "equip", "qty": "99", "unit": "個", "zone": "B", "note": ""}, {"id": 256, "name": "哨子掛繩", "cat": "equip", "qty": "97", "unit": "條", "zone": "B", "note": ""}, {"id": 257, "name": "哨子（銀）+掛繩", "cat": "equip", "qty": "2", "unit": "組", "zone": "B", "note": ""}, {"id": 258, "name": "三合一充電線", "cat": "supply", "qty": "25", "unit": "條", "zone": "B", "note": ""}, {"id": 259, "name": "A4影印紙", "cat": "supply", "qty": "20", "unit": "箱", "zone": "B", "note": ""}, {"id": 260, "name": "拾物網", "cat": "equip", "qty": "4", "unit": "個", "zone": "B", "note": ""}, {"id": 261, "name": "梯子", "cat": "equip", "qty": "1", "unit": "架", "zone": "B", "note": ""}, {"id": 262, "name": "小型數幣機", "cat": "equip", "qty": "2", "unit": "台", "zone": "B", "note": ""}, {"id": 263, "name": "服務人員背心", "cat": "equip", "qty": "20", "unit": "件", "zone": "B", "note": ""}, {"id": 264, "name": "小行李箱", "cat": "equip", "qty": "1", "unit": "個", "zone": "B", "note": ""}, {"id": 265, "name": "大行李箱", "cat": "equip", "qty": "1", "unit": "個", "zone": "B", "note": ""}, {"id": 266, "name": "滅火器底座", "cat": "equip", "qty": "5", "unit": "個", "zone": "B", "note": ""}, {"id": 267, "name": "延長線", "cat": "supply", "qty": "2", "unit": "箱", "zone": "B", "note": ""}, {"id": 268, "name": "10層效率櫃", "cat": "equip", "qty": "2", "unit": "台", "zone": "B", "note": ""}, {"id": 269, "name": "新值勤包", "cat": "equip", "qty": "1", "unit": "個", "zone": "C", "note": ""}, {"id": 270, "name": "舊值勤包", "cat": "equip", "qty": "17", "unit": "個", "zone": "C", "note": ""}, {"id": 271, "name": "開放式雜誌架", "cat": "equip", "qty": "1", "unit": "個", "zone": "C", "note": ""}, {"id": 272, "name": "小心地滑牌", "cat": "equip", "qty": "若干", "unit": "個", "zone": "C", "note": ""}, {"id": 273, "name": "裝訂膠圈（彩色）", "cat": "supply", "qty": "1", "unit": "盒", "zone": "C", "note": ""}, {"id": 274, "name": "裝訂膠圈（黑小）", "cat": "supply", "qty": "1", "unit": "盒", "zone": "C", "note": ""}, {"id": 275, "name": "裝訂膠圈（黑大）", "cat": "supply", "qty": "2", "unit": "盒", "zone": "C", "note": ""}, {"id": 276, "name": "裝訂機", "cat": "equip", "qty": "1", "unit": "台", "zone": "C", "note": ""}, {"id": 277, "name": "A4護貝膠膜", "cat": "supply", "qty": "2", "unit": "包", "zone": "C", "note": ""}, {"id": 278, "name": "紅閃燈", "cat": "ctrl", "qty": "3", "unit": "支", "zone": "C", "note": ""}, {"id": 279, "name": "數據線", "cat": "supply", "qty": "1", "unit": "捲", "zone": "C", "note": ""}, {"id": 280, "name": "省電燈泡", "cat": "supply", "qty": "17", "unit": "個", "zone": "C", "note": ""}, {"id": 281, "name": "財務袋", "cat": "supply", "qty": "55", "unit": "個", "zone": "C", "note": ""}, {"id": 282, "name": "封籤", "cat": "supply", "qty": "40", "unit": "排", "zone": "C", "note": ""}, {"id": 283, "name": "1號電池", "cat": "supply", "qty": "240", "unit": "顆", "zone": "C", "note": ""}, {"id": 284, "name": "票證袋", "cat": "supply", "qty": "34", "unit": "個", "zone": "C", "note": ""}, {"id": 285, "name": "聖誕裝飾", "cat": "misc", "qty": "1", "unit": "批", "zone": "C", "note": ""}, {"id": 286, "name": "微波爐備品", "cat": "misc", "qty": "1", "unit": "批", "zone": "C", "note": ""}, {"id": 287, "name": "數據線（箱裝）", "cat": "supply", "qty": "1", "unit": "箱", "zone": "C", "note": ""}, {"id": 288, "name": "三色指揮棒", "cat": "equip", "qty": "5", "unit": "支", "zone": "C", "note": ""}, {"id": 289, "name": "手提整理箱", "cat": "equip", "qty": "4", "unit": "個", "zone": "D", "note": ""}, {"id": 290, "name": "大聲公", "cat": "equip", "qty": "4", "unit": "台", "zone": "D", "note": ""}, {"id": 291, "name": "雨傘", "cat": "equip", "qty": "2", "unit": "把", "zone": "D", "note": ""}, {"id": 292, "name": "待水銷簿冊", "cat": "misc", "qty": "若干", "unit": "批", "zone": "D", "note": "待水銷處理"}, {"id": 293, "name": "SCD備品", "cat": "equip", "qty": "1", "unit": "個", "zone": "D", "note": ""}, {"id": 294, "name": "電線壓條", "cat": "supply", "qty": "8", "unit": "條", "zone": "A", "note": ""}],
-  inv412: []
-};
+// 品項資料（從 Sheets 載入後覆寫）
+let inv403 = [{"id": 1, "name": "乾粉滅火器", "cat": "fire", "qty": "19", "unit": "支", "zone": "A", "note": "訓練用×14、備品×4、報廢/已壞×1"}, {"id": 2, "name": "CO₂滅火器", "cat": "fire", "qty": "8", "unit": "支", "zone": "A", "note": "黑色喇叭型"}, {"id": 3, "name": "不鏽鋼隔離柱", "cat": "equip", "qty": "15", "unit": "支", "zone": "B", "note": "附伸縮繩，已確認數量"}, {"id": 4, "name": "摺疊椅（藍色）", "cat": "equip", "qty": "38", "unit": "張", "zone": "B", "note": "堆疊放置"}, {"id": 5, "name": "10層放手欄", "cat": "equip", "qty": "1", "unit": "組", "zone": "A", "note": "60107-1246"}, {"id": 6, "name": "播墩", "cat": "equip", "qty": "2", "unit": "個", "zone": "B", "note": "60602-003 / 60602-006"}, {"id": 7, "name": "輪椅", "cat": "equip", "qty": "1", "unit": "台", "zone": "A", "note": ""}, {"id": 8, "name": "電風扇", "cat": "equip", "qty": "2", "unit": "台", "zone": "C", "note": "立扇"}, {"id": 9, "name": "A2 告示架", "cat": "equip", "qty": "2", "unit": "組", "zone": "D", "note": "60702-1159 / 60702-1158"}, {"id": 10, "name": "A1 告示架", "cat": "equip", "qty": "2", "unit": "組", "zone": "D", "note": "60702-536 / 60702-537"}, {"id": 11, "name": "會議桌", "cat": "equip", "qty": "2", "unit": "張", "zone": "D", "note": "60112-602含延長線×1"}, {"id": 12, "name": "白板", "cat": "equip", "qty": "1", "unit": "塊", "zone": "B", "note": ""}, {"id": 13, "name": "G9 暫存椅", "cat": "equip", "qty": "4", "unit": "張", "zone": "B", "note": ""}, {"id": 14, "name": "錄影架", "cat": "equip", "qty": "1", "unit": "組", "zone": "A", "note": ""}, {"id": 15, "name": "晾衣架", "cat": "equip", "qty": "1", "unit": "組", "zone": "C", "note": "未拆封，靠牆放置"}, {"id": 16, "name": "紅絨（隔離繩）", "cat": "ctrl", "qty": "15", "unit": "條", "zone": "B", "note": ""}, {"id": 17, "name": "紅閃燈", "cat": "ctrl", "qty": "5", "unit": "支", "zone": "D", "note": ""}, {"id": 18, "name": "支架", "cat": "ctrl", "qty": "9", "unit": "支", "zone": "D", "note": ""}, {"id": 19, "name": "推車", "cat": "ctrl", "qty": "6", "unit": "台", "zone": "D", "note": ""}, {"id": 20, "name": "指導背心", "cat": "ctrl", "qty": "12", "unit": "件", "zone": "D", "note": ""}, {"id": 21, "name": "捕蚊燈", "cat": "ctrl", "qty": "2", "unit": "台", "zone": "A", "note": ""}, {"id": 22, "name": "捕貓籠", "cat": "ctrl", "qty": "2", "unit": "個", "zone": "A", "note": ""}, {"id": 23, "name": "垃圾桶", "cat": "ctrl", "qty": "2", "unit": "個", "zone": "D", "note": ""}, {"id": 24, "name": "A4 插牌", "cat": "supply", "qty": "11", "unit": "個", "zone": "C", "note": ""}, {"id": 25, "name": "A4 影印紙", "cat": "supply", "qty": "20", "unit": "包", "zone": "C", "note": "10包×2箱"}, {"id": 26, "name": "POS 紙捲", "cat": "supply", "qty": "47", "unit": "捲", "zone": "C", "note": "30捲×1箱+17捲"}, {"id": 27, "name": "ATIM 感熱紙", "cat": "supply", "qty": "300", "unit": "捲", "zone": "C", "note": "36捲×7箱+18捲+30捲"}, {"id": 28, "name": "PAM 感熱紙", "cat": "supply", "qty": "450", "unit": "捲", "zone": "C", "note": "30捲×15箱"}, {"id": 29, "name": "C型夾工具", "cat": "misc", "qty": "1", "unit": "箱", "zone": "A", "note": ""}, {"id": 30, "name": "木板（門片）", "cat": "misc", "qty": "1", "unit": "片", "zone": "C", "note": ""}, {"id": 31, "name": "捲筒衛生紙", "cat": "misc", "qty": "", "unit": "箱", "zone": "C", "note": "數量待確認"}];
+let inv406 = [{"id": 200, "name": "二孔拱型夾", "cat": "supply", "qty": "13", "unit": "箱", "zone": "A", "note": "12入×4箱+12入×1箱"}, {"id": 201, "name": "抽取式衛生紙", "cat": "supply", "qty": "2", "unit": "箱", "zone": "A", "note": "6串×12包×2箱"}, {"id": 202, "name": "PP夾鏈袋", "cat": "supply", "qty": "1", "unit": "箱", "zone": "A", "note": ""}, {"id": 203, "name": "遺失物現金袋", "cat": "supply", "qty": "1", "unit": "箱", "zone": "A", "note": ""}, {"id": 204, "name": "遺失物吊牌", "cat": "supply", "qty": "1", "unit": "箱", "zone": "A", "note": ""}, {"id": 205, "name": "零錢盒", "cat": "supply", "qty": "1", "unit": "箱", "zone": "A", "note": ""}, {"id": 206, "name": "紙杯", "cat": "supply", "qty": "1", "unit": "箱", "zone": "A", "note": ""}, {"id": 207, "name": "吹風機", "cat": "equip", "qty": "2", "unit": "台", "zone": "A", "note": ""}, {"id": 208, "name": "中間彈力夾", "cat": "supply", "qty": "2", "unit": "箱", "zone": "A", "note": "12入×2箱"}, {"id": 209, "name": "除膠劑", "cat": "supply", "qty": "11", "unit": "罐", "zone": "A", "note": ""}, {"id": 210, "name": "A3護貝膠膜", "cat": "supply", "qty": "1", "unit": "箱", "zone": "A", "note": "10盒入×1箱"}, {"id": 211, "name": "黃黑警示膠帶", "cat": "supply", "qty": "52", "unit": "捲", "zone": "A", "note": ""}, {"id": 212, "name": "訪客臨時證+掛繩", "cat": "equip", "qty": "若干", "unit": "組", "zone": "A", "note": ""}, {"id": 213, "name": "哨子", "cat": "supply", "qty": "7", "unit": "盒", "zone": "A", "note": "12入×7盒+6個"}, {"id": 214, "name": "面紙盒", "cat": "supply", "qty": "2", "unit": "盒", "zone": "A", "note": ""}, {"id": 215, "name": "磁鐵條", "cat": "supply", "qty": "13", "unit": "組", "zone": "A", "note": ""}, {"id": 216, "name": "衛生棉", "cat": "supply", "qty": "1", "unit": "箱", "zone": "A", "note": "8包入×1箱+3包"}, {"id": 217, "name": "配重水帶", "cat": "equip", "qty": "1", "unit": "條", "zone": "A", "note": ""}, {"id": 218, "name": "電蚊拍", "cat": "equip", "qty": "1", "unit": "台", "zone": "A", "note": ""}, {"id": 219, "name": "花車帶（10尺）", "cat": "supply", "qty": "9", "unit": "個", "zone": "A", "note": ""}, {"id": 220, "name": "捲尺", "cat": "supply", "qty": "5", "unit": "個", "zone": "A", "note": ""}, {"id": 221, "name": "門擋（木）", "cat": "equip", "qty": "1", "unit": "個", "zone": "A", "note": ""}, {"id": 222, "name": "TETRA耳機", "cat": "equip", "qty": "5", "unit": "個", "zone": "A", "note": ""}, {"id": 223, "name": "變壓器（反針孔用）", "cat": "equip", "qty": "5", "unit": "個", "zone": "A", "note": "5V/500mA"}, {"id": 224, "name": "變壓器（大聲公用）", "cat": "equip", "qty": "6", "unit": "個", "zone": "A", "note": "12V/2A"}, {"id": 225, "name": "膠帶切割器", "cat": "supply", "qty": "10", "unit": "個", "zone": "A", "note": ""}, {"id": 226, "name": "8號夾鏈袋", "cat": "supply", "qty": "22", "unit": "包", "zone": "A", "note": ""}, {"id": 227, "name": "10號夾鏈袋", "cat": "supply", "qty": "37", "unit": "包", "zone": "A", "note": "10包+27包"}, {"id": 228, "name": "12號夾鏈袋", "cat": "supply", "qty": "10", "unit": "包", "zone": "A", "note": ""}, {"id": 229, "name": "健診手套（L）", "cat": "supply", "qty": "2", "unit": "箱", "zone": "A", "note": "10盒×2箱+3盒"}, {"id": 230, "name": "健診手套（M）", "cat": "supply", "qty": "1", "unit": "箱", "zone": "A", "note": "10盒×1箱+7盒"}, {"id": 231, "name": "殺蟲劑", "cat": "supply", "qty": "4", "unit": "罐", "zone": "A", "note": ""}, {"id": 232, "name": "5號夾鏈袋", "cat": "supply", "qty": "7", "unit": "包", "zone": "A", "note": ""}, {"id": 233, "name": "4號夾鏈袋", "cat": "supply", "qty": "6", "unit": "包", "zone": "A", "note": ""}, {"id": 234, "name": "汰換皮革手套", "cat": "misc", "qty": "若干", "unit": "雙", "zone": "A", "note": "髒舊待處理"}, {"id": 235, "name": "皮革手套", "cat": "equip", "qty": "49", "unit": "雙", "zone": "A", "note": "31雙+18雙"}, {"id": 236, "name": "橡膠手套", "cat": "equip", "qty": "1", "unit": "雙", "zone": "A", "note": ""}, {"id": 237, "name": "科技沙包", "cat": "equip", "qty": "35", "unit": "個", "zone": "A", "note": ""}, {"id": 238, "name": "頭燈", "cat": "equip", "qty": "4", "unit": "個", "zone": "A", "note": "含充電器、電池"}, {"id": 239, "name": "手電筒", "cat": "equip", "qty": "6", "unit": "組", "zone": "A", "note": ""}, {"id": 240, "name": "耳塞", "cat": "supply", "qty": "1", "unit": "盒", "zone": "A", "note": ""}, {"id": 241, "name": "標示站名帆布袋", "cat": "equip", "qty": "9", "unit": "個", "zone": "A", "note": "綠色"}, {"id": 242, "name": "4公升酒精", "cat": "supply", "qty": "12", "unit": "瓶", "zone": "A", "note": "6瓶×2箱"}, {"id": 243, "name": "電線壓條", "cat": "supply", "qty": "8", "unit": "條", "zone": "A", "note": ""}, {"id": 244, "name": "防護衣", "cat": "equip", "qty": "2", "unit": "件", "zone": "B", "note": ""}, {"id": 245, "name": "防護鞋", "cat": "equip", "qty": "2", "unit": "雙", "zone": "B", "note": ""}, {"id": 246, "name": "防護手套", "cat": "equip", "qty": "2", "unit": "雙", "zone": "B", "note": ""}, {"id": 247, "name": "小垃圾桶", "cat": "equip", "qty": "1", "unit": "個", "zone": "B", "note": "塑膠"}, {"id": 248, "name": "膠帶台", "cat": "supply", "qty": "10", "unit": "個", "zone": "B", "note": ""}, {"id": 249, "name": "20頁資料夾", "cat": "supply", "qty": "36", "unit": "冊", "zone": "B", "note": ""}, {"id": 250, "name": "防毒面罩", "cat": "equip", "qty": "2", "unit": "個", "zone": "B", "note": "含濾罐×2"}, {"id": 251, "name": "護目鏡", "cat": "equip", "qty": "2", "unit": "個", "zone": "B", "note": ""}, {"id": 252, "name": "防疫面罩", "cat": "equip", "qty": "9", "unit": "組", "zone": "B", "note": ""}, {"id": 253, "name": "防割手套", "cat": "equip", "qty": "14", "unit": "雙", "zone": "B", "note": ""}, {"id": 254, "name": "束帶", "cat": "supply", "qty": "12", "unit": "包", "zone": "B", "note": ""}, {"id": 255, "name": "事務帶", "cat": "supply", "qty": "19", "unit": "包", "zone": "B", "note": ""}, {"id": 256, "name": "哨子（黑）", "cat": "equip", "qty": "99", "unit": "個", "zone": "B", "note": ""}, {"id": 257, "name": "哨子掛繩", "cat": "equip", "qty": "97", "unit": "條", "zone": "B", "note": ""}, {"id": 258, "name": "哨子（銀）+掛繩", "cat": "equip", "qty": "2", "unit": "組", "zone": "B", "note": ""}, {"id": 259, "name": "三合一充電線", "cat": "supply", "qty": "25", "unit": "條", "zone": "B", "note": ""}, {"id": 260, "name": "A4影印紙", "cat": "supply", "qty": "20", "unit": "箱", "zone": "B", "note": ""}, {"id": 261, "name": "拾物網", "cat": "equip", "qty": "4", "unit": "個", "zone": "B", "note": ""}, {"id": 262, "name": "梯子", "cat": "equip", "qty": "1", "unit": "架", "zone": "B", "note": ""}, {"id": 263, "name": "小型數幣機", "cat": "equip", "qty": "2", "unit": "台", "zone": "B", "note": ""}, {"id": 264, "name": "服務人員背心", "cat": "equip", "qty": "20", "unit": "件", "zone": "B", "note": ""}, {"id": 265, "name": "小行李箱", "cat": "equip", "qty": "1", "unit": "個", "zone": "B", "note": ""}, {"id": 266, "name": "大行李箱", "cat": "equip", "qty": "1", "unit": "個", "zone": "B", "note": ""}, {"id": 267, "name": "滅火器底座", "cat": "equip", "qty": "5", "unit": "個", "zone": "B", "note": ""}, {"id": 268, "name": "延長線", "cat": "supply", "qty": "2", "unit": "箱", "zone": "B", "note": ""}, {"id": 269, "name": "10層效率櫃", "cat": "equip", "qty": "2", "unit": "台", "zone": "B", "note": ""}, {"id": 270, "name": "新值勤包", "cat": "equip", "qty": "1", "unit": "個", "zone": "C", "note": ""}, {"id": 271, "name": "舊值勤包", "cat": "equip", "qty": "17", "unit": "個", "zone": "C", "note": ""}, {"id": 272, "name": "開放式雜誌架", "cat": "equip", "qty": "1", "unit": "個", "zone": "C", "note": ""}, {"id": 273, "name": "小心地滑牌", "cat": "equip", "qty": "若干", "unit": "個", "zone": "C", "note": ""}, {"id": 274, "name": "裝訂膠圈（彩色）", "cat": "supply", "qty": "1", "unit": "盒", "zone": "C", "note": ""}, {"id": 275, "name": "裝訂膠圈（黑小）", "cat": "supply", "qty": "1", "unit": "盒", "zone": "C", "note": ""}, {"id": 276, "name": "裝訂膠圈（黑大）", "cat": "supply", "qty": "2", "unit": "盒", "zone": "C", "note": ""}, {"id": 277, "name": "裝訂機", "cat": "equip", "qty": "1", "unit": "台", "zone": "C", "note": ""}, {"id": 278, "name": "A4護貝膠膜", "cat": "supply", "qty": "2", "unit": "包", "zone": "C", "note": ""}, {"id": 279, "name": "紅閃燈", "cat": "ctrl", "qty": "3", "unit": "支", "zone": "C", "note": ""}, {"id": 280, "name": "數據線", "cat": "supply", "qty": "1", "unit": "捲", "zone": "C", "note": ""}, {"id": 281, "name": "省電燈泡", "cat": "supply", "qty": "17", "unit": "個", "zone": "C", "note": ""}, {"id": 282, "name": "財務袋", "cat": "supply", "qty": "55", "unit": "個", "zone": "C", "note": ""}, {"id": 283, "name": "封籤", "cat": "supply", "qty": "40", "unit": "排", "zone": "C", "note": ""}, {"id": 284, "name": "1號電池", "cat": "supply", "qty": "240", "unit": "顆", "zone": "C", "note": ""}, {"id": 285, "name": "票證袋", "cat": "supply", "qty": "34", "unit": "個", "zone": "C", "note": ""}, {"id": 286, "name": "聖誕裝飾", "cat": "misc", "qty": "1", "unit": "批", "zone": "C", "note": ""}, {"id": 287, "name": "微波爐備品", "cat": "misc", "qty": "1", "unit": "批", "zone": "C", "note": ""}, {"id": 288, "name": "數據線（箱裝）", "cat": "supply", "qty": "1", "unit": "箱", "zone": "C", "note": ""}, {"id": 289, "name": "三色指揮棒", "cat": "equip", "qty": "5", "unit": "支", "zone": "C", "note": ""}, {"id": 290, "name": "手提整理箱", "cat": "equip", "qty": "4", "unit": "個", "zone": "D", "note": ""}, {"id": 291, "name": "大聲公", "cat": "equip", "qty": "4", "unit": "台", "zone": "D", "note": ""}, {"id": 292, "name": "雨傘", "cat": "equip", "qty": "2", "unit": "把", "zone": "D", "note": ""}, {"id": 293, "name": "待水銷簿冊", "cat": "misc", "qty": "若干", "unit": "批", "zone": "D", "note": "待水銷處理"}, {"id": 294, "name": "SCD備品", "cat": "equip", "qty": "1", "unit": "個", "zone": "D", "note": ""}];
+let inv412 = [];
 
-const INV_CATS = {fire:'消防',equip:'設備',ctrl:'管制',supply:'耗材',misc:'雜項'};
-const INV_CAT_CLS = {fire:'icat-fire',equip:'icat-equip',ctrl:'icat-ctrl',supply:'icat-supply',misc:'icat-misc'};
-const INV_COLORS = [
-  {label:'藍',  border:'#2d5f80', bg:'rgba(232,240,245,0.75)', text:'#245070'},
-  {label:'紫',  border:'#534ab7', bg:'rgba(238,237,254,0.75)', text:'#3c3489'},
-  {label:'綠',  border:'#3b6d11', bg:'rgba(234,243,222,0.75)', text:'#27500a'},
-  {label:'橙',  border:'#854f0b', bg:'rgba(250,238,218,0.75)', text:'#633806'},
-  {label:'紅',  border:'#a32d2d', bg:'rgba(252,235,235,0.75)', text:'#791f1f'},
-  {label:'灰',  border:'#5f5e5a', bg:'rgba(241,239,232,0.75)', text:'#2c2c2a'},
+// 統一存取介面
+function invGetItems(roomId) {
+  if (roomId==='inv403') return inv403;
+  if (roomId==='inv406') return inv406;
+  return inv412;
+}
+function invSetItems(roomId, arr) {
+  if (roomId==='inv403') inv403=arr;
+  else if (roomId==='inv406') inv406=arr;
+  else inv412=arr;
+}
+function invGetZones(roomId) { return invZones[roomId]||[]; }
+
+// 類別設定
+const INV_CATS = [
+  {id:'fire',   label:'消防', color:'#c0392b', bg:'#fdf2f0'},
+  {id:'equip',  label:'設備', color:'#2d5f80', bg:'#eef5fa'},
+  {id:'ctrl',   label:'管制', color:'#534ab7', bg:'#f0eefc'},
+  {id:'supply', label:'耗材', color:'#3b6d11', bg:'#eef6e5'},
+  {id:'misc',   label:'雜項', color:'#6b6b6b', bg:'#f3f3f3'},
 ];
 
-// ── 導覽 ──────────────────────────────────────────────────────────
-function toggleInventoryNav() {
-  const sub = document.getElementById('inv-subnav');
-  const arrow = document.getElementById('inv-nav-arrow');
-  const open = sub.style.display !== 'none';
-  sub.style.display = open ? 'none' : 'block';
-  arrow.style.transform = open ? '' : 'rotate(90deg)';
-  if (!open) showInventoryRoom('inv403');
+function invCatInfo(catId) {
+  return INV_CATS.find(c=>c.id===catId) || INV_CATS[4];
 }
 
-function showInventoryRoom(roomId) {
+// zone 值清理（大小寫不敏感，確保合法）
+function invSanitize(roomId) {
+  const validIds = invGetZones(roomId).map(z=>z.id);
+  if (!validIds.length) return;
+  invGetItems(roomId).forEach(row => {
+    if (!row.zone || validIds.indexOf(row.zone)===-1) {
+      const upper = (row.zone||'').toUpperCase();
+      const match = validIds.find(id=>id.toUpperCase()===upper);
+      row.zone = match || validIds[0];
+    }
+  });
+}
+function invSanitizeAll() {
+  ['inv403','inv406','inv412'].forEach(invSanitize);
+}
+
+// ── 渲染入口 ──────────────────────────────────────────────────
+function renderInvPage(roomId) {
+  roomId = roomId || invCurrentRoom;
   invCurrentRoom = roomId;
-  showPage('p6');
-  ['inv-tab-403','inv-tab-406','inv-tab-412'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.classList.remove('active');
-  });
-  const tabMap = {inv403:'inv-tab-403',inv406:'inv-tab-406',inv412:'inv-tab-412'};
-  const te = document.getElementById(tabMap[roomId]); if (te) te.classList.add('active');
-  ['nav-inv403','nav-inv406','nav-inv412'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.classList.remove('active');
-  });
-  const nm = {inv403:'nav-inv403',inv406:'nav-inv406',inv412:'nav-inv412'};
-  const ne = document.getElementById(nm[roomId]); if (ne) ne.classList.add('active');
-  const sub = document.getElementById('inv-subnav');
-  const arrow = document.getElementById('inv-nav-arrow');
-  if (sub) sub.style.display = 'block';
-  if (arrow) arrow.style.transform = 'rotate(90deg)';
-  ['inv403','inv406','inv412'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.toggle('active', id === roomId);
-  });
-  const sm = {inv403:'JIF 403 通風機房',inv406:'J1F 406 儲藏室',inv412:'J1F 412 段辦公室'};
-  const se = document.getElementById('p6-sub'); if (se) se.textContent = sm[roomId];
-  const canEdit = appMode === 'admin' && currentUser && currentUser.level !== 'B';
-  ['inv403','inv406','inv412'].forEach(rid => {
-    const btn = document.getElementById(rid + '-edit-btn');
-    if (btn) btn.style.display = (rid === roomId && canEdit) ? '' : 'none';
-  });
+  renderInvStats(roomId);
   renderInvMap(roomId);
   renderInvTable(roomId);
-  if (roomId === 'inv403') inv403UpdateCounts();
 }
 
-// ── 地圖渲染 ──────────────────────────────────────────────────────
-function renderInvMap(roomId) {
-  const wrapId = roomId === 'inv403' ? 'inv403-zones-wrap'
-               : roomId === 'inv406' ? 'inv406-zones-wrap'
-               : 'inv412-zones-wrap';
-  const wrap = document.getElementById(wrapId);
-  if (!wrap) return;
-  const zones = invZones[roomId] || [];
-  const canEdit = appMode === 'admin' && currentUser && currentUser.level !== 'B';
-  const selZone = invSelZone[roomId] || 'all';
-  wrap.innerHTML = zones.map(z => {
-    const col = INV_COLORS.find(c => c.border === z.color) || INV_COLORS[0];
-    const cnt = (invData[roomId]||[]).filter(r => r.zone === z.id).length;
-    const isActive = selZone === z.id;
-    const activeStyle = isActive ? 'outline:2.5px solid var(--accent);outline-offset:1px;' : '';
-    const editMode = invMapEditMode[roomId];
-    const editStyle = editMode && canEdit ? 'border-style:dashed;' : '';
-    return `<div class="inv-zone${isActive?' iz-active':''}" data-zone="${z.id}"
-      style="top:${z.top}%;left:${z.left}%;width:${z.w}%;height:${z.h}%;border-color:${z.color};background:${z.bg};z-index:2;cursor:pointer;${activeStyle}${editStyle}"
-      onclick="invSelectZone('${roomId}','${z.id}')">
-      <span class="inv-zone-label" style="color:${col.text};z-index:2;position:relative">${z.label}<br><span style="font-size:9px;opacity:.8">${z.sub}</span></span>
-      <span class="inv-zone-count" style="color:${z.color};z-index:2;position:relative" id="z${roomId.slice(-3)}-cnt-${z.id}">${cnt} 項</span>
-    </div>`;
-  }).join('');
-  renderInvLegend(roomId);
-  renderInvZoneList(roomId);
-  renderInvTable(roomId);
-}
-
-function renderInvLegend(roomId) {
-  const el = document.getElementById(roomId + '-legend');
+function renderInvStats(roomId) {
+  const items = invGetItems(roomId);
+  const total = items.length;
+  const counts = {};
+  INV_CATS.forEach(c=>counts[c.id]=0);
+  items.forEach(r=>{ if(counts[r.cat]!==undefined) counts[r.cat]++; else counts.misc++; });
+  const el = document.getElementById(roomId+'-stats');
   if (!el) return;
-  const zones = invZones[roomId] || [];
-  el.innerHTML = zones.map(z =>
-    `<div class="inv-leg"><div class="inv-leg-dot" style="background:${z.bg};border:1px solid ${z.color}"></div>${z.label} ${z.sub}</div>`
-  ).join('');
+  el.innerHTML = `
+    <div class="inv-stat-card"><div class="inv-stat-num">${total}</div><div class="inv-stat-label">品項數</div></div>
+    ${INV_CATS.map(c=>`<div class="inv-stat-card" style="border-top:2px solid ${c.color}">
+      <div class="inv-stat-num" style="color:${c.color}">${counts[c.id]||0}</div>
+      <div class="inv-stat-label">${c.label}</div>
+    </div>`).join('')}`;
 }
 
-// ── 地圖編輯模式（通用）──────────────────────────────────────────
-function invToggleMapEditRoom(roomId) {
-  invMapEditMode[roomId] = !invMapEditMode[roomId];
-  const mode = invMapEditMode[roomId];
-  const btn   = document.getElementById(roomId + '-edit-btn');
-  const panel = document.getElementById(roomId + '-map-editor');
-  if (btn)   { btn.textContent = mode ? '✓ 完成編輯' : '✏ 編輯'; btn.style.background = mode ? 'var(--green-light)' : ''; btn.style.color = mode ? 'var(--green)' : ''; }
-  if (panel) panel.style.display = mode ? 'block' : 'none';
-  if (mode) { invSelZone[roomId] = 'all'; if (roomId==='inv403') inv403SelZone='all'; }
-  renderInvMap(roomId);
-}
-function invToggleMapEdit() { invToggleMapEditRoom('inv403'); } // 相容舊呼叫
+function renderInvMap(roomId) {
+  const zones = invGetZones(roomId);
+  const items = invGetItems(roomId);
+  const selZone = invSelZone[roomId]||'all';
+  const canEdit = appMode==='admin' && currentUser && currentUser.level!=='B';
+  const isEditing = invEditMode && canEdit;
 
-function renderInvZoneList(roomId) {
-  const list = document.getElementById(roomId + '-zone-list');
-  if (!list) return;
-  const zones = invZones[roomId] || [];
-  const canEdit = appMode === 'admin' && currentUser && currentUser.level !== 'B';
-  if (!invMapEditMode[roomId] || !canEdit) { list.innerHTML = ''; return; }
-  list.innerHTML = zones.map((z,i) => {
-    const colorOpts = INV_COLORS.map(c =>
-      `<option value="${c.border}" ${z.color===c.border?'selected':''}>${c.label}</option>`
-    ).join('');
-    return `<div style="display:flex;flex-direction:column;gap:6px;background:var(--surface2);border-radius:var(--radius);padding:10px;border:1px solid var(--border)">
-      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:end">
-        <div>
-          <div style="font-size:10px;color:var(--text3);margin-bottom:3px">區域名稱（ID: ${z.id}）</div>
-          <input value="${z.label}" style="width:100%;padding:3px 6px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"
-            data-room="${roomId}" data-zone="${z.id}" data-field="label"
-            onblur="invUpdateZone(this.dataset.room,this.dataset.zone,this.dataset.field,this.value)"
-            oncompositionend="invUpdateZone(this.dataset.room,this.dataset.zone,this.dataset.field,this.value)">
-        </div>
-        <div>
-          <div style="font-size:10px;color:var(--text3);margin-bottom:3px">副標題</div>
-          <input value="${z.sub}" style="width:100%;padding:3px 6px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"
-            data-room="${roomId}" data-zone="${z.id}" data-field="sub"
-            onblur="invUpdateZone(this.dataset.room,this.dataset.zone,this.dataset.field,this.value)"
-            oncompositionend="invUpdateZone(this.dataset.room,this.dataset.zone,this.dataset.field,this.value)">
-        </div>
-        <div style="display:flex;flex-direction:column;gap:4px;align-items:center">
-          <div style="font-size:10px;color:var(--text3)">顏色</div>
-          <select style="font-size:11px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"
-            onchange="invUpdateZoneColor('${roomId}','${z.id}',this.value)">${colorOpts}</select>
-          <button class="btn-danger" style="font-size:10px;padding:1px 6px;border:1px solid #f0b8b8;border-radius:4px;background:none;cursor:pointer;color:var(--red)"
-            onclick="invDelZone('${roomId}','${z.id}')">刪除</button>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px">
-        <div>
-          <div style="font-size:10px;color:var(--text3);margin-bottom:3px">上邊距 top%</div>
-          <input type="number" min="0" max="99" value="${z.top}" style="width:100%;padding:3px 6px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"
-            onchange="invUpdateZoneNum('${roomId}','${z.id}','top',this.value)">
-        </div>
-        <div>
-          <div style="font-size:10px;color:var(--text3);margin-bottom:3px">左邊距 left%</div>
-          <input type="number" min="0" max="99" value="${z.left}" style="width:100%;padding:3px 6px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"
-            onchange="invUpdateZoneNum('${roomId}','${z.id}','left',this.value)">
-        </div>
-        <div>
-          <div style="font-size:10px;color:var(--text3);margin-bottom:3px">寬度 w%</div>
-          <input type="number" min="5" max="100" value="${z.w}" style="width:100%;padding:3px 6px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"
-            onchange="invUpdateZoneNum('${roomId}','${z.id}','w',this.value)">
-        </div>
-        <div>
-          <div style="font-size:10px;color:var(--text3);margin-bottom:3px">高度 h%</div>
-          <input type="number" min="5" max="100" value="${z.h}" style="width:100%;padding:3px 6px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"
-            onchange="invUpdateZoneNum('${roomId}','${z.id}','h',this.value)">
-        </div>
-      </div>
+  const wrap = document.getElementById(roomId+'-zones-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = zones.map(z=>{
+    const cnt = items.filter(r=>r.zone===z.id).length;
+    const isActive = selZone===z.id;
+    const activeStyle = isActive ? 'outline:2.5px solid var(--accent);outline-offset:1px;' : '';
+    const dashStyle = isEditing ? 'border-style:dashed;' : '';
+    return `<div class="inv-zone${isActive?' iz-active':''}" data-zone="${z.id}"
+      style="top:${z.top}%;left:${z.left}%;width:${z.w}%;height:${z.h}%;border-color:${z.color};background:${z.bg};${activeStyle}${dashStyle}"
+      onclick="invClickZone('${roomId}','${z.id}')">
+      <span class="inv-zone-label" style="color:${z.color}">${z.label}<br><span style="font-size:9px;opacity:.7">${z.sub}</span></span>
+      <span class="inv-zone-count" style="color:${z.color}">${cnt} 項</span>
     </div>`;
   }).join('');
+
+  // 圖例
+  const leg = document.getElementById(roomId+'-legend');
+  if (leg) leg.innerHTML = zones.map(z=>
+    `<span class="inv-leg"><span class="inv-leg-dot" style="background:${z.bg};border:1px solid ${z.color}"></span>${z.label} ${z.sub}</span>`
+  ).join('');
+
+  // 編輯面板
+  renderInvZoneEditor(roomId);
+}
+
+function invClickZone(roomId, zoneId) {
+  if (invEditMode) return;
+  const sel = invSelZone[roomId];
+  invSelZone[roomId] = (sel===zoneId) ? 'all' : zoneId;
+  renderInvMap(roomId);
+  renderInvTable(roomId);
+}
+
+function invSelectZoneAll(roomId) {
+  invSelZone[roomId] = 'all';
+  renderInvMap(roomId);
+  renderInvTable(roomId);
+}
+
+function renderInvZoneEditor(roomId) {
+  const el = document.getElementById(roomId+'-zone-editor');
+  if (!el) return;
+  const canEdit = appMode==='admin' && currentUser && currentUser.level!=='B';
+  if (!invEditMode || !canEdit) { el.innerHTML=''; el.style.display='none'; return; }
+  el.style.display='';
+  const zones = invGetZones(roomId);
+  const INV_COLORS = [
+    {label:'藍',border:'#2d5f80',bg:'rgba(232,240,245,0.75)',text:'#1a3d52'},
+    {label:'紫',border:'#534ab7',bg:'rgba(238,237,254,0.75)',text:'#2e2a6b'},
+    {label:'綠',border:'#3b6d11',bg:'rgba(234,243,222,0.75)',text:'#274a0b'},
+    {label:'橙',border:'#854f0b',bg:'rgba(250,238,218,0.75)',text:'#5c3507'},
+    {label:'紅',border:'#a32d2d',bg:'rgba(252,235,235,0.75)',text:'#6b1a1a'},
+    {label:'灰',border:'#6b6b6b',bg:'rgba(243,243,243,0.75)',text:'#444'},
+  ];
+  el.innerHTML = `<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+    <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:8px">區域設定（位置請填 0-100 的數值）</div>
+    ${zones.map(z=>{
+      const colorOpts = INV_COLORS.map(c=>`<option value="${c.border}|${c.bg}" ${z.color===c.border?'selected':''}>${c.label}</option>`).join('');
+      return `<div style="background:var(--surface2);border-radius:var(--radius);padding:8px;margin-bottom:8px;border:1px solid var(--border)">
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-bottom:6px">
+          <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px">名稱（ID: ${z.id}）</div>
+            <input value="${z.label}" style="width:100%;padding:2px 5px;font-size:12px;border:1px solid var(--border);border-radius:3px;background:var(--surface)"
+              onchange="invUpdateZone('${roomId}','${z.id}','label',this.value)"></div>
+          <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px">副標題</div>
+            <input value="${z.sub}" style="width:100%;padding:2px 5px;font-size:12px;border:1px solid var(--border);border-radius:3px;background:var(--surface)"
+              onchange="invUpdateZone('${roomId}','${z.id}','sub',this.value)"></div>
+          <div><div style="font-size:10px;color:var(--text3);margin-bottom:2px">顏色</div>
+            <select style="padding:2px 4px;font-size:11px;border:1px solid var(--border);border-radius:3px;background:var(--surface)"
+              onchange="invUpdateZoneColor('${roomId}','${z.id}',this.value)">${colorOpts}</select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px">
+          ${['top','left','w','h'].map(f=>`<div>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:2px">${f==='top'?'上%':f==='left'?'左%':f==='w'?'寬%':'高%'}</div>
+            <input type="number" min="0" max="100" value="${z[f]}" style="width:100%;padding:2px 5px;font-size:12px;border:1px solid var(--border);border-radius:3px;background:var(--surface)"
+              onchange="invUpdateZoneNum('${roomId}','${z.id}','${f}',this.value)"></div>`).join('')}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
 }
 
 function invUpdateZone(roomId, zoneId, field, val) {
-  const z = (invZones[roomId]||[]).find(z => z.id === zoneId);
-  if (!z || z[field] === val) return;
-  z[field] = val;
-  // 只更新地圖視覺，不重繪 zone-list（避免 input 被銷毀造成注音中斷）
-  renderInvMapOnly(roomId);
-  persistData(); markDirty();
+  const z = invGetZones(roomId).find(z=>z.id===zoneId);
+  if (z) { z[field]=val; renderInvMap(roomId); persistData(); markDirty(); }
 }
-
-function renderInvMapOnly(roomId) {
-  const wrapId = roomId === 'inv403' ? 'inv403-zones-wrap'
-               : roomId === 'inv406' ? 'inv406-zones-wrap'
-               : 'inv412-zones-wrap';
-  const wrap = document.getElementById(wrapId);
-  if (!wrap) return;
-  const zones = invZones[roomId] || [];
-  const canEdit = appMode === 'admin' && currentUser && currentUser.level !== 'B';
-  const selZone = invSelZone[roomId] || 'all';
-  const editMode = invMapEditMode[roomId];
-  wrap.innerHTML = zones.map(z => {
-    const col = INV_COLORS.find(c => c.border === z.color) || INV_COLORS[0];
-    const cnt = (invData[roomId]||[]).filter(r => r.zone === z.id).length;
-    const isActive = selZone === z.id;
-    const activeStyle = isActive ? 'outline:2.5px solid var(--accent);outline-offset:1px;' : '';
-    const editStyle = editMode && canEdit ? 'border-style:dashed;' : '';
-    return `<div class="inv-zone${isActive?' iz-active':''}" data-zone="${z.id}"
-      style="top:${z.top}%;left:${z.left}%;width:${z.w}%;height:${z.h}%;border-color:${z.color};background:${z.bg};z-index:2;cursor:pointer;${activeStyle}${editStyle}"
-      onclick="invSelectZone('${roomId}','${z.id}')">
-      <span class="inv-zone-label" style="color:${col.text};z-index:2;position:relative">${z.label}<br><span style="font-size:9px;opacity:.8">${z.sub}</span></span>
-      <span class="inv-zone-count" style="color:${z.color};z-index:2;position:relative" id="z${roomId.slice(-3)}-cnt-${z.id}">${cnt} 項</span>
-    </div>`;
-  }).join('');
-  renderInvLegend(roomId);
-}
-function invUpdateZoneColor(roomId, zoneId, colorBorder) {
-  const z = (invZones[roomId]||[]).find(z => z.id === zoneId);
-  const col = INV_COLORS.find(c => c.border === colorBorder);
-  if (z && col) { z.color = col.border; z.bg = col.bg; renderInvMap(roomId); persistData(); markDirty(); }
-}
-function invDelZone(roomId, zoneId) {
-  if (!confirm('刪除此區域？已分配到此區域的品項將移至第一個區域。')) return;
-  invZones[roomId] = (invZones[roomId]||[]).filter(z => z.id !== zoneId);
-  sanitizeInvZones();
-  renderInvMap(roomId); persistData(); markDirty(); toast('區域已刪除');
-}
-function invAddZone(roomId) {
-  const zones = invZones[roomId] || [];
-  // 用固定字母序列作為 ID，避免產生亂碼
-  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  const usedIds = new Set(zones.map(z => z.id));
-  let newId = '';
-  for (const l of letters) {
-    if (!usedIds.has(l)) { newId = l; break; }
-  }
-  if (!newId) { toast('最多支援 26 個區域'); return; }
-  const col = INV_COLORS[zones.length % INV_COLORS.length];
-  zones.push({id:newId, label:newId+' 區', sub:'', color:col.border, bg:col.bg, top:20, left:20, w:30, h:25});
-  invZones[roomId] = zones;
-  renderInvMap(roomId); persistData(); markDirty(); toast('已新增 '+newId+' 區，請用數值調整位置和大小');
+function invUpdateZoneColor(roomId, zoneId, val) {
+  const [border, bg] = val.split('|');
+  const z = invGetZones(roomId).find(z=>z.id===zoneId);
+  if (z) { z.color=border; z.bg=bg; renderInvMap(roomId); persistData(); markDirty(); }
 }
 function invUpdateZoneNum(roomId, zoneId, field, val) {
-  const z = (invZones[roomId]||[]).find(z => z.id === zoneId);
-  if (!z) return;
-  const num = parseFloat(val);
-  if (isNaN(num)) return;
-  z[field] = Math.max(0, Math.min(field==='w'||field==='h' ? 100 : 99, num));
-  renderInvMapOnly(roomId);
-  persistData(); markDirty();
+  const z = invGetZones(roomId).find(z=>z.id===zoneId);
+  if (z) { z[field]=Math.max(0,Math.min(100,parseFloat(val)||0)); renderInvMap(roomId); persistData(); markDirty(); }
 }
 
-// ── 區域篩選（通用）────────────────────────────────────────────────
-function invSelectZone(roomId, z) {
-  if (invMapEditMode[roomId]) return;
-  invSelZone[roomId] = z;
-  if (roomId === 'inv403') inv403SelZone = z; // 相容
-  const zoneData = (invZones[roomId]||[]).find(zd => zd.id === z);
-  const lb = document.getElementById(roomId + '-zlabel');
-  if (lb) {
-    if (z === 'all') {
-      lb.textContent = '全部品項'; lb.style.background = '#f0ede8'; lb.style.color = '#6b6860';
-    } else if (zoneData) {
-      const col = INV_COLORS.find(c => c.border === zoneData.color) || INV_COLORS[0];
-      lb.textContent = zoneData.label + (zoneData.sub ? ' ' + zoneData.sub : '');
-      lb.style.background = zoneData.bg.replace('0.75','0.5');
-      lb.style.color = col.text;
-    }
-  }
-  const allBtn = document.getElementById(roomId + '-all-btn');
-  if (allBtn) {
-    allBtn.style.background = z === 'all' ? 'var(--accent-light)' : '';
-    allBtn.style.color = z === 'all' ? 'var(--accent)' : '';
-    allBtn.style.borderColor = z === 'all' ? '#c5daea' : '';
+function invToggleEdit(roomId) {
+  const canEdit = appMode==='admin' && currentUser && currentUser.level!=='B';
+  if (!canEdit) return;
+  invEditMode = !invEditMode;
+  const btn = document.getElementById(roomId+'-edit-btn');
+  if (btn) {
+    btn.textContent = invEditMode ? '✓ 完成編輯' : '✏ 編輯';
+    btn.style.background = invEditMode ? 'var(--accent)' : '';
+    btn.style.color = invEditMode ? '#fff' : '';
   }
   renderInvMap(roomId);
-  renderInvTable(roomId);
-}
-function inv403Zone(z) { invSelectZone('inv403', z); } // 相容舊呼叫
-
-function inv403UpdateCounts() {
-  const data = invData.inv403 || [];
-  const zones = invZones.inv403 || [];
-  zones.forEach(z => {
-    const el = document.getElementById('z403-cnt-' + z.id);
-    if (el) el.textContent = data.filter(r => r.zone === z.id).length + ' 項';
-  });
-  const s = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
-  s('inv403-cnt', data.length);
-  s('inv403-fire',   data.filter(r => r.cat === 'fire').length);
-  s('inv403-equip',  data.filter(r => r.cat === 'equip').length);
-  s('inv403-supply', data.filter(r => r.cat === 'supply').length);
 }
 
-// ── 表格排序 ──────────────────────────────────────────────────────
-function invSort(thEl, field) {
-  const roomId = invCurrentRoom;
-  const state = invSortState[roomId];
-  if (state.field === field) {
-    state.dir = state.dir * -1;
-  } else {
-    state.field = field;
-    state.dir = 1;
-  }
-  // 重置所有圖示
-  thEl.closest('thead').querySelectorAll('.inv-sort-icon').forEach(el => {
-    el.className = 'inv-sort-icon';
-    el.textContent = '⇅';
-  });
-  const icon = thEl.querySelector('.inv-sort-icon');
-  if (icon) {
-    icon.textContent = '';
-    icon.className = 'inv-sort-icon ' + (state.dir === 1 ? 'asc' : 'desc');
-  }
-  renderInvTable(roomId);
-}
-
-// ── 表格渲染（含拖曳排序）────────────────────────────────────────
-let invRowDrag = null;
-
+// ── 表格渲染 ──────────────────────────────────────────────────
 function renderInvTable(roomId) {
-  const canEdit = appMode === 'admin' && currentUser && currentUser.level !== 'B';
-  let data = [...(invData[roomId] || [])];
-  if (roomId === 'inv403' && inv403SelZone !== 'all') data = data.filter(r => r.zone === inv403SelZone);
-  if (roomId === 'inv406' && (invSelZone.inv406||'all') !== 'all') data = data.filter(r => r.zone === invSelZone.inv406);
-  if (roomId === 'inv412' && (invSelZone.inv412||'all') !== 'all') data = data.filter(r => r.zone === invSelZone.inv412);
+  const canEdit = appMode==='admin' && currentUser && currentUser.level!=='B';
+  const selZone = invSelZone[roomId]||'all';
+  let items = [...invGetItems(roomId)];
+  if (selZone!=='all') items = items.filter(r=>r.zone===selZone);
 
-  // 套用排序
+  // 排序
   const sort = invSortState[roomId];
   if (sort && sort.field) {
-    const zoneOrder = (invZones[roomId]||[]).reduce((acc,z,i)=>{ acc[z.id]=i; return acc; }, {});
-    data.sort((a, b) => {
-      let va = a[sort.field] || '';
-      let vb = b[sort.field] || '';
-      if (sort.field === 'zone') {
-        // 優先用 zoneOrder（ID對應），找不到才用字串比較
-        const oa = zoneOrder[va] !== undefined ? zoneOrder[va] : va;
-        const ob = zoneOrder[vb] !== undefined ? zoneOrder[vb] : vb;
-        if (typeof oa === 'number' && typeof ob === 'number') return (oa - ob) * sort.dir;
-        if (typeof oa === 'number') return -1 * sort.dir;
-        if (typeof ob === 'number') return 1 * sort.dir;
-        return String(oa).localeCompare(String(ob), 'zh-TW') * sort.dir;
+    const zoneOrder = {};
+    invGetZones(roomId).forEach((z,i)=>zoneOrder[z.id]=i);
+    const catOrder = {fire:0,equip:1,ctrl:2,supply:3,misc:4};
+    items.sort((a,b)=>{
+      if (sort.field==='zone') {
+        const oa=zoneOrder[a.zone]??999, ob=zoneOrder[b.zone]??999;
+        return (oa-ob)*sort.dir;
       }
-      if (sort.field === 'cat') {
-        const catOrder = {fire:0, equip:1, ctrl:2, supply:3, misc:4};
-        const oa = catOrder[va] !== undefined ? catOrder[va] : 9;
-        const ob = catOrder[vb] !== undefined ? catOrder[vb] : 9;
-        return (oa - ob) * sort.dir;
+      if (sort.field==='cat') {
+        return ((catOrder[a.cat]??9)-(catOrder[b.cat]??9))*sort.dir;
       }
-      return va.localeCompare(vb, 'zh-TW') * sort.dir;
+      return (a[sort.field]||'').localeCompare(b[sort.field]||'')*sort.dir;
     });
   }
-  const tbody = document.getElementById(roomId + '-tbody');
+
+  const zones = invGetZones(roomId);
+  const zoneLabel = {};
+  zones.forEach(z=>zoneLabel[z.id]=z.label);
+
+  const tbody = document.getElementById(roomId+'-tbody');
   if (!tbody) return;
-  const cntEl = document.getElementById(roomId + '-cnt');
-  if (cntEl) cntEl.textContent = (invData[roomId]||[]).length;
-  if (data.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" class="inv-empty">尚無品項，點選「＋ 新增品項」開始建立</td></tr>';
-    if (roomId === 'inv403') inv403UpdateCounts();
-    return;
-  }
-  const catOpts = (cur) => Object.entries(INV_CATS).map(([k,v]) => `<option value="${k}"${cur===k?' selected':''}>${v}</option>`).join('');
-  const zoneOpts = (rid, cur) => (invZones[rid]||[]).map(z => `<option value="${z.id}"${cur===z.id?' selected':''}>${z.label}</option>`).join('');
-  tbody.innerHTML = data.map(row => {
-    const cc = INV_CAT_CLS[row.cat]||'icat-misc';
-    const cl = INV_CATS[row.cat]||row.cat;
-    if (!canEdit) {
-      return `<tr data-id="${row.id}" data-room="${roomId}"><td></td><td>${row.name}</td><td><span class="inv-cat ${cc}">${cl}</span></td><td>${row.qty}</td><td>${row.unit}</td><td>${row.zone||'—'}</td><td style="font-size:11px;color:var(--text2)">${row.note}</td><td></td></tr>`;
+
+  tbody.innerHTML = items.map(row=>{
+    const cat = invCatInfo(row.cat);
+    const zLabel = zoneLabel[row.zone] || row.zone || '';
+    const zoneOpts = zones.map(z=>`<option value="${z.id}" ${row.zone===z.id?'selected':''}>${z.label}</option>`).join('');
+    const catOpts = INV_CATS.map(c=>`<option value="${c.id}" ${row.cat===c.id?'selected':''}>${c.label}</option>`).join('');
+    if (canEdit) {
+      return `<tr data-id="${row.id}">
+        <td style="width:24px;color:var(--text3);cursor:grab;user-select:none;font-size:16px;text-align:center">⠿</td>
+        <td><span class="inv-editable" contenteditable="true" data-field="name" data-id="${row.id}" data-room="${roomId}"
+          onblur="invSaveCell(this)" oncompositionend="invSaveCell(this)">${row.name}</span></td>
+        <td><select class="inv-cat-sel" data-field="cat" data-id="${row.id}" data-room="${roomId}"
+          style="font-size:11px;padding:1px 4px;border-radius:20px;border:1px solid ${cat.color};color:${cat.color};background:${cat.bg};cursor:pointer"
+          onchange="invSaveSelect(this)">${catOpts}</select></td>
+        <td><span class="inv-editable" contenteditable="true" data-field="qty" data-id="${row.id}" data-room="${roomId}"
+          onblur="invSaveCell(this)" oncompositionend="invSaveCell(this)" style="min-width:30px;display:inline-block">${row.qty}</span></td>
+        <td><span class="inv-editable" contenteditable="true" data-field="unit" data-id="${row.id}" data-room="${roomId}"
+          onblur="invSaveCell(this)" oncompositionend="invSaveCell(this)" style="min-width:20px;display:inline-block">${row.unit}</span></td>
+        <td><select data-field="zone" data-id="${row.id}" data-room="${roomId}"
+          style="font-size:11px;padding:1px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface)"
+          onchange="invSaveSelect(this)">${zoneOpts}</select></td>
+        <td><span class="inv-editable" contenteditable="true" data-field="note" data-id="${row.id}" data-room="${roomId}"
+          onblur="invSaveCell(this)" oncompositionend="invSaveCell(this)" style="color:var(--text2);font-size:11px">${row.note}</span></td>
+        <td><button class="inv-del" onclick="invDelRow('${roomId}',${row.id})">×</button></td>
+      </tr>`;
+    } else {
+      return `<tr>
+        <td><span style="font-size:11px;padding:1px 7px;border-radius:20px;border:1px solid ${cat.color};color:${cat.color};background:${cat.bg}">${cat.label}</span></td>
+        <td>${row.name}</td>
+        <td style="text-align:center">${row.qty}</td>
+        <td style="color:var(--text2)">${row.unit}</td>
+        <td>${zLabel}</td>
+        <td style="color:var(--text2);font-size:11px">${row.note}</td>
+      </tr>`;
     }
-    const zoneCell = (invZones[roomId]||[]).length > 0
-      ? `<select class="inv-sel" onchange="invSet('${roomId}',${row.id},'zone',this.value)">${zoneOpts(roomId, row.zone)}</select>`
-      : `<span contenteditable="true" class="inv-editable" onblur="invSet('${roomId}',${row.id},'zone',this.innerText.trim())">${row.zone||''}</span>`;
-    return `<tr data-id="${row.id}" data-room="${roomId}">
-      <td style="width:24px;text-align:center;padding:7px 4px"><span class="inv-row-handle" onmousedown="invRowHandleMousedown(event)" style="color:var(--text3);cursor:grab;font-size:16px;user-select:none;-webkit-user-select:none;display:inline-block;line-height:1;padding:2px 4px" title="拖曳排序">⠿</span></td>
-      <td contenteditable="true" class="inv-editable" onblur="invSet('${roomId}',${row.id},'name',this.innerText.trim())">${row.name}</td>
-      <td><select class="inv-sel" onchange="invSet('${roomId}',${row.id},'cat',this.value)">${catOpts(row.cat)}</select></td>
-      <td contenteditable="true" class="inv-editable" onblur="invSet('${roomId}',${row.id},'qty',this.innerText.trim())">${row.qty}</td>
-      <td contenteditable="true" class="inv-editable" onblur="invSet('${roomId}',${row.id},'unit',this.innerText.trim())">${row.unit}</td>
-      <td>${zoneCell}</td>
-      <td contenteditable="true" class="inv-editable" style="font-size:11px;color:var(--text2)" onblur="invSet('${roomId}',${row.id},'note',this.innerText.trim())">${row.note}</td>
-      <td style="text-align:center"><button class="inv-del" onclick="invDel('${roomId}',${row.id})">✕</button></td>
-    </tr>`;
   }).join('');
-  if (roomId === 'inv403') inv403UpdateCounts();
-}
 
-function invRowHandleMousedown(e) {
-  e.preventDefault();
-  e.stopPropagation();
-
-  const handle = e.currentTarget;
-  const tr = handle.closest('tr');
-  if (!tr) return;
-  const roomId = tr.dataset.room;
-  const id = parseInt(tr.dataset.id);
-  const tbody = tr.closest('tbody');
-  const rect = tr.getBoundingClientRect();
-
-  // 拖曳中禁止選字
-  function blockSelect(ev) { ev.preventDefault(); }
-  document.addEventListener('selectstart', blockSelect);
-
-  // ghost
-  const ghost = tr.cloneNode(true);
-  ghost.style.cssText = [
-    'position:fixed',
-    'left:' + rect.left + 'px',
-    'top:' + rect.top + 'px',
-    'width:' + rect.width + 'px',
-    'opacity:0.8',
-    'background:var(--surface)',
-    'box-shadow:0 4px 20px rgba(0,0,0,.18)',
-    'pointer-events:none',
-    'z-index:9999',
-    'display:table',
-    'border-collapse:collapse',
-    'border-radius:4px',
-    'outline:2px solid var(--accent)'
-  ].join(';');
-  document.body.appendChild(ghost);
-  tr.style.opacity = '0.25';
-  handle.style.cursor = 'grabbing';
-
-  const offsetY = e.clientY - rect.top;
-  let lastOverTr = null;
-
-  function onMove(ev) {
-    ghost.style.top = (ev.clientY - offsetY) + 'px';
-    ghost.style.visibility = 'hidden';
-    const el = document.elementFromPoint(ev.clientX, ev.clientY);
-    ghost.style.visibility = '';
-    const overTr = el && el.closest('tr[data-id]');
-    if (overTr !== lastOverTr) {
-      tbody.querySelectorAll('tr.inv-row-over, tr.inv-row-deny').forEach(r => {
-        r.classList.remove('inv-row-over','inv-row-deny');
-      });
-      if (overTr && overTr !== tr) {
-        const fromRow = invData[roomId] && invData[roomId].find(r => r.id === id);
-        const toRow   = invData[roomId] && invData[roomId].find(r => r.id === parseInt(overTr.dataset.id));
-        if (fromRow && toRow && fromRow.zone === toRow.zone) {
-          overTr.classList.add('inv-row-over');
-        } else {
-          overTr.classList.add('inv-row-deny');
-        }
-      }
-      lastOverTr = overTr;
-    }
+  // 更新 zone label
+  const lbl = document.getElementById(roomId+'-zlabel');
+  if (lbl) {
+    const z = zones.find(z=>z.id===selZone);
+    lbl.textContent = z ? z.label+' '+z.sub : '全部品項';
   }
 
-  function onUp(ev) {
-    document.removeEventListener('mousemove', onMove);
-    document.removeEventListener('mouseup', onUp);
-    document.removeEventListener('selectstart', blockSelect);
-    ghost.remove();
-    tbody.querySelectorAll('tr.inv-row-over').forEach(r => r.classList.remove('inv-row-over'));
-    tr.style.opacity = '';
-    handle.style.cursor = 'grab';
-
-    // 找放下位置（ghost 已移除，直接 elementFromPoint）
-    const el = document.elementFromPoint(ev.clientX, ev.clientY);
-    const overTr = el && el.closest('tr[data-id]');
-
-    if (overTr && overTr !== tr) {
-      const targetId = parseInt(overTr.dataset.id);
-      const arr = invData[roomId];
-      const fromRow = arr.find(r => r.id === id);
-      const toRow   = arr.find(r => r.id === targetId);
-      // 僅允許同區域內拖曳
-      if (fromRow && toRow && fromRow.zone === toRow.zone) {
-        const fromIdx = arr.indexOf(fromRow);
-        const toIdx   = arr.indexOf(toRow);
-        if (fromIdx !== -1 && toIdx !== -1 && fromIdx !== toIdx) {
-          const [moved] = arr.splice(fromIdx, 1);
-          arr.splice(toIdx, 0, moved);
-          persistData(); markDirty();
-          renderInvTable(roomId);
-          if (roomId === 'inv403') { renderInvMapOnly('inv403'); inv403UpdateCounts(); }
-          toast('排序已更新');
-        }
-      } else if (fromRow && toRow && fromRow.zone !== toRow.zone) {
-        toast('只能在相同區域內調整排序');
-      }
-    }
-    invRowDrag = null;
-  }
-
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('mouseup', onUp);
+  // 更新排序圖示
+  ['name','cat','zone'].forEach(f=>{
+    const th = document.querySelector('#${roomId}-tbl th[data-field="'+f+'"]');
+    if (!th) return;
+    const icon = th.querySelector('.inv-sort-icon');
+    if (!icon) return;
+    if (sort && sort.field===f) {
+      icon.textContent = sort.dir===1?'↑':'↓';
+      icon.style.opacity='1';
+    } else { icon.textContent='⇅'; icon.style.opacity='.4'; }
+  });
 }
 
-function invSet(roomId, id, field, val) {
-  const row = (invData[roomId]||[]).find(r => r.id === id);
+function invSort(roomId, field) {
+  const s = invSortState[roomId];
+  if (s.field===field) s.dir*=-1;
+  else { s.field=field; s.dir=1; }
+  renderInvTable(roomId);
+}
+
+function invSaveCell(el) {
+  const {field,id,room} = el.dataset;
+  const items = invGetItems(room);
+  const row = items.find(r=>String(r.id)===String(id));
   if (!row) return;
-  row[field] = val;
-  if (field === 'zone' || field === 'cat') renderInvTable(roomId);
-  if (roomId === 'inv403') { renderInvMap('inv403'); inv403UpdateCounts(); }
+  const val = el.textContent.trim();
+  if (row[field]===val) return;
+  row[field]=val;
   persistData(); markDirty();
 }
 
-function invDel(roomId, id) {
-  if (!confirm('確定要刪除此品項嗎？')) return;
-  invData[roomId] = (invData[roomId]||[]).filter(r => r.id !== id);
-  renderInvTable(roomId);
-  if (roomId === 'inv403') { renderInvMap('inv403'); inv403UpdateCounts(); }
-  persistData(); markDirty(); toast('已刪除');
+function invSaveSelect(sel) {
+  const {field,id,room} = sel.dataset;
+  const items = invGetItems(room);
+  const row = items.find(r=>String(r.id)===String(id));
+  if (!row) return;
+  row[field]=sel.value;
+  persistData(); markDirty();
+  if (field==='zone') renderInvTable(room); // 區域改變要重排
 }
 
-function invAddRow() {
-  const zone = (invCurrentRoom === 'inv403' && inv403SelZone !== 'all') ? inv403SelZone : ((invZones[invCurrentRoom]||[]).length > 0 ? (invZones[invCurrentRoom][0]||{}).id||'' : '');
-  invData[invCurrentRoom] = invData[invCurrentRoom] || [];
-  invData[invCurrentRoom].push({id: invNextId++, name:'新品項', cat:'misc', qty:'1', unit:'個', zone, note:''});
-  renderInvTable(invCurrentRoom);
-  if (invCurrentRoom === 'inv403') { renderInvMap('inv403'); inv403UpdateCounts(); }
-  persistData(); markDirty(); toast('已新增，請直接點擊欄位編輯');
+function invDelRow(roomId, id) {
+  if (!confirm('確認刪除此品項？')) return;
+  invSetItems(roomId, invGetItems(roomId).filter(r=>r.id!==id));
+  persistData(); markDirty();
+  renderInvPage(roomId);
+  toast('品項已刪除');
 }
 
-function invExportCSV() {
-  const names = {inv403:'JIF403_通風機房',inv406:'J1F406_儲藏室',inv412:'J1F412_段辦公室'};
-  const data = invData[invCurrentRoom] || [];
-  const hdr = ['品項','類別','數量','單位','區域','備註'];
-  const rows = data.map(r => [r.name, INV_CATS[r.cat]||r.cat, r.qty, r.unit, r.zone||'', r.note]);
-  const csv = [hdr,...rows].map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\n');
-  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = names[invCurrentRoom] + '_庫存清單.csv'; a.click();
-  URL.revokeObjectURL(url);
+function invAddRow(roomId) {
+  const zones = invGetZones(roomId);
+  const selZone = invSelZone[roomId];
+  const defaultZone = (selZone!=='all'&&zones.find(z=>z.id===selZone)) ? selZone : (zones[0]?.id||'A');
+  const newRow = {id:invNextId++, name:'新品項', cat:'misc', qty:'1', unit:'個', zone:defaultZone, note:''};
+  invGetItems(roomId).push(newRow);
+  persistData(); markDirty();
+  renderInvPage(roomId);
+  toast('已新增品項');
 }
 
-// INIT: triggered by startApp() on login
-</script>
-</body>
+// ── 全頁初始化 ────────────────────────────────────────────────
+function initInvPage() {
+  ['inv403','inv406','inv412'].forEach(rid=>{
+    const btn = document.getElementById(rid+'-edit-btn');
+    if (btn) btn.style.display = (appMode==='admin'&&currentUser&&currentUser.level!=='B') ? '' : 'none';
+  });
+  renderInvPage(invCurrentRoom);
+}
+
+function switchInvRoom(roomId) {
+  invCurrentRoom = roomId;
+  invEditMode = false;
+  // 更新 tab
+  ['inv403','inv406','inv412'].forEach(rid=>{
+    const tab = document.getElementById('inv-tab-'+rid);
+    if (tab) tab.classList.toggle('active', rid===roomId);
+    const room = document.getElementById('inv-room-'+rid);
+    if (room) room.classList.toggle('active', rid===roomId);
+  });
+  renderInvPage(roomId);
+}
+
 </html>
