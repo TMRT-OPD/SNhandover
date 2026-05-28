@@ -360,7 +360,9 @@ tbody tr:hover td { background: #fafaf8; }
 .user-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;margin-bottom:6px;letter-spacing:.06em}
 .badge-s{background:#f0c040;color:#1a1917}
 .badge-a{background:#7ab8d6;color:#1a1917}
+.badge-am{background:#b8a0d6;color:#1a1917}
 .badge-b{background:#a8d8a8;color:#1a1917}
+.badge-v{background:#d0d0d0;color:#1a1917}
 .badge-v{background:rgba(255,255,255,.15);color:rgba(255,255,255,.7)}
 .user-name{font-size:13px;font-weight:500;color:#fff}
 .user-id{font-size:10px;color:rgba(255,255,255,.4);margin-top:2px;font-family:var(--mono)}
@@ -826,6 +828,7 @@ tbody tr:hover td { background: #fafaf8; }
               <th style="padding:10px 14px;text-align:left;border:1px solid var(--border);font-weight:500;color:var(--text2);white-space:nowrap">功能</th>
               <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><span class="user-badge badge-s" style="font-size:11px">S</span><div style="font-size:10px;color:var(--text2);margin-top:3px">最高管理</div></th>
               <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><span class="user-badge badge-a" style="font-size:11px">A</span><div style="font-size:10px;color:var(--text2);margin-top:3px">後台編輯</div></th>
+              <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><span class="user-badge badge-am" style="font-size:11px">A-</span><div style="font-size:10px;color:var(--text2);margin-top:3px">庫存編輯</div></th>
               <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><span class="user-badge badge-b" style="font-size:11px">B</span><div style="font-size:10px;color:var(--text2);margin-top:3px">檢視</div></th>
               <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><span class="user-badge badge-v" style="font-size:11px">V</span><div style="font-size:10px;color:var(--text2);margin-top:3px">訪客</div></th>
             </tr>
@@ -917,6 +920,7 @@ tbody tr:hover td { background: #fafaf8; }
         <div class="field"><label>帳號層級</label>
           <select id="nu-level">
             <option value="A">層級 A（完整編輯）</option>
+            <option value="A-">層級 A-（庫存編輯/業務檢視）</option>
             <option value="B">層級 B（僅檢視）</option>
           </select>
         </div>
@@ -1265,7 +1269,7 @@ tbody tr:hover td { background: #fafaf8; }
 </div>
 
 <!-- EDIT USER MODAL -->
-<div class="modal-overlay" id="edit-user-modal" onclick="closeEditUserModal(event)">
+<div class="modal-overlay" id="edit-user-modal">
   <div class="modal-box" onclick="event.stopPropagation()" style="max-width:400px">
     <div class="modal-title">編輯帳號</div>
     <input type="hidden" id="eu-id">
@@ -1281,6 +1285,7 @@ tbody tr:hover td { background: #fafaf8; }
       <label>層級</label>
       <select id="eu-level" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:13px">
         <option value="A">A — 後台編輯</option>
+        <option value="A-">A- — 庫存編輯/業務檢視</option>
         <option value="B">B — 檢視</option>
       </select>
     </div>
@@ -1289,7 +1294,7 @@ tbody tr:hover td { background: #fafaf8; }
       <input id="eu-pw" type="password" placeholder="請輸入新密碼">
     </div>
     <div class="modal-actions">
-      <button class="btn" onclick="document.getElementById('edit-user-modal').classList.remove('open')">取消</button>
+      <button class="btn" onclick="closeEditUserModal()">取消</button>
       <button class="btn btn-primary" onclick="saveEditUser()">儲存</button>
     </div>
   </div>
@@ -1572,6 +1577,7 @@ function startApp(){
   const level    = currentUser ? (String(currentUser.level || '').trim()) : 'V';
   const isS      = level === 'S';
   const isA      = level === 'A';
+  const isAMinus = level === 'A-';
   const isB      = level === 'B';
   const isViewer = appMode === 'viewer';
   const isSuper  = isS; // 相容舊程式碼
@@ -1585,12 +1591,12 @@ function startApp(){
   document.getElementById('user-display-id').textContent   =
     isViewer ? '觀看模式' : 'ID: ' + currentUser.id;
   document.getElementById('sys-subtitle').textContent =
-    isViewer?'觀看版':isS?'後台管理 S':isA?'後台編輯 A':isB?'檢視模式 B':'觀看版';
+    isViewer?'觀看版':isS?'後台管理 S':isA?'後台編輯 A':isAMinus?'後台管理 A-':isB?'檢視模式 B':'觀看版';
 
   // ── 左側選單顯示控制 ─────────────────────────────────────
   // 資料儲存區（同步 Sheets 等）：S 和 A 可見
   const navAdmin = document.getElementById('nav-admin-section');
-  if(navAdmin) navAdmin.style.display = (isS||isA) ? '' : 'none';
+  if(navAdmin) navAdmin.style.display = (isS||isA||isAMinus) ? '' : 'none';
   // 備份JSON/還原JSON/匯出CSV/列印：僅 S 可見
   const navSTools = document.getElementById('nav-s-only-tools');
   if(navSTools) navSTools.style.display = isS ? '' : 'none';
@@ -1607,7 +1613,7 @@ function startApp(){
   if(navInvSub && isViewer) navInvSub.style.display = 'none';
   // A/B 層顯示帳號設定（改密碼）- nav-ab-section 去 p5
   const navAB = document.getElementById('nav-ab-section');
-  if(navAB) navAB.style.display = (isA||isB) ? '' : 'none';
+  if(navAB) navAB.style.display = (isA||isAMinus||isB) ? '' : 'none';
   // nav-a-section: 直接開改密碼 modal（同樣給 A/B 用，二擇一保留）
   const navASec = document.getElementById('nav-a-section');
   if(navASec) navASec.style.display = 'none';  // 統一用 nav-ab-section
@@ -1617,7 +1623,7 @@ function startApp(){
   document.body.classList.toggle('level-b', isB);
 
   // ── 函式鎖死 ─────────────────────────────────────────────
-  // 訪客 & B 層：不能編輯
+  // 訪客 & B 層：不能編輯任何內容
   if(isViewer || isB){
     const noop  = ()=>{};
     const toast2 = isB ? ()=>toast('B 層僅能檢視，無法編輯') : noop;
@@ -1631,6 +1637,21 @@ function startApp(){
     window.deleteProject     = noop;
     window.updatePct         = noop;
     window.addShuWu          = noop;
+  }
+
+  // A- 層：業務/專案/庶務不能編輯，庫存可以編輯
+  if(isAMinus){
+    const toast2 = ()=>toast('A- 層此頁面僅供檢視，無法編輯');
+    window.openEditModal     = toast2;
+    window.openProjModal     = toast2;
+    window.openShuwuModal    = toast2;
+    window.openAddShuWuModal = toast2;
+    window.toggleForm        = ()=>{};
+    window.addItem           = toast2;
+    window.addProject        = toast2;
+    window.deleteProject     = toast2;
+    window.updatePct         = toast2;
+    window.addShuWu          = toast2;
   }
 
   if(isViewer || isB){
@@ -1759,7 +1780,7 @@ function doChangeSelfPw() {
   const errEl    = document.getElementById('sp-error');
   errEl.textContent = '';
 
-  if (!currentUser || (currentUser.level !== 'A' && currentUser.level !== 'B')) { toast('權限不足'); return; }
+  if (!currentUser || (currentUser.level !== 'A' && currentUser.level !== 'A-' && currentUser.level !== 'B')) { toast('權限不足'); return; }
 
   // 比對目前密碼
   const users = getUsers();
@@ -1835,7 +1856,7 @@ function renderUsers(){
   const aUsers = getUsers();
   const all = [SUPER_USER, ...aUsers];
   tbody.innerHTML = all.map(u => {
-    const lvlBadge = u.level==='S'?'badge-s':u.level==='A'?'badge-a':u.level==='B'?'badge-b':'badge-v';
+    const lvlBadge = u.level==='S'?'badge-s':u.level==='A'?'badge-a':u.level==='A-'?'badge-am':u.level==='B'?'badge-b':'badge-v';
     const canManage = isS && u.level !== 'S';
     return `<tr>
       <td style="font-family:var(--mono);font-size:12px">${u.id}</td>
@@ -1932,7 +1953,6 @@ function openEditUser(id){
   _mo.classList.add('open');
 }
 function closeEditUserModal(e){
-  if(e&&e.target!==document.getElementById('edit-user-modal'))return;
   const _mc = document.getElementById('edit-user-modal');
   _mc.classList.remove('open');
   _mc.style.removeProperty('display');
@@ -2398,7 +2418,7 @@ function renderMain() {
         <td style="max-width:120px">${formShort ? `<span class="nas-link" title="${i.formUrl}">${formShort}</span>` : '<span style="color:var(--text3)">—</span>'}</td>
         <td style="font-size:12px;color:var(--text2)">${i.mail || '<span style="color:var(--text3)">—</span>'}</td>
         <td><button class="jump-btn" onclick="showPage('p2',${i.id})">說明 →</button></td>
-        ${(appMode==='admin' && currentUser && currentUser.level!=='B') ? `<td class="edit-btn-col"><button class="btn btn-sm" onclick="openEditModal(${i.id})" style="color:var(--accent);border-color:#c5daea">編輯</button></td>` : '<td class="edit-btn-col"></td>'}
+        ${(appMode==='admin' && currentUser && currentUser.level!=='B' && currentUser.level!=='A-') ? `<td class="edit-btn-col"><button class="btn btn-sm" onclick="openEditModal(${i.id})" style="color:var(--accent);border-color:#c5daea">編輯</button></td>` : '<td class="edit-btn-col"></td>'}
       </tr>
     `}).join('');
   }
@@ -2592,7 +2612,7 @@ function renderProjects() {
   });
 
   const tbody = document.getElementById('tbody3');
-  const editCol = (id) => (appMode==='admin' && currentUser && currentUser.level!=='B')
+  const editCol = (id) => (appMode==='admin' && currentUser && currentUser.level!=='B' && currentUser.level!=='A-')
     ? `<td class="edit-btn-col"><button class="btn btn-sm" onclick="openProjModal(${id})" style="color:var(--accent);border-color:#c5daea">編輯</button></td>`
     : '<td class="edit-btn-col"></td>';
 
@@ -3100,7 +3120,7 @@ function renderShuWu() {
       <td style="font-size:11px;color:var(--text2);max-width:180px;line-height:1.5">${r.reg || '<span style="color:var(--text3)">無</span>'}</td>
       <td style="font-size:12px;color:var(--text2);max-width:200px;line-height:1.6">${r.note}</td>
       <td style="font-size:11px;color:var(--text3);max-width:150px;line-height:1.5">${r.remark || '—'}</td>
-      ${(appMode==='admin' && currentUser && currentUser.level!=='B') ? `<td class="edit-btn-col"><button class="btn btn-sm" onclick="openShuwuModal(${r.no})" style="color:var(--accent);border-color:#c5daea">編輯</button></td>` : '<td class="edit-btn-col"></td>'}
+      ${(appMode==='admin' && currentUser && currentUser.level!=='B' && currentUser.level!=='A-') ? `<td class="edit-btn-col"><button class="btn btn-sm" onclick="openShuwuModal(${r.no})" style="color:var(--accent);border-color:#c5daea">編輯</button></td>` : '<td class="edit-btn-col"></td>'}
     </tr>
   `).join('');
 }
@@ -3456,7 +3476,7 @@ function renderInvMap(roomId) {
   const zones = invGetZones(roomId);
   const items = invGetItems(roomId);
   const selZone = invSelZone[roomId]||'all';
-  const canEdit = appMode==='admin' && currentUser && currentUser.level!=='B';
+  const canEdit = appMode==='admin' && currentUser && (currentUser.level==='S'||currentUser.level==='A'||currentUser.level==='A-');
   const isEditing = invEditMode && canEdit;
 
   const wrap = document.getElementById(roomId+'-zones-wrap');
@@ -3512,7 +3532,7 @@ function toggleInventoryNav() {
 function renderInvZoneEditor(roomId) {
   const el = document.getElementById(roomId+'-zone-editor');
   if (!el) return;
-  const canEdit = appMode==='admin' && currentUser && currentUser.level!=='B';
+  const canEdit = appMode==='admin' && currentUser && (currentUser.level==='S'||currentUser.level==='A'||currentUser.level==='A-');
   if (!invEditMode || !canEdit) { el.innerHTML=''; el.style.display='none'; return; }
   el.style.display='';
   const zones = invGetZones(roomId);
@@ -3566,7 +3586,7 @@ function invUpdateZoneNum(roomId, zoneId, field, val) {
 }
 
 function invToggleEdit(roomId) {
-  const canEdit = appMode==='admin' && currentUser && currentUser.level!=='B';
+  const canEdit = appMode==='admin' && currentUser && (currentUser.level==='S'||currentUser.level==='A'||currentUser.level==='A-');
   if (!canEdit) return;
   invEditMode = !invEditMode;
   const btn = document.getElementById(roomId+'-edit-btn');
@@ -3580,7 +3600,7 @@ function invToggleEdit(roomId) {
 
 // ── 表格渲染 ──────────────────────────────────────────────────
 function renderInvTable(roomId) {
-  const canEdit = appMode==='admin' && currentUser && currentUser.level!=='B';
+  const canEdit = appMode==='admin' && currentUser && (currentUser.level==='S'||currentUser.level==='A'||currentUser.level==='A-');
   const selZone = invSelZone[roomId]||'all';
   let items = [...invGetItems(roomId)];
   if (selZone!=='all') items = items.filter(r=>r.zone===selZone);
@@ -3717,7 +3737,7 @@ function invAddRow(roomId) {
 function initInvPage() {
   ['inv403','inv406','inv412'].forEach(rid=>{
     const btn = document.getElementById(rid+'-edit-btn');
-    if (btn) btn.style.display = (appMode==='admin'&&currentUser&&currentUser.level!=='B') ? '' : 'none';
+    if (btn) btn.style.display = (appMode==='admin'&&currentUser&&(currentUser.level==='S'||currentUser.level==='A'||currentUser.level==='A-')) ? '' : 'none';
   });
   renderInvPage(invCurrentRoom);
 }
