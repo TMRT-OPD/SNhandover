@@ -1525,7 +1525,7 @@ function saveUsers(arr){
   const allUsers = [SUPER_USER, ...sheetsUsers];
   fetch(APPS_SCRIPT_URL, {
     method:'POST',
-    body: JSON.stringify({ action: 'save', data: { items, projects, shuWu, users: allUsers, nextId, nextPid, nextShuWuNo, invData, invZones, invNextId, superPw: SUPER_USER.pw } })
+    body: JSON.stringify({ action: 'save', data: { items, projects, shuWu, users: allUsers, nextId, nextPid, nextShuWuNo, invData, invZones, invNextId } })
   }).then(r=>r.json()).then(d=>{
     if(d.ok) toast('帳號已更新至 Sheets ✓');
     else toast('帳號寫入失敗：' + (d.error||''));
@@ -1660,8 +1660,14 @@ function startApp(){
     if(APPS_SCRIPT_URL){
       fetch(APPS_SCRIPT_URL+'?action=load').then(r=>r.json()).then(d=>{
         if(Array.isArray(d.users)){
-          // 只更新 A/B 層帳號，不碰 S 層密碼
           sheetsUsers = d.users.filter(u=>u.level!=='S');
+          const savedS = d.users.find(u=>u.level==='S'&&String(u.id)===String(SUPER_USER.id));
+          // Sheets 有任何密碼就採用（以 Sheets 為主）
+          if(savedS&&savedS.pw){
+            const sheetsPw=savedS.pw.startsWith('UC:')?savedS.pw.slice(3):savedS.pw;
+            SUPER_USER={...SUPER_USER, pw:sheetsPw};
+            if(currentUser&&isS) currentUser={...currentUser,pw:sheetsPw};
+          }
           // 確認 A/B 帳號仍有效
           if(appMode==='admin'&&currentUser&&(isA||isB)){
             const valid=sheetsUsers.find(u=>String(u.id)===String(currentUser.id));
@@ -2851,7 +2857,7 @@ function syncToSheets() {
   const allUsers = [SUPER_USER, ...sheetsUsers];
   fetch(APPS_SCRIPT_URL, {
     method: 'POST',
-    body: JSON.stringify({ action: 'save', data: { items, projects, shuWu, users: allUsers, nextId, nextPid, nextShuWuNo, invData, invZones, invNextId, superPw: SUPER_USER.pw } })
+    body: JSON.stringify({ action: 'save', data: { items, projects, shuWu, users: allUsers, nextId, nextPid, nextShuWuNo, invData, invZones, invNextId } })
   })
   .then(r => r.text())
   .then(text => {
@@ -3316,14 +3322,14 @@ function restoreSession() {
       const s = document.getElementById('jsonp-init');
       if (s) s.remove();
       delete window[cbName];
-      if (d && d.ok) {
-        // A/B 層帳號
-        if (Array.isArray(d.users)) {
-          sheetsUsers = d.users.filter(u => u.level !== 'S');
-        }
-        // S 層密碼從 meta 的 superPw 欄位取（與 users 分頁無關）
-        if (d.superPw) {
-          SUPER_USER = { ...SUPER_USER, pw: d.superPw };
+      if (d && d.ok && Array.isArray(d.users)) {
+        sheetsUsers = d.users.filter(u => u.level !== 'S');
+        const savedS = d.users.find(u => u.level === 'S' && String(u.id) === String(SUPER_USER.id));
+        // Sheets 有任何密碼就採用（以 Sheets 為主）
+        if (savedS && savedS.pw) {
+          const sheetsPw = savedS.pw.startsWith('UC:') ? savedS.pw.slice(3) : savedS.pw;
+          SUPER_USER = { ...SUPER_USER, pw: sheetsPw };
+          if(currentUser&&isS) currentUser={...currentUser, pw: sheetsPw};
         }
       }
       initAfterLoad();
@@ -3488,13 +3494,10 @@ function renderInvMap(roomId) {
     const isActive = selZone === z.id;
     const activeStyle = isActive ? 'outline:2.5px solid var(--accent);outline-offset:1px;' : '';
     const editMode = invMapEditMode[roomId];
-    const dragHandles = editMode && canEdit ? `
-      <div class="iz-drag-handle" onmousedown="invStartDrag(event,'${roomId}','${z.id}')" title="拖曳移動" style="position:absolute;top:0;left:0;right:0;bottom:0;cursor:move;z-index:1"></div>
-      <div class="iz-resize-handle" onmousedown="invStartResize(event,'${roomId}','${z.id}')" title="拖曳調整大小" style="position:absolute;bottom:0;right:0;width:12px;height:12px;cursor:se-resize;background:${z.color};border-radius:2px 0 0 0;z-index:3"></div>` : '';
+    const editStyle = editMode && canEdit ? 'border-style:dashed;' : '';
     return `<div class="inv-zone${isActive?' iz-active':''}" data-zone="${z.id}"
-      style="top:${z.top}%;left:${z.left}%;width:${z.w}%;height:${z.h}%;border-color:${z.color};background:${z.bg};z-index:2;${activeStyle}${editMode&&canEdit?'':'cursor:pointer;'}"
-      ${!editMode ? `onclick="invSelectZone('${roomId}','${z.id}')"` : ''}>
-      ${dragHandles}
+      style="top:${z.top}%;left:${z.left}%;width:${z.w}%;height:${z.h}%;border-color:${z.color};background:${z.bg};z-index:2;cursor:pointer;${activeStyle}${editStyle}"
+      onclick="invSelectZone('${roomId}','${z.id}')">
       <span class="inv-zone-label" style="color:${col.text};z-index:2;position:relative">${z.label}<br><span style="font-size:9px;opacity:.8">${z.sub}</span></span>
       <span class="inv-zone-count" style="color:${z.color};z-index:2;position:relative" id="z${roomId.slice(-3)}-cnt-${z.id}">${cnt} 項</span>
     </div>`;
@@ -3536,27 +3539,51 @@ function renderInvZoneList(roomId) {
     const colorOpts = INV_COLORS.map(c =>
       `<option value="${c.border}" ${z.color===c.border?'selected':''}>${c.label}</option>`
     ).join('');
-    return `<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:center;background:var(--surface2);border-radius:var(--radius);padding:8px 10px;border:1px solid var(--border)">
-      <div>
-        <div style="font-size:10px;color:var(--text3);margin-bottom:3px">區域名稱</div>
-        <input value="${z.label}" style="width:100%;padding:3px 6px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"
-          data-room="${roomId}" data-zone="${z.id}" data-field="label"
-          onblur="invUpdateZone(this.dataset.room,this.dataset.zone,this.dataset.field,this.value)"
-          oncompositionend="invUpdateZone(this.dataset.room,this.dataset.zone,this.dataset.field,this.value)">
+    return `<div style="display:flex;flex-direction:column;gap:6px;background:var(--surface2);border-radius:var(--radius);padding:10px;border:1px solid var(--border)">
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:end">
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px">區域名稱（ID: ${z.id}）</div>
+          <input value="${z.label}" style="width:100%;padding:3px 6px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"
+            data-room="${roomId}" data-zone="${z.id}" data-field="label"
+            onblur="invUpdateZone(this.dataset.room,this.dataset.zone,this.dataset.field,this.value)"
+            oncompositionend="invUpdateZone(this.dataset.room,this.dataset.zone,this.dataset.field,this.value)">
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px">副標題</div>
+          <input value="${z.sub}" style="width:100%;padding:3px 6px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"
+            data-room="${roomId}" data-zone="${z.id}" data-field="sub"
+            onblur="invUpdateZone(this.dataset.room,this.dataset.zone,this.dataset.field,this.value)"
+            oncompositionend="invUpdateZone(this.dataset.room,this.dataset.zone,this.dataset.field,this.value)">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:center">
+          <div style="font-size:10px;color:var(--text3)">顏色</div>
+          <select style="font-size:11px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"
+            onchange="invUpdateZoneColor('${roomId}','${z.id}',this.value)">${colorOpts}</select>
+          <button class="btn-danger" style="font-size:10px;padding:1px 6px;border:1px solid #f0b8b8;border-radius:4px;background:none;cursor:pointer;color:var(--red)"
+            onclick="invDelZone('${roomId}','${z.id}')">刪除</button>
+        </div>
       </div>
-      <div>
-        <div style="font-size:10px;color:var(--text3);margin-bottom:3px">副標題</div>
-        <input value="${z.sub}" style="width:100%;padding:3px 6px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"
-          data-room="${roomId}" data-zone="${z.id}" data-field="sub"
-          onblur="invUpdateZone(this.dataset.room,this.dataset.zone,this.dataset.field,this.value)"
-          oncompositionend="invUpdateZone(this.dataset.room,this.dataset.zone,this.dataset.field,this.value)">
-      </div>
-      <div style="display:flex;flex-direction:column;gap:4px;align-items:center">
-        <div style="font-size:10px;color:var(--text3)">顏色</div>
-        <select style="font-size:11px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"
-          onchange="invUpdateZoneColor('${roomId}','${z.id}',this.value)">${colorOpts}</select>
-        <button class="btn-danger" style="font-size:10px;padding:1px 6px;border:1px solid #f0b8b8;border-radius:4px;background:none;cursor:pointer;color:var(--red)"
-          onclick="invDelZone('${roomId}','${z.id}')">刪除</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px">
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px">上邊距 top%</div>
+          <input type="number" min="0" max="99" value="${z.top}" style="width:100%;padding:3px 6px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"
+            onchange="invUpdateZoneNum('${roomId}','${z.id}','top',this.value)">
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px">左邊距 left%</div>
+          <input type="number" min="0" max="99" value="${z.left}" style="width:100%;padding:3px 6px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"
+            onchange="invUpdateZoneNum('${roomId}','${z.id}','left',this.value)">
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px">寬度 w%</div>
+          <input type="number" min="5" max="100" value="${z.w}" style="width:100%;padding:3px 6px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"
+            onchange="invUpdateZoneNum('${roomId}','${z.id}','w',this.value)">
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px">高度 h%</div>
+          <input type="number" min="5" max="100" value="${z.h}" style="width:100%;padding:3px 6px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"
+            onchange="invUpdateZoneNum('${roomId}','${z.id}','h',this.value)">
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -3586,13 +3613,10 @@ function renderInvMapOnly(roomId) {
     const cnt = (invData[roomId]||[]).filter(r => r.zone === z.id).length;
     const isActive = selZone === z.id;
     const activeStyle = isActive ? 'outline:2.5px solid var(--accent);outline-offset:1px;' : '';
-    const dragHandles = editMode && canEdit ? `
-      <div class="iz-drag-handle" onmousedown="invStartDrag(event,'${roomId}','${z.id}')" title="拖曳移動" style="position:absolute;top:0;left:0;right:0;bottom:0;cursor:move;z-index:1"></div>
-      <div class="iz-resize-handle" onmousedown="invStartResize(event,'${roomId}','${z.id}')" title="拖曳調整大小" style="position:absolute;bottom:0;right:0;width:12px;height:12px;cursor:se-resize;background:${z.color};border-radius:2px 0 0 0;z-index:3"></div>` : '';
+    const editStyle = editMode && canEdit ? 'border-style:dashed;' : '';
     return `<div class="inv-zone${isActive?' iz-active':''}" data-zone="${z.id}"
-      style="top:${z.top}%;left:${z.left}%;width:${z.w}%;height:${z.h}%;border-color:${z.color};background:${z.bg};z-index:2;${activeStyle}${editMode&&canEdit?'':'cursor:pointer;'}"
-      ${!editMode ? `onclick="invSelectZone('${roomId}','${z.id}')"` : ''}>
-      ${dragHandles}
+      style="top:${z.top}%;left:${z.left}%;width:${z.w}%;height:${z.h}%;border-color:${z.color};background:${z.bg};z-index:2;cursor:pointer;${activeStyle}${editStyle}"
+      onclick="invSelectZone('${roomId}','${z.id}')">
       <span class="inv-zone-label" style="color:${col.text};z-index:2;position:relative">${z.label}<br><span style="font-size:9px;opacity:.8">${z.sub}</span></span>
       <span class="inv-zone-count" style="color:${z.color};z-index:2;position:relative" id="z${roomId.slice(-3)}-cnt-${z.id}">${cnt} 項</span>
     </div>`;
@@ -3607,86 +3631,32 @@ function invUpdateZoneColor(roomId, zoneId, colorBorder) {
 function invDelZone(roomId, zoneId) {
   if (!confirm('刪除此區域？已分配到此區域的品項將移至第一個區域。')) return;
   invZones[roomId] = (invZones[roomId]||[]).filter(z => z.id !== zoneId);
-  // 刪除區域後立即清理該區域的品項 zone 值
   sanitizeInvZones();
   renderInvMap(roomId); persistData(); markDirty(); toast('區域已刪除');
 }
 function invAddZone(roomId) {
   const zones = invZones[roomId] || [];
-  const newId = 'Z' + Date.now().toString(36).slice(-4).toUpperCase();
+  // 用固定字母序列作為 ID，避免產生亂碼
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const usedIds = new Set(zones.map(z => z.id));
+  let newId = '';
+  for (const l of letters) {
+    if (!usedIds.has(l)) { newId = l; break; }
+  }
+  if (!newId) { toast('最多支援 26 個區域'); return; }
   const col = INV_COLORS[zones.length % INV_COLORS.length];
-  zones.push({id:newId, label:'新區域', sub:'', color:col.border, bg:col.bg, top:20, left:20, w:30, h:25});
+  zones.push({id:newId, label:newId+' 區', sub:'', color:col.border, bg:col.bg, top:20, left:20, w:30, h:25});
   invZones[roomId] = zones;
-  renderInvMap(roomId); persistData(); markDirty(); toast('已新增區域，可拖曳調整位置');
+  renderInvMap(roomId); persistData(); markDirty(); toast('已新增 '+newId+' 區，請用數值調整位置和大小');
 }
-
-// ── 拖拉移動 ──────────────────────────────────────────────────────
-let invDragState = null;
-
-function invStartDrag(e, roomId, zoneId) {
-  e.preventDefault(); e.stopPropagation();
-  const fpId = roomId === 'inv403' ? 'fp403' : roomId === 'inv406' ? 'fp406' : 'fp412';
-  const fp = document.getElementById(fpId);
-  if (!fp) return;
-  const rect = fp.getBoundingClientRect();
+function invUpdateZoneNum(roomId, zoneId, field, val) {
   const z = (invZones[roomId]||[]).find(z => z.id === zoneId);
   if (!z) return;
-  invDragState = { type:'move', roomId, zoneId, startX: e.clientX, startY: e.clientY, origLeft: z.left, origTop: z.top, fpW: rect.width, fpH: rect.height };
-  document.addEventListener('mousemove', invOnDragMove);
-  document.addEventListener('mouseup', invOnDragEnd);
-}
-
-function invStartResize(e, roomId, zoneId) {
-  e.preventDefault(); e.stopPropagation();
-  const fpId = roomId === 'inv403' ? 'fp403' : roomId === 'inv406' ? 'fp406' : 'fp412';
-  const fp = document.getElementById(fpId);
-  if (!fp) return;
-  const rect = fp.getBoundingClientRect();
-  const z = (invZones[roomId]||[]).find(z => z.id === zoneId);
-  if (!z) return;
-  invDragState = { type:'resize', roomId, zoneId, startX: e.clientX, startY: e.clientY, origW: z.w, origH: z.h, fpW: rect.width, fpH: rect.height };
-  document.addEventListener('mousemove', invOnDragMove);
-  document.addEventListener('mouseup', invOnDragEnd);
-}
-
-function invOnDragMove(e) {
-  if (!invDragState) return;
-  const ds = invDragState;
-  const dx = ((e.clientX - ds.startX) / ds.fpW) * 100;
-  const dy = ((e.clientY - ds.startY) / ds.fpH) * 100;
-  const z = (invZones[ds.roomId]||[]).find(z => z.id === ds.zoneId);
-  if (!z) return;
-  if (ds.type === 'move') {
-    z.left = Math.max(0, Math.min(100 - z.w, ds.origLeft + dx));
-    z.top  = Math.max(0, Math.min(100 - z.h, ds.origTop  + dy));
-  } else {
-    z.w = Math.max(10, Math.min(100 - z.left, ds.origW + dx));
-    z.h = Math.max(10, Math.min(100 - z.top,  ds.origH + dy));
-  }
-  // 只更新該區域的 CSS，不重新渲染整個地圖
-  const wrapId = ds.roomId === 'inv403' ? 'inv403-zones-wrap'
-               : ds.roomId === 'inv406' ? 'inv406-zones-wrap' : 'inv412-zones-wrap';
-  const wrap = document.getElementById(wrapId);
-  if (wrap) {
-    const el = wrap.querySelector('[data-zone="' + ds.zoneId + '"]');
-    if (el) {
-      el.style.top    = z.top  + '%';
-      el.style.left   = z.left + '%';
-      el.style.width  = z.w    + '%';
-      el.style.height = z.h    + '%';
-    }
-  }
-}
-
-function invOnDragEnd() {
-  if (invDragState) {
-    // 放開後才完整重新渲染
-    renderInvMap(invDragState.roomId);
-    persistData(); markDirty();
-  }
-  invDragState = null;
-  document.removeEventListener('mousemove', invOnDragMove);
-  document.removeEventListener('mouseup', invOnDragEnd);
+  const num = parseFloat(val);
+  if (isNaN(num)) return;
+  z[field] = Math.max(0, Math.min(field==='w'||field==='h' ? 100 : 99, num));
+  renderInvMapOnly(roomId);
+  persistData(); markDirty();
 }
 
 // ── 區域篩選（通用）────────────────────────────────────────────────
