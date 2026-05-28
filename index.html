@@ -3477,6 +3477,16 @@ function invSelectZoneAll(roomId) {
   renderInvTable(roomId);
 }
 
+function toggleInventoryNav() {
+  const sub = document.getElementById('inv-subnav');
+  const arrow = document.getElementById('inv-nav-arrow');
+  if (!sub) return;
+  const isOpen = sub.style.display !== 'none';
+  sub.style.display = isOpen ? 'none' : '';
+  if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(90deg)';
+  if (!isOpen) showPage('p6');
+}
+
 function renderInvZoneEditor(roomId) {
   const el = document.getElementById(roomId+'-zone-editor');
   if (!el) return;
