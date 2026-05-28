@@ -1525,7 +1525,7 @@ function saveUsers(arr){
   const allUsers = [SUPER_USER, ...sheetsUsers];
   fetch(APPS_SCRIPT_URL, {
     method:'POST',
-    body: JSON.stringify({ action: 'save', data: { items, projects, shuWu, users: allUsers, nextId, nextPid, nextShuWuNo, invData, invZones, invNextId } })
+    body: JSON.stringify({ action: 'save', data: { items, projects, shuWu, users: allUsers, nextId, nextPid, nextShuWuNo, invData, invZones, invNextId, superPw: SUPER_USER.pw } })
   }).then(r=>r.json()).then(d=>{
     if(d.ok) toast('帳號已更新至 Sheets ✓');
     else toast('帳號寫入失敗：' + (d.error||''));
@@ -1660,14 +1660,8 @@ function startApp(){
     if(APPS_SCRIPT_URL){
       fetch(APPS_SCRIPT_URL+'?action=load').then(r=>r.json()).then(d=>{
         if(Array.isArray(d.users)){
+          // 只更新 A/B 層帳號，不碰 S 層密碼
           sheetsUsers = d.users.filter(u=>u.level!=='S');
-          const savedS = d.users.find(u=>u.level==='S'&&String(u.id)===String(SUPER_USER.id));
-          // Sheets 有任何密碼就採用（以 Sheets 為主）
-          if(savedS&&savedS.pw){
-            const sheetsPw=savedS.pw.startsWith('UC:')?savedS.pw.slice(3):savedS.pw;
-            SUPER_USER={...SUPER_USER, pw:sheetsPw};
-            if(currentUser&&isS) currentUser={...currentUser,pw:sheetsPw};
-          }
           // 確認 A/B 帳號仍有效
           if(appMode==='admin'&&currentUser&&(isA||isB)){
             const valid=sheetsUsers.find(u=>String(u.id)===String(currentUser.id));
@@ -2857,7 +2851,7 @@ function syncToSheets() {
   const allUsers = [SUPER_USER, ...sheetsUsers];
   fetch(APPS_SCRIPT_URL, {
     method: 'POST',
-    body: JSON.stringify({ action: 'save', data: { items, projects, shuWu, users: allUsers, nextId, nextPid, nextShuWuNo, invData, invZones, invNextId } })
+    body: JSON.stringify({ action: 'save', data: { items, projects, shuWu, users: allUsers, nextId, nextPid, nextShuWuNo, invData, invZones, invNextId, superPw: SUPER_USER.pw } })
   })
   .then(r => r.text())
   .then(text => {
@@ -3322,14 +3316,14 @@ function restoreSession() {
       const s = document.getElementById('jsonp-init');
       if (s) s.remove();
       delete window[cbName];
-      if (d && d.ok && Array.isArray(d.users)) {
-        sheetsUsers = d.users.filter(u => u.level !== 'S');
-        const savedS = d.users.find(u => u.level === 'S' && String(u.id) === String(SUPER_USER.id));
-        // Sheets 有任何密碼就採用（以 Sheets 為主）
-        if (savedS && savedS.pw) {
-          const sheetsPw = savedS.pw.startsWith('UC:') ? savedS.pw.slice(3) : savedS.pw;
-          SUPER_USER = { ...SUPER_USER, pw: sheetsPw };
-          if(currentUser&&isS) currentUser={...currentUser, pw: sheetsPw};
+      if (d && d.ok) {
+        // A/B 層帳號
+        if (Array.isArray(d.users)) {
+          sheetsUsers = d.users.filter(u => u.level !== 'S');
+        }
+        // S 層密碼從 meta 的 superPw 欄位取（與 users 分頁無關）
+        if (d.superPw) {
+          SUPER_USER = { ...SUPER_USER, pw: d.superPw };
         }
       }
       initAfterLoad();
