@@ -1643,7 +1643,7 @@ function startApp(){
       fetch(APPS_SCRIPT_URL+'?action=load').then(r=>r.json()).then(d=>{
         if(d.ok) {
           // A/B 層帳號
-          if(Array.isArray(d.users)) sheetsUsers = d.users.filter(u=>u.level!=='S');
+          if(Array.isArray(d.users) && d.users.length > 0) sheetsUsers = d.users.filter(u=>u.level!=='S');
           // S 密碼不從 Sheets 讀回（密碼只在 HTML 和 localStorage 管理）
           // 確認 A/B 帳號仍有效
           if(appMode==='admin'&&currentUser&&(isA||isB)){
@@ -2855,7 +2855,7 @@ function loadFromSheets() {
     if (Array.isArray(d.projects)) projects = d.projects;
     if (Array.isArray(d.shuWu) && d.shuWu.length > 0) shuWu = d.shuWu;
     // 帳號（只取 A/B 層）
-    if (Array.isArray(d.users)) sheetsUsers = d.users.filter(u => u.level !== 'S');
+    if (Array.isArray(d.users) && d.users.length > 0) sheetsUsers = d.users.filter(u => u.level !== 'S');
     // S 密碼不從 Sheets 讀回
     if (d.nextId) nextId = d.nextId;
     if (d.nextPid) nextPid = d.nextPid;
@@ -3298,7 +3298,7 @@ function restoreSession() {
       delete window[cbName];
       if (d && d.ok) {
         // A/B 層帳號
-        if (Array.isArray(d.users)) sheetsUsers = d.users.filter(u => u.level !== 'S');
+        if (Array.isArray(d.users) && d.users.length > 0) sheetsUsers = d.users.filter(u => u.level !== 'S');
         // S 密碼不從 Sheets 讀回（密碼只在 HTML 和 localStorage 管理）
         // 庫存資料（新扁平結構）
         if (Array.isArray(d.inv403) && d.inv403.length > 0) inv403 = d.inv403;
