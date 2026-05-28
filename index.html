@@ -1277,6 +1277,13 @@ tbody tr:hover td { background: #fafaf8; }
       <label>姓名</label>
       <input id="eu-name" placeholder="顯示姓名">
     </div>
+    <div class="field" style="margin-bottom:12px">
+      <label>層級</label>
+      <select id="eu-level" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:13px">
+        <option value="A">A — 後台編輯</option>
+        <option value="B">B — 檢視</option>
+      </select>
+    </div>
     <div class="field" style="margin-bottom:16px">
       <label>新密碼（留空則不變更）</label>
       <input id="eu-pw" type="password" placeholder="請輸入新密碼">
@@ -1918,6 +1925,8 @@ function openEditUser(id){
   document.getElementById('eu-id-display').value = id;
   document.getElementById('eu-name').value = u.name;
   document.getElementById('eu-pw').value = '';
+  const lvSel = document.getElementById('eu-level');
+  if(lvSel) lvSel.value = u.level || 'B';
   const _mo = document.getElementById('edit-user-modal');
   _mo.style.setProperty('display','flex','important');
   _mo.classList.add('open');
@@ -1932,14 +1941,17 @@ function saveEditUser(){
   const id=document.getElementById('eu-id').value;
   const name=document.getElementById('eu-name').value.trim();
   const pw=document.getElementById('eu-pw').value.trim();
+  const lvSel=document.getElementById('eu-level');
+  const level=lvSel ? lvSel.value : null;
   if(!name){toast('姓名不可空白');return}
   const users=getUsers();
   const idx=users.findIndex(u=>String(u.id)===String(id));
   if(idx===-1)return;
   users[idx].name=name;
+  if(level) users[idx].level=level;
   if(pw){
     users[idx].pw=pw;
-    users[idx].isFirstLogin=false; // 密碼被修改，清除首次登入標記
+    users[idx].isFirstLogin=false;
   }
   saveUsers(users);
   const mc=document.getElementById('edit-user-modal');
