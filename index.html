@@ -1720,23 +1720,7 @@ window.addEventListener('beforeunload', e => {
   }
 });
 
-function loadFromSheets(){
-  if(!APPS_SCRIPT_URL){toast('請先填入 Apps Script 網址');return}
-  document.getElementById('sync-status').textContent='載入中...';
-  fetch(APPS_SCRIPT_URL+'?action=load').then(r=>r.json()).then(d=>{
-    if(!d.ok)throw new Error(d.error);
-    if(Array.isArray(d.items)&&d.items.length>0)items=d.items;
-    if(Array.isArray(d.projects))projects=d.projects;
-    if(Array.isArray(d.shuWu)&&d.shuWu.length>0)shuWu=d.shuWu;
-    if(Array.isArray(d.users))sheetsUsers=d.users;
-    if(d.nextId)nextId=d.nextId;if(d.nextPid)nextPid=d.nextPid;
-    persistData();renderMain();renderDetail();renderProjects();renderShuWu();updateTimestamp();
-    const ts=new Date().toLocaleString('zh-TW',{hour:'2-digit',minute:'2-digit'});
-    document.getElementById('sync-status').textContent='☁ 已載入 '+ts;
-    document.getElementById('sync-status').style.color='#7ab8d6';
-    toast('已從 Google Sheets 載入 ✓');
-  }).catch(err=>{toast('載入失敗：'+err.message)})
-}
+// loadFromSheets 定義在下方
 
 
 // ── 層級 A 修改自己密碼 ──────────────────────────────────────────
@@ -2867,23 +2851,24 @@ function loadFromSheets() {
     if (Array.isArray(d.items) && d.items.length > 0) items = d.items;
     if (Array.isArray(d.projects)) projects = d.projects;
     if (Array.isArray(d.shuWu) && d.shuWu.length > 0) shuWu = d.shuWu;
+    // 帳號（只取 A/B 層）
+    if (Array.isArray(d.users)) sheetsUsers = d.users.filter(u => u.level !== 'S');
+    // S 密碼（有值才更新）
+    if (d.superPw && d.superPw.trim()) SUPER_USER = {...SUPER_USER, pw: String(d.superPw)};
     if (d.nextId) nextId = d.nextId;
     if (d.nextPid) nextPid = d.nextPid;
     if (d.nextShuWuNo) nextShuWuNo = d.nextShuWuNo;
-    // 還原庫存資料
+    // 庫存資料
     if (Array.isArray(d.inv403) && d.inv403.length > 0) inv403 = d.inv403;
-    if (Array.isArray(d.inv406)) inv406 = d.inv406;
+    if (Array.isArray(d.inv406) && d.inv406.length > 0) inv406 = d.inv406;
     if (Array.isArray(d.inv412)) inv412 = d.inv412;
     if (d.invNextId) invNextId = parseInt(d.invNextId)||invNextId;
-    if (d.invZones) {
-      if (Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
-      if (Array.isArray(d.invZones.inv406) && d.invZones.inv406.length > 0) invZones.inv406 = d.invZones.inv406;
-      if (Array.isArray(d.invZones.inv412) && d.invZones.inv412.length > 0) invZones.inv412 = d.invZones.inv412;
-    }
     invSanitizeAll();
     persistData();
-    renderMain();
+    renderMain(); renderDetail(); renderProjects(); renderShuWu();
     updateTimestamp();
+    renderUsers();
+    if (document.getElementById('inv-room-inv403') && invCurrentRoom) renderInvPage(invCurrentRoom);
     const ts = new Date().toLocaleString('zh-TW', {hour:'2-digit',minute:'2-digit'});
     document.getElementById('sync-status').textContent = `☁ 已載入 ${ts}`;
     document.getElementById('sync-status').style.color = '#7ab8d6';
@@ -2896,7 +2881,7 @@ function loadFromSheets() {
 }
 
 function saveData() {
-  const payload = JSON.stringify({ items, projects, nextId, nextPid, shuWu, nextShuWuNo, invData, invZones, invNextId }, null, 2);
+  const payload = JSON.stringify({ items, projects, nextId, nextPid, shuWu, nextShuWuNo, inv403, inv406, inv412, invNextId, invZones }, null, 2);
   const a = document.createElement('a');
   const ts = new Date().toISOString().slice(0,10);
   a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(payload);
@@ -2919,12 +2904,13 @@ function loadData(e) {
       nextId = d.nextId || (items.length + 1);
       nextPid = d.nextPid || (projects.length + 1);
       if (Array.isArray(d.shuWu) && d.shuWu.length > 0) shuWu = d.shuWu;
-      // 還原庫存資料
-      if (d.invData) {
-        if (Array.isArray(d.invData.inv403) && d.invData.inv403.length > 0) invData.inv403 = d.invData.inv403;
-        if (Array.isArray(d.invData.inv406)) invData.inv406 = d.invData.inv406;
-        if (Array.isArray(d.invData.inv412)) invData.inv412 = d.invData.inv412;
-      }
+      // 還原庫存資料（支援新舊格式）
+      if (Array.isArray(d.inv403) && d.inv403.length > 0) inv403 = d.inv403;
+      else if (d.invData && Array.isArray(d.invData.inv403) && d.invData.inv403.length > 0) inv403 = d.invData.inv403;
+      if (Array.isArray(d.inv406)) inv406 = d.inv406;
+      else if (d.invData && Array.isArray(d.invData.inv406)) inv406 = d.invData.inv406;
+      if (Array.isArray(d.inv412)) inv412 = d.inv412;
+      else if (d.invData && Array.isArray(d.invData.inv412)) inv412 = d.invData.inv412;
       if (d.invZones) {
         if (Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
         if (Array.isArray(d.invZones.inv406) && d.invZones.inv406.length > 0) invZones.inv406 = d.invZones.inv406;
