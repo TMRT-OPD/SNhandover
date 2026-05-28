@@ -2164,7 +2164,8 @@ function updateTimestamp() {
 // ── NAVIGATION ────────────────────────────────────────────────
 function showPage(pid, target) {
   // 切換到庫存管理不需要 isDirty 警告（庫存有自己的存檔機制）
-  const skipDirtyCheck = (pid === 'p6');
+  const isS = currentUser && currentUser.level === 'S';
+  const skipDirtyCheck = (pid === 'p6') || !isS;
   if (isDirty && appMode === 'admin' && !skipDirtyCheck) {
     const ok = window.confirm('您有尚未同步至 Sheets 的修改，確定要離開嗎？');
     if (!ok) return;
