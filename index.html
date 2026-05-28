@@ -387,7 +387,7 @@ tbody tr:hover td { background: #fafaf8; }
 .inv-tab{padding:12px 20px;font-size:13px;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;transition:var(--transition);white-space:nowrap}
 .inv-tab:hover{color:var(--text)}
 .inv-tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
-.inv-room{display:none}.inv-room.active{display:block}
+.inv-room{display:none}.inv-room.active{display:block !important}
 .inv-layout{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start}
 .inv-map-card,.inv-table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px}
 .inv-map-title{font-size:11px;font-weight:500;color:var(--text2);letter-spacing:.04em;text-transform:uppercase;margin-bottom:12px}
@@ -1367,7 +1367,7 @@ tbody tr:hover td { background: #fafaf8; }
 
 <script>
 
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzD55NSycUMoXSxoecPYGFSc4d7G1hCEmZtbmNr_P9qYCwKblVeKhzhowZodqelF644kQ/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwVkMt1kRYsIygrz_PxCKCWwSHOIf0-yyGfT-LaxOIiX9QsWkzKsA_JbZ5vvU1MGVdSRw/exec';
 // 層級 S 帳號（可透過修改密碼功能更新，存於 Sheets users 分頁）
 let SUPER_USER = {id:'110219', pw:'SNnorth2025', name:'\u6797\u7dad\u8fb0', level:'S'};
 
@@ -1637,8 +1637,8 @@ function startApp(){
         if(d.ok) {
           // A/B 層帳號
           if(Array.isArray(d.users)) sheetsUsers = d.users.filter(u=>u.level!=='S');
-          // S 密碼從 meta.superPw 取（穩定）
-          if(d.superPw) {
+          // S 密碼從 meta.superPw 取（有值才更新）
+          if(d.superPw && d.superPw.trim()){
             SUPER_USER = {...SUPER_USER, pw: String(d.superPw)};
             if(currentUser && currentUser.level==='S') currentUser = {...currentUser, pw: String(d.superPw)};
             saveSession();
@@ -2017,7 +2017,7 @@ function loadFromSheetsJsonp() {
   const script = document.createElement('script');
   script.id = 'jsonp-script';
   // 加上時間戳避免瀏覽器快取舊資料
-  script.src = 'https://script.google.com/macros/s/AKfycbzD55NSycUMoXSxoecPYGFSc4d7G1hCEmZtbmNr_P9qYCwKblVeKhzhowZodqelF644kQ/exec?action=load&callback=' + cbName + '&t=' + Date.now();
+  script.src = 'https://script.google.com/macros/s/AKfycbwVkMt1kRYsIygrz_PxCKCWwSHOIf0-yyGfT-LaxOIiX9QsWkzKsA_JbZ5vvU1MGVdSRw/exec?action=load&callback=' + cbName + '&t=' + Date.now();
   script.onerror = () => {
     clearTimeout(timer);
     if (script.parentNode) script.remove();
@@ -2958,7 +2958,7 @@ function sanitizeInvZones() {
     if (!zones.length) return;
     const validIds = zones.map(z => z.id);
     const defaultZone = validIds[0];
-    (invData[rid] || []).forEach(row => {
+    invGetItems(rid).forEach(row => {
       if (!row.zone) { row.zone = defaultZone; return; }
       // 先嘗試完全匹配
       if (validIds.indexOf(row.zone) !== -1) return;
@@ -3297,8 +3297,10 @@ function restoreSession() {
       if (d && d.ok) {
         // A/B 層帳號
         if (Array.isArray(d.users)) sheetsUsers = d.users.filter(u => u.level !== 'S');
-        // S 密碼從 meta.superPw 取（穩定，不從 users 分頁讀）
-        if (d.superPw) SUPER_USER = { ...SUPER_USER, pw: String(d.superPw) };
+        // S 密碼從 meta.superPw 取（有值才更新，空字串不覆蓋預設值）
+        if (d.superPw && d.superPw.trim()) {
+          SUPER_USER = { ...SUPER_USER, pw: String(d.superPw) };
+        }
         // 庫存資料（新扁平結構）
         if (Array.isArray(d.inv403) && d.inv403.length > 0) inv403 = d.inv403;
         if (Array.isArray(d.inv406)) inv406 = d.inv406;
@@ -3448,7 +3450,8 @@ function renderInvMap(roomId) {
     return `<div class="inv-zone${isActive?' iz-active':''}" data-zone="${z.id}"
       style="top:${z.top}%;left:${z.left}%;width:${z.w}%;height:${z.h}%;border-color:${z.color};background:${z.bg};${activeStyle}${dashStyle}"
       onclick="invClickZone('${roomId}','${z.id}')">
-      <span class="inv-zone-label" style="color:${z.color}">${z.label}<br><span style="font-size:9px;opacity:.7">${z.sub}</span></span>
+      <span class="inv-zone-label" style="color:${z.color}">${z.label}</span>
+      <span style="font-size:9px;color:${z.color};opacity:.8;display:block;margin-top:2px">${z.sub}</span>
       <span class="inv-zone-count" style="color:${z.color}">${cnt} 項</span>
     </div>`;
   }).join('');
@@ -3595,21 +3598,21 @@ function renderInvTable(roomId) {
     const catOpts = INV_CATS.map(c=>`<option value="${c.id}" ${row.cat===c.id?'selected':''}>${c.label}</option>`).join('');
     if (canEdit) {
       return `<tr data-id="${row.id}">
-        <td style="width:24px;color:var(--text3);cursor:grab;user-select:none;font-size:16px;text-align:center">⠿</td>
-        <td><span class="inv-editable" contenteditable="true" data-field="name" data-id="${row.id}" data-room="${roomId}"
+        <td style="width:24px;color:var(--text3);user-select:none;font-size:16px;text-align:center">⠿</td>
+        <td style="min-width:60px"><span class="inv-editable" contenteditable="true" data-field="name" data-id="${row.id}" data-room="${roomId}"
           onblur="invSaveCell(this)" oncompositionend="invSaveCell(this)">${row.name}</span></td>
         <td><select class="inv-cat-sel" data-field="cat" data-id="${row.id}" data-room="${roomId}"
           style="font-size:11px;padding:1px 4px;border-radius:20px;border:1px solid ${cat.color};color:${cat.color};background:${cat.bg};cursor:pointer"
           onchange="invSaveSelect(this)">${catOpts}</select></td>
-        <td><span class="inv-editable" contenteditable="true" data-field="qty" data-id="${row.id}" data-room="${roomId}"
+        <td style="min-width:40px"><span class="inv-editable" contenteditable="true" data-field="qty" data-id="${row.id}" data-room="${roomId}"
           onblur="invSaveCell(this)" oncompositionend="invSaveCell(this)" style="min-width:30px;display:inline-block">${row.qty}</span></td>
-        <td><span class="inv-editable" contenteditable="true" data-field="unit" data-id="${row.id}" data-room="${roomId}"
+        <td style="min-width:30px"><span class="inv-editable" contenteditable="true" data-field="unit" data-id="${row.id}" data-room="${roomId}"
           onblur="invSaveCell(this)" oncompositionend="invSaveCell(this)" style="min-width:20px;display:inline-block">${row.unit}</span></td>
         <td><select data-field="zone" data-id="${row.id}" data-room="${roomId}"
           style="font-size:11px;padding:1px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface)"
           onchange="invSaveSelect(this)">${zoneOpts}</select></td>
-        <td><span class="inv-editable" contenteditable="true" data-field="note" data-id="${row.id}" data-room="${roomId}"
-          onblur="invSaveCell(this)" oncompositionend="invSaveCell(this)" style="color:var(--text2);font-size:11px">${row.note}</span></td>
+        <td style="min-width:80px"><span class="inv-editable" contenteditable="true" data-field="note" data-id="${row.id}" data-room="${roomId}"
+          onblur="invSaveCell(this)" oncompositionend="invSaveCell(this)" style="color:var(--text2);font-size:11px;min-width:80px;display:inline-block">${row.note}</span></td>
         <td><button class="inv-del" onclick="invDelRow('${roomId}',${row.id})">×</button></td>
       </tr>`;
     } else {
