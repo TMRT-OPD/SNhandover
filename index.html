@@ -363,8 +363,9 @@ tbody tr:hover td { background: #fafaf8; }
 .badge-am{background:#b8a0d6;color:#1a1917}
 .badge-b{background:#a8d8a8;color:#1a1917}
 .badge-bm{background:#f4a460;color:#1a1917}
-.badge-v{background:#d0d0d0;color:#1a1917}
-.badge-v{background:rgba(255,255,255,.15);color:rgba(255,255,255,.7)}
+.badge-cv{background:#ffd7a0;color:#7a3a00}
+.badge-v{background:#d0d0d0;color:#444}
+
 .user-name{font-size:13px;font-weight:500;color:#fff}
 .user-id{font-size:10px;color:rgba(255,255,255,.4);margin-top:2px;font-family:var(--mono)}
 .user-table{width:100%;border-collapse:collapse;font-size:13px}
@@ -1583,7 +1584,7 @@ function startApp(){
   const badge = document.getElementById('user-badge-label');
   badge.textContent  = level;
   badge.className    = 'user-badge ' +
-    (isS?'badge-s':isA?'badge-a':isAMinus?'badge-am':isB?'badge-b':isBMinus?'badge-bm':isC?'badge-v':'badge-v');
+    (isS?'badge-s':isA?'badge-a':isAMinus?'badge-am':isB?'badge-b':isBMinus?'badge-bm':isC?'badge-cv':'badge-v');
   document.getElementById('user-display-name').textContent = currentUser.name;
   document.getElementById('user-display-id').textContent   =
     isViewer ? '觀看模式' : 'ID: ' + currentUser.id;
@@ -1872,7 +1873,7 @@ function renderUsers(){
   const aUsers = getUsers();
   const all = [SUPER_USER, ...aUsers];
   tbody.innerHTML = all.map(u => {
-    const lvlBadge = u.level==='S'?'badge-s':u.level==='A'?'badge-a':u.level==='A-'?'badge-am':u.level==='B'?'badge-b':u.level==='B-'?'badge-bm':'badge-v';
+    const lvlBadge = u.level==='S'?'badge-s':u.level==='A'?'badge-a':u.level==='A-'?'badge-am':u.level==='B'?'badge-b':u.level==='B-'?'badge-bm':u.level==='C'?'badge-cv':'badge-v';
     const canManage = isS && u.level !== 'S';
     return `<tr>
       <td style="font-family:var(--mono);font-size:12px">${u.id}</td>
