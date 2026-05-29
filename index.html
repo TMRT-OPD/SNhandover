@@ -2128,34 +2128,6 @@ function loadFromSheetsJsonp() {
 
 loadFromSheetsJsonp();
 
-// ── 觀看版防護 ────────────────────────────────────────────────
-// 停用右鍵
-document.addEventListener('contextmenu', e => e.preventDefault());
-
-// 停用鍵盤快捷鍵
-document.addEventListener('keydown', e => {
-  const k = e.key.toLowerCase();
-  // 停用 Ctrl+C, Ctrl+A, Ctrl+S, Ctrl+P, Ctrl+U（檢視原始碼）
-  if (e.ctrlKey && ['c','a','s','p','u'].includes(k)) {
-    e.preventDefault();
-    return false;
-  }
-  // 停用 F12（開發者工具）
-  if (e.key === 'F12') {
-    e.preventDefault();
-    return false;
-  }
-  // 停用 PrintScreen
-  if (e.key === 'PrintScreen') {
-    e.preventDefault();
-    navigator.clipboard?.writeText('').catch(()=>{});
-    return false;
-  }
-});
-
-// 停用拖曳選取
-document.addEventListener('dragstart', e => e.preventDefault());
-
 
 
 // ── DATA ──────────────────────────────────────────────────────
