@@ -517,6 +517,7 @@ tbody tr:hover td { background: #fafaf8; }
   </div>
   <div class="sidebar-footer">
     <div id="sync-status" style="margin-bottom:6px;font-size:10px;color:rgba(255,255,255,0.4)">-</div>
+    <div id="sheets-last-sync" style="font-size:9px;color:rgba(255,255,255,0.28);line-height:1.6;margin-bottom:4px"></div>
     最後更新<br><span id="last-update" style="font-family:var(--mono);font-size:10px"></span>
   </div>
 </nav>
@@ -1525,9 +1526,19 @@ function doLogin(){
   const err=document.getElementById('login-error');
   err.textContent='';
 
-  // S 層直接登入
+  // S 層：先 fetch Sheets 取最新資料，再進入系統
   if(id===SUPER_USER.id && pw===SUPER_USER.pw){
-    currentUser=SUPER_USER; appMode='admin'; startApp(); saveSession(); return;
+    currentUser=SUPER_USER; appMode='admin';
+    if(APPS_SCRIPT_URL){
+      const err=document.getElementById('login-error');
+      err.style.color='var(--accent)'; err.textContent='載入中…';
+      fetch(APPS_SCRIPT_URL+'?action=load').then(r=>r.json()).then(d=>{
+        err.textContent=''; err.style.color='';
+        applySheetData(d);
+        startApp(); saveSession();
+      }).catch(()=>{ err.textContent=''; startApp(); saveSession(); });
+    } else { startApp(); saveSession(); }
+    return;
   }
 
   // A/B/A-/B-/C 層：先用本機資料驗證密碼，再從 Sheets 取最新 level
@@ -1546,24 +1557,7 @@ function doLogin(){
       .then(r=>r.json())
       .then(d=>{
         err.textContent=''; err.style.color='';
-        // 更新 sheetsUsers
-        if(Array.isArray(d.users) && d.users.length > 0){
-          sheetsUsers = d.users.filter(u=>u.level!=='S');
-        }
-        // S 密碼
-        if(d.superPw && String(d.superPw).trim()) SUPER_USER={...SUPER_USER, pw:String(d.superPw)};
-        // 庫存品項
-        if(Array.isArray(d.inv403) && d.inv403.length > 0) inv403 = d.inv403;
-        if(Array.isArray(d.inv406) && d.inv406.length > 0) inv406 = d.inv406;
-        if(Array.isArray(d.inv412) && d.inv412.length > 0) inv412 = d.inv412;
-        if(d.invNextId) invNextId = parseInt(d.invNextId)||invNextId;
-        // 平面配置（Sheets 為唯一來源）
-        if(d.invZones) {
-          if(Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
-          if(Array.isArray(d.invZones.inv406) && d.invZones.inv406.length > 0) invZones.inv406 = d.invZones.inv406;
-          if(Array.isArray(d.invZones.inv412) && d.invZones.inv412.length > 0) invZones.inv412 = d.invZones.inv412;
-        }
-        if(d.sysName) { sysName = d.sysName; }
+        applySheetData(d);
         // 用 Sheets 最新資料找帳號
         const latestUser = sheetsUsers.find(u=>String(u.id)===String(id));
         if(!latestUser){ err.style.color=''; err.textContent='帳號驗證失敗，請重新登入'; return; }
@@ -1745,14 +1739,7 @@ function startApp(){
       fetch(APPS_SCRIPT_URL+'?action=load').then(r=>r.json()).then(d=>{
         document.getElementById('sync-status').textContent='';
         if(d.ok) {
-          // 帳號
-          if(Array.isArray(d.users) && d.users.length > 0) sheetsUsers = d.users.filter(u=>u.level!=='S');
-          // S 密碼
-          if(d.superPw && String(d.superPw).trim()){
-            SUPER_USER = {...SUPER_USER, pw: String(d.superPw)};
-            if(currentUser && currentUser.level==='S') currentUser = {...currentUser, pw: String(d.superPw)};
-            saveSession();
-          }
+          applySheetData(d);
           // 確認帳號仍有效（非 S 層）
           if(appMode==='admin' && currentUser && currentUser.level !== 'S'){
             const valid=sheetsUsers.find(u=>String(u.id)===String(currentUser.id));
@@ -1763,27 +1750,8 @@ function startApp(){
               startApp(); return;
             }
           }
-          // 業務資料（Sheets 覆蓋 localStorage）
-          if(Array.isArray(d.items) && d.items.length > 0) items = d.items;
-          if(Array.isArray(d.projects) && d.projects.length > 0) projects = d.projects;
-          if(Array.isArray(d.shuWu) && d.shuWu.length > 0) shuWu = d.shuWu;
-          if(d.nextId) nextId = parseInt(d.nextId)||nextId;
-          if(d.nextPid) nextPid = parseInt(d.nextPid)||nextPid;
-          if(d.nextShuWuNo) nextShuWuNo = parseInt(d.nextShuWuNo)||nextShuWuNo;
-          // 庫存品項
-          if(Array.isArray(d.inv403) && d.inv403.length > 0) inv403 = d.inv403;
-          if(Array.isArray(d.inv406) && d.inv406.length > 0) inv406 = d.inv406;
-          if(Array.isArray(d.inv412) && d.inv412.length > 0) inv412 = d.inv412;
-          if(d.invNextId) invNextId = parseInt(d.invNextId)||invNextId;
-          // 平面配置（Sheets 為唯一來源，直接覆蓋）
-          if(d.invZones) {
-            if(Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
-            if(Array.isArray(d.invZones.inv406) && d.invZones.inv406.length > 0) invZones.inv406 = d.invZones.inv406;
-            if(Array.isArray(d.invZones.inv412) && d.invZones.inv412.length > 0) invZones.inv412 = d.invZones.inv412;
-          }
-          // 系統名稱
-          if(d.sysName) { sysName = d.sysName; applySysName(); }
         }
+        updateSheetsInfo();
         doRender();
       }).catch(()=>{
         toast('網路異常，使用本機快取資料');
@@ -1810,6 +1778,18 @@ function applyViewerRestrictions(){
 
 // ── 未儲存變更追蹤 ──────────────────────────────────────────────
 let isDirty = false;
+let sheetsLastSaved = '';
+let sheetsSavedBy   = '';
+
+function updateSheetsInfo() {
+  const el = document.getElementById('sheets-last-sync');
+  if (!el) return;
+  if (sheetsLastSaved) {
+    el.textContent = `☁ ${sheetsLastSaved}${sheetsSavedBy ? ' · ' + sheetsSavedBy : ''}`;
+  } else {
+    el.textContent = '';
+  }
+}
 
 function markDirty() {
   if (appMode !== 'admin') return;
@@ -2927,79 +2907,164 @@ function exportCSV() {
 // ── 儲存 / 載入 ───────────────────────────────────────────────
 // ── Google Sheets 設定 ────────────────────────────────────────
 // 部署 Apps Script 後，將 Web App 網址貼於此
+// ── 統一套用 Sheets 資料（所有載入點都呼叫這裡）────────────────
+function applySheetData(d) {
+  if (!d || !d.ok) return;
+  // 帳號
+  if (Array.isArray(d.users) && d.users.length > 0)
+    sheetsUsers = d.users.filter(u => u.level !== 'S');
+  // S 密碼
+  if (d.superPw && String(d.superPw).trim()) {
+    SUPER_USER = {...SUPER_USER, pw: String(d.superPw)};
+    if (currentUser && currentUser.level === 'S')
+      currentUser = {...currentUser, pw: String(d.superPw)};
+  }
+  // 業務資料
+  if (Array.isArray(d.items)    && d.items.length > 0)    items    = d.items;
+  if (Array.isArray(d.projects) && d.projects.length > 0) projects = d.projects;
+  if (Array.isArray(d.shuWu)   && d.shuWu.length > 0)    shuWu   = d.shuWu;
+  if (d.nextId)      nextId      = parseInt(d.nextId)      || nextId;
+  if (d.nextPid)     nextPid     = parseInt(d.nextPid)     || nextPid;
+  if (d.nextShuWuNo) nextShuWuNo = parseInt(d.nextShuWuNo) || nextShuWuNo;
+  // 庫存品項
+  if (Array.isArray(d.inv403) && d.inv403.length > 0) inv403 = d.inv403;
+  if (Array.isArray(d.inv406) && d.inv406.length > 0) inv406 = d.inv406;
+  if (Array.isArray(d.inv412) && d.inv412.length > 0) inv412 = d.inv412;
+  if (d.invNextId) invNextId = parseInt(d.invNextId) || invNextId;
+  // 平面配置（Sheets 為唯一來源，直接整包覆蓋）
+  if (d.invZones) {
+    if (Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
+    if (Array.isArray(d.invZones.inv406) && d.invZones.inv406.length > 0) invZones.inv406 = d.invZones.inv406;
+    if (Array.isArray(d.invZones.inv412) && d.invZones.inv412.length > 0) invZones.inv412 = d.invZones.inv412;
+  }
+  // 系統名稱
+  if (d.sysName) { sysName = d.sysName; applySysName(); }
+  // 最後同步資訊
+  if (d.lastSaved) sheetsLastSaved = d.lastSaved;
+  if (d.savedBy)   sheetsSavedBy   = d.savedBy;
+  // invZones 套好後才清理 zone 值
+  invSanitizeAll();
+}
+
 function syncToSheets() {
   if (!APPS_SCRIPT_URL) { toast('請先填入 Apps Script 網址'); return; }
   invSanitizeAll();
   persistData();
   const nav = document.getElementById('nav-sync');
   nav.style.opacity = '0.5'; nav.style.pointerEvents = 'none';
-  document.getElementById('sync-status').textContent = '同步中…';
-  const allUsers = [SUPER_USER, ...sheetsUsers];
-  fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'save', data: {
-      items, projects, shuWu, users: allUsers,
-      nextId, nextPid, nextShuWuNo,
-      inv403, inv406, inv412, invNextId, invZones,
-      superPw: SUPER_USER.pw, sysName
-    }})
-  })
-  .then(r => r.text())
-  .then(text => {
-    nav.style.opacity = ''; nav.style.pointerEvents = '';
-    let d = {};
-    try { d = JSON.parse(text); } catch(e) { d = { ok: true }; }
-    if (d.ok !== false) {
-      const ts = new Date().toLocaleString('zh-TW', {hour:'2-digit',minute:'2-digit'});
-      document.getElementById('sync-status').textContent = '☁ 已同步 ' + ts;
-      document.getElementById('sync-status').style.color = '#7ab8d6';
-      clearDirty();
-      toast('已同步至 Google Sheets ✓');
+  document.getElementById('sync-status').textContent = '檢查中…';
+
+  // 先拉 Sheets 最新 lastSaved，比對是否有衝突
+  fetch(APPS_SCRIPT_URL+'?action=load').then(r=>r.json()).then(d=>{
+    const remoteSavedBy   = d.savedBy   || '';
+    const remoteLastSaved = d.lastSaved || '';
+
+    // 若 Sheets 的最後儲存時間比我們登入時記錄的新，代表有人已經更新過
+    const hasConflict = remoteLastSaved && sheetsLastSaved && remoteLastSaved !== sheetsLastSaved;
+
+    const doSync = () => {
+      document.getElementById('sync-status').textContent = '同步中…';
+      const allUsers = [SUPER_USER, ...sheetsUsers];
+      const savedByName = currentUser ? currentUser.name : '';
+      fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'save', data: {
+          items, projects, shuWu, users: allUsers,
+          nextId, nextPid, nextShuWuNo,
+          inv403, inv406, inv412, invNextId, invZones,
+          superPw: SUPER_USER.pw, sysName,
+          savedBy: savedByName
+        }})
+      })
+      .then(r => r.text())
+      .then(text => {
+        nav.style.opacity = ''; nav.style.pointerEvents = '';
+        let res = {};
+        try { res = JSON.parse(text); } catch(e) { res = { ok: true }; }
+        if (res.ok !== false) {
+          const ts = new Date().toLocaleString('zh-TW', {hour:'2-digit',minute:'2-digit'});
+          document.getElementById('sync-status').textContent = '☁ 已同步 ' + ts;
+          document.getElementById('sync-status').style.color = '#7ab8d6';
+          // 更新本機記錄的 Sheets 時間戳
+          sheetsLastSaved = res.time || new Date().toLocaleString('zh-TW');
+          sheetsSavedBy   = savedByName;
+          updateSheetsInfo();
+          clearDirty();
+          toast('已同步至 Google Sheets ✓');
+        } else {
+          document.getElementById('sync-status').textContent = '同步失敗';
+          toast('同步失敗：' + (res.error || '未知錯誤'));
+        }
+      })
+      .catch(() => {
+        nav.style.opacity = ''; nav.style.pointerEvents = '';
+        document.getElementById('sync-status').textContent = '同步失敗';
+        toast('網路錯誤，請確認連線');
+      });
+    };
+
+    if (hasConflict) {
+      nav.style.opacity = ''; nav.style.pointerEvents = '';
+      const who = remoteSavedBy ? `（${remoteSavedBy}）` : '';
+      const msg = `⚠️ Sheets 已有他人更新${who}\n時間：${remoteLastSaved}\n\n覆蓋將使對方的修改遺失。\n確定仍要同步嗎？`;
+      if (confirm(msg)) {
+        nav.style.opacity = '0.5'; nav.style.pointerEvents = 'none';
+        doSync();
+      } else {
+        document.getElementById('sync-status').textContent = '已取消同步';
+        toast('已取消，建議先「從 Sheets 載入」取得最新資料');
+      }
     } else {
-      document.getElementById('sync-status').textContent = '同步失敗';
-      toast('同步失敗：' + (d.error || '未知錯誤'));
+      doSync();
     }
-  })
-  .catch(() => {
-    nav.style.opacity = ''; nav.style.pointerEvents = '';
-    document.getElementById('sync-status').textContent = '同步失敗';
-    toast('網路錯誤，請確認連線');
+  }).catch(() => {
+    // 無法比對就直接同步（網路問題）
+    document.getElementById('sync-status').textContent = '同步中…';
+    nav.style.opacity = '0.5'; nav.style.pointerEvents = 'none';
+    const allUsers = [SUPER_USER, ...sheetsUsers];
+    const savedByName = currentUser ? currentUser.name : '';
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'save', data: {
+        items, projects, shuWu, users: allUsers,
+        nextId, nextPid, nextShuWuNo,
+        inv403, inv406, inv412, invNextId, invZones,
+        superPw: SUPER_USER.pw, sysName,
+        savedBy: savedByName
+      }})
+    }).then(r=>r.text()).then(text=>{
+      nav.style.opacity = ''; nav.style.pointerEvents = '';
+      let res = {}; try { res = JSON.parse(text); } catch(e) { res={ok:true}; }
+      if(res.ok !== false){
+        const ts = new Date().toLocaleString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+        document.getElementById('sync-status').textContent = '☁ 已同步 ' + ts;
+        document.getElementById('sync-status').style.color = '#7ab8d6';
+        clearDirty(); toast('已同步至 Google Sheets ✓');
+      } else {
+        document.getElementById('sync-status').textContent = '同步失敗';
+        toast('同步失敗：' + (res.error||''));
+      }
+    }).catch(()=>{
+      nav.style.opacity = ''; nav.style.pointerEvents = '';
+      document.getElementById('sync-status').textContent = '同步失敗';
+      toast('網路錯誤，請確認連線');
+    });
   });
 }
 
 function loadFromSheets() {
-  if (!APPS_SCRIPT_URL) {
-    toast('請先填入 Apps Script 網址');
-    return;
-  }
+  if (!APPS_SCRIPT_URL) { toast('請先填入 Apps Script 網址'); return; }
   document.getElementById('sync-status').textContent = '載入中…';
-
   fetch(APPS_SCRIPT_URL + '?action=load')
   .then(r => r.json())
   .then(d => {
-    if (!d.ok) throw new Error(d.error);
-    if (Array.isArray(d.items) && d.items.length > 0) items = d.items;
-    if (Array.isArray(d.projects)) projects = d.projects;
-    if (Array.isArray(d.shuWu) && d.shuWu.length > 0) shuWu = d.shuWu;
-    // 帳號（只取 A/B 層）
-    if (Array.isArray(d.users) && d.users.length > 0) sheetsUsers = d.users.filter(u => u.level !== 'S');
-    // S 密碼（有值才更新）
-    if (d.superPw && String(d.superPw).trim()) SUPER_USER = {...SUPER_USER, pw: String(d.superPw)};
-    if (d.nextId) nextId = d.nextId;
-    if (d.nextPid) nextPid = d.nextPid;
-    if (d.nextShuWuNo) nextShuWuNo = d.nextShuWuNo;
-    // 庫存資料
-    if (Array.isArray(d.inv403) && d.inv403.length > 0) inv403 = d.inv403;
-    if (Array.isArray(d.inv406) && d.inv406.length > 0) inv406 = d.inv406;
-    if (Array.isArray(d.inv412) && d.inv412.length > 0) inv412 = d.inv412;
-    if (d.invNextId) invNextId = parseInt(d.invNextId)||invNextId;
-    invSanitizeAll();
-    if(d.sysName) { sysName=d.sysName; applySysName(); }
+    if (!d.ok) throw new Error(d.error || '載入失敗');
+    applySheetData(d);
     persistData();
     renderMain(); renderDetail(); renderProjects(); renderShuWu();
-    updateTimestamp();
-    renderUsers();
+    updateTimestamp(); renderUsers();
     if (document.getElementById('inv-room-inv403') && invCurrentRoom) renderInvPage(invCurrentRoom);
+    updateSheetsInfo();
     const ts = new Date().toLocaleString('zh-TW', {hour:'2-digit',minute:'2-digit'});
     document.getElementById('sync-status').textContent = `☁ 已載入 ${ts}`;
     document.getElementById('sync-status').style.color = '#7ab8d6';
@@ -3007,7 +3072,7 @@ function loadFromSheets() {
   })
   .catch(err => {
     document.getElementById('sync-status').textContent = '載入失敗';
-    toast('載入失敗：' + err.message);
+    toast('載入失敗：' + (err.message||'網路錯誤'));
   });
 }
 
@@ -3133,7 +3198,6 @@ function restoreData() {
     if (Array.isArray(d.inv412) && d.inv412.length > 0) inv412 = d.inv412;
     if (d.invNextId) invNextId = d.invNextId;
     // invZones 不從 localStorage 還原，統一由 Sheets 提供最新資料
-    invSanitizeAll();
     if(d.sysName) { sysName=d.sysName; applySysName(); }
     return true;
   } catch(e) { return false; }
