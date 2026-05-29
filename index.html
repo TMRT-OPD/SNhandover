@@ -1469,7 +1469,7 @@ function doChangePw() {
       body: JSON.stringify({ action: 'save', data: {
         items, projects, shuWu, users: allUsers,
         nextId, nextPid, nextShuWuNo,
-        inv403, inv406, inv412, invNextId,
+        inv403, inv406, inv412, invNextId, invZones,
         superPw: newPw
       }})
     }).then(r => r.json()).then(d => {
@@ -1506,7 +1506,7 @@ function saveUsers(arr){
     body: JSON.stringify({ action: 'save', data: {
       items, projects, shuWu, users: allUsers,
       nextId, nextPid, nextShuWuNo,
-      inv403, inv406, inv412, invNextId, superPw: SUPER_USER.pw
+      inv403, inv406, inv412, invNextId, invZones, superPw: SUPER_USER.pw
     }})
   }).then(r=>r.json()).then(d=>{
     if(d.ok) toast('帳號已更新至 Sheets ✓');
@@ -2913,7 +2913,7 @@ function syncToSheets() {
     body: JSON.stringify({ action: 'save', data: {
       items, projects, shuWu, users: allUsers,
       nextId, nextPid, nextShuWuNo,
-      inv403, inv406, inv412, invNextId,
+      inv403, inv406, inv412, invNextId, invZones,
       superPw: SUPER_USER.pw, sysName
     }})
   })
