@@ -1001,7 +1001,6 @@ tbody tr:hover td { background: #fafaf8; }
         </div>
         <div style="overflow-x:auto"><table class="inv-tbl" id="inv403-tbl">
           <thead><tr>
-            <th class="edit-only" style="width:24px"></th>
             <th style="width:28%;cursor:pointer" onclick="invSort('inv403','name')" data-field="name">品項 <span class="inv-sort-icon">⇅</span></th>
             <th style="width:10%;cursor:pointer" onclick="invSort('inv403','cat')" data-field="cat">類別 <span class="inv-sort-icon">⇅</span></th>
             <th style="width:8%">數量</th>
@@ -1049,7 +1048,6 @@ tbody tr:hover td { background: #fafaf8; }
         </div>
         <div style="overflow-x:auto"><table class="inv-tbl" id="inv406-tbl">
           <thead><tr>
-            <th class="edit-only" style="width:24px"></th>
             <th style="width:28%;cursor:pointer" onclick="invSort('inv406','name')" data-field="name">品項 <span class="inv-sort-icon">⇅</span></th>
             <th style="width:10%;cursor:pointer" onclick="invSort('inv406','cat')" data-field="cat">類別 <span class="inv-sort-icon">⇅</span></th>
             <th style="width:8%">數量</th>
@@ -1098,7 +1096,6 @@ tbody tr:hover td { background: #fafaf8; }
         </div>
         <div style="overflow-x:auto"><table class="inv-tbl" id="inv412-tbl">
           <thead><tr>
-            <th class="edit-only" style="width:24px"></th>
             <th style="width:28%;cursor:pointer" onclick="invSort('inv412','name')" data-field="name">品項 <span class="inv-sort-icon">⇅</span></th>
             <th style="width:10%;cursor:pointer" onclick="invSort('inv412','cat')" data-field="cat">類別 <span class="inv-sort-icon">⇅</span></th>
             <th style="width:8%">數量</th>
@@ -3722,7 +3719,6 @@ function renderInvTable(roomId) {
     const catOpts = INV_CATS.map(c=>`<option value="${c.id}" ${row.cat===c.id?'selected':''}>${c.label}</option>`).join('');
     if (canEdit) {
       return `<tr data-id="${row.id}">
-        <td style="width:24px;color:var(--text3);user-select:none;font-size:16px;text-align:center">⠿</td>
         <td style="min-width:60px"><span class="inv-editable" contenteditable="true" data-field="name" data-id="${row.id}" data-room="${roomId}"
           onblur="invSaveCell(this)" oncompositionend="invSaveCell(this)">${row.name}</span></td>
         <td><select class="inv-cat-sel" data-field="cat" data-id="${row.id}" data-room="${roomId}"
@@ -3741,8 +3737,8 @@ function renderInvTable(roomId) {
       </tr>`;
     } else {
       return `<tr>
-        <td><span style="font-size:11px;padding:1px 7px;border-radius:20px;border:1px solid ${cat.color};color:${cat.color};background:${cat.bg}">${cat.label}</span></td>
         <td>${row.name}</td>
+        <td><span class="inv-cat ${cat.cls}">${cat.label}</span></td>
         <td style="text-align:center">${row.qty}</td>
         <td style="color:var(--text2)">${row.unit}</td>
         <td>${zLabel}</td>
