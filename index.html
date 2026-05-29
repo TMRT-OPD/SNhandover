@@ -3843,7 +3843,7 @@ function renderInvTable(roomId) {
 
   // 更新排序圖示
   ['name','cat','zone'].forEach(f=>{
-    const th = document.querySelector('#${roomId}-tbl th[data-field="'+f+'"]');
+    const th = document.querySelector(`#${roomId}-tbl th[data-field="${f}"]`);
     if (!th) return;
     const icon = th.querySelector('.inv-sort-icon');
     if (!icon) return;
