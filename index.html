@@ -3920,12 +3920,13 @@ function invRenderShelf2(roomId, row) {
   const groups = SHELF_GROUPS[roomId] || {};
   const g = row.shelf1 || '';
   const subList = groups[g] || [];
-  if (!subList.length) return '<span style="color:var(--text3);font-size:11px">—</span>';
   const cur = row.shelf2 || '';
   const opts = `<option value="">—</option>` +
     subList.map(s => `<option value="${s}" ${s===cur?'selected':''}>${s}</option>`).join('');
+  const disabled = !subList.length ? 'disabled' : '';
   return `<select class="inv-sel" data-field="shelf2" data-id="${row.id}" data-room="${roomId}"
-    style="font-size:11px;max-width:70px" onchange="invSaveSelect(this)">${opts}</select>`;
+    style="font-size:11px;max-width:70px;${!subList.length?'opacity:0.3':''}" ${disabled}
+    onchange="invSaveSelect(this)">${opts}</select>`;
 }
 
 function invShelf1Change(sel) {
@@ -3934,13 +3935,12 @@ function invShelf1Change(sel) {
   const row = items.find(r => String(r.id) === String(id));
   if (!row) return;
   row.shelf1 = sel.value;
-  row.shelf2 = ''; // 群組改了，子層清空
+  row.shelf2 = '';
   persistData(); markDirty();
-  // 重新渲染該 tr 的第二層選單
-  const tr = sel.closest('tr');
-  if (tr) {
-    const sub = tr.querySelector('[data-field="shelf2"]');
-    if (sub) sub.outerHTML = invRenderShelf2(room, row);
+  // 找同一列的 shelf2 select，重新渲染
+  const sub = document.querySelector(`[data-field="shelf2"][data-id="${id}"][data-room="${room}"]`);
+  if (sub) {
+    sub.outerHTML = invRenderShelf2(room, row);
   }
 }
 
