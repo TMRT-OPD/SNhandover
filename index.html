@@ -846,7 +846,7 @@ tbody tr:hover td { background: #fafaf8; }
               <th style="padding:10px 14px;text-align:left;border:1px solid var(--border);font-weight:500;color:var(--text2);white-space:nowrap">功能</th>
               <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><span class="user-badge badge-s" style="font-size:11px">S</span><div style="font-size:10px;color:var(--text2);margin-top:3px">最高管理</div></th>
               <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><span class="user-badge badge-a" style="font-size:11px">A</span><div style="font-size:10px;color:var(--text2);margin-top:3px">後台編輯</div></th>
-              <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><span class="user-badge badge-am" style="font-size:11px">A-</span><div style="font-size:10px;color:var(--text2);margin-top:3px">庫存編輯</div></th>
+              <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><span class="user-badge badge-am" style="font-size:11px">A-</span><div style="font-size:10px;color:var(--text2);margin-top:3px">業務檢視+庫存編輯</div></th>
               <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><span class="user-badge badge-b" style="font-size:11px">B</span><div style="font-size:10px;color:var(--text2);margin-top:3px">業務+庫存檢視</div></th>
               <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><span class="user-badge badge-bm" style="font-size:11px">B-</span><div style="font-size:10px;color:var(--text2);margin-top:3px">庫存管理</div></th>
               <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><span class="user-badge" style="font-size:11px;background:#ffd7a0;color:#7a3a00">C</span><div style="font-size:10px;color:var(--text2);margin-top:3px">業務檢視</div></th>
@@ -870,7 +870,7 @@ tbody tr:hover td { background: #fafaf8; }
             </tr>
             <tr><td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2);font-size:11px;font-weight:500;background:var(--surface2)" colspan="8">☁ 資料同步</td></tr>
             <tr>
-              <td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2)">同步至 Sheets / 從 Sheets 載入</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td>
+              <td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2)">同步至 Sheets / 從 Sheets 載入</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td>
             </tr>
             <tr style="background:var(--surface2)">
               <td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2)">備份 JSON / 還原 JSON</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td>
@@ -1594,7 +1594,7 @@ function startApp(){
   // ── 左側選單顯示控制 ─────────────────────────────────────
   // 資料儲存區（同步 Sheets 等）：S 和 A 可見
   const navAdmin = document.getElementById('nav-admin-section');
-  if(navAdmin) navAdmin.style.display = (isS||isA||isAMinus) ? '' : 'none';
+  if(navAdmin) navAdmin.style.display = (isS||isA||isAMinus||isBMinus) ? '' : 'none';
   // 備份JSON/還原JSON/匯出CSV/列印：僅 S 可見
   const navSTools = document.getElementById('nav-s-only-tools');
   if(navSTools) navSTools.style.display = isS ? '' : 'none';
@@ -1682,6 +1682,11 @@ function startApp(){
     const restored = restoreData();
     renderMain();renderDetail();renderProjects();renderShuWu();updateTimestamp();
     if(restored) toast('已自動還原上次資料 ✓');
+
+    // B- 層直接跳到庫存管理頁面
+    if(isBMinus) {
+      showPage('p6');
+    }
 
     // 從 Sheets 載入最新帳號、S 密碼、庫存資料
     if(APPS_SCRIPT_URL){
