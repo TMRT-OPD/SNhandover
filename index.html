@@ -1524,28 +1524,52 @@ function doLogin(){
   const pw = toHalf(document.getElementById('login-pass').value);
   const err=document.getElementById('login-error');
   err.textContent='';
-  if(id===SUPER_USER.id&&pw===SUPER_USER.pw){currentUser=SUPER_USER;appMode='admin';startApp();saveSession();return}
-  const found=getUsers().find(u=>String(u.id)===String(id)&&String(u.pw)===String(pw));
-  if(found){
-    currentUser=found; appMode='admin';
-    if(found.firstLogin === true || found.firstLogin === 'true'){
-      // 首次登入：強制顯示改密碼 modal，不進入主系統
-      document.getElementById('login-screen').style.display='none';
-      document.getElementById('app-screen').style.display='flex';
-      document.getElementById('user-display-name').textContent=found.name;
-      document.getElementById('user-display-id').textContent='首次登入，請立即修改密碼';
-      document.getElementById('user-badge-label').textContent='A';
-      document.getElementById('user-badge-label').className='user-badge badge-a';
-      document.getElementById('sys-subtitle').textContent='首次登入';
-      ['nav-admin-section','nav-s-section','nav-a-section'].forEach(id=>{
-        const el=document.getElementById(id); if(el) el.style.display='none';
-      });
-      setTimeout(()=>openChangeSelfPwModal(), 300);
-      return;
-    }
-    startApp(); saveSession(); return;
+
+  // S 層直接登入
+  if(id===SUPER_USER.id && pw===SUPER_USER.pw){
+    currentUser=SUPER_USER; appMode='admin'; startApp(); saveSession(); return;
   }
-  err.textContent='\u5e33\u865f\u6216\u5bc6\u78bc\u932f\u8aa4\uff0c\u8acb\u91cd\u65b0\u8f38\u5165';
+
+  // A/B/A-/B-/C 層：先用本機資料驗證密碼，再從 Sheets 取最新 level
+  const found = getUsers().find(u=>String(u.id)===String(id)&&String(u.pw)===String(pw));
+  if(!found){
+    err.textContent='帳號或密碼錯誤，請重新輸入'; return;
+  }
+
+  // 密碼正確，顯示載入中
+  err.style.color='var(--accent)';
+  err.textContent='驗證中…';
+
+  // 從 Sheets 取最新帳號資料（確保 level 是最新的）
+  if(APPS_SCRIPT_URL){
+    fetch(APPS_SCRIPT_URL+'?action=load')
+      .then(r=>r.json())
+      .then(d=>{
+        err.textContent=''; err.style.color='';
+        // 更新 sheetsUsers
+        if(Array.isArray(d.users) && d.users.length > 0){
+          sheetsUsers = d.users.filter(u=>u.level!=='S');
+        }
+        // S 密碼
+        if(d.superPw && String(d.superPw).trim()) SUPER_USER={...SUPER_USER, pw:String(d.superPw)};
+        // 用 Sheets 最新資料找帳號
+        const latestUser = sheetsUsers.find(u=>String(u.id)===String(id));
+        if(!latestUser){ err.style.color=''; err.textContent='帳號驗證失敗，請重新登入'; return; }
+        // 驗證密碼（用最新資料）
+        if(String(latestUser.pw)!==String(pw)){ err.textContent='帳號或密碼錯誤，請重新輸入'; return; }
+        currentUser = latestUser;
+        appMode = 'admin';
+        startApp(); saveSession();
+      })
+      .catch(()=>{
+        // 網路失敗：用本機資料登入
+        err.textContent=''; err.style.color='';
+        currentUser=found; appMode='admin'; startApp(); saveSession();
+      });
+  } else {
+    // 沒有 APPS_SCRIPT_URL：直接用本機資料
+    currentUser=found; appMode='admin'; startApp(); saveSession();
+  }
 }
 function enterGuest(){
   const ls = document.getElementById('login-screen');
