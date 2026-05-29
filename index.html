@@ -1052,13 +1052,13 @@ tbody tr:hover td { background: #fafaf8; }
         </div>
         <div style="overflow-x:auto"><table class="inv-tbl" id="inv406-tbl">
           <thead><tr>
-            <th style="width:16%;cursor:pointer" onclick="invSort('inv406','name')" data-field="name">品項 <span class="inv-sort-icon">⇅</span></th>
-            <th style="width:7%;cursor:pointer" onclick="invSort('inv406','cat')" data-field="cat">類別 <span class="inv-sort-icon">⇅</span></th>
+            <th style="width:13%;cursor:pointer" onclick="invSort('inv406','name')" data-field="name">品項 <span class="inv-sort-icon">⇅</span></th>
+            <th style="width:6%;cursor:pointer" onclick="invSort('inv406','cat')" data-field="cat">類別 <span class="inv-sort-icon">⇅</span></th>
             <th style="width:5%">數量</th>
             <th style="width:4%">單位</th>
             <th style="width:6%;cursor:pointer" onclick="invSort('inv406','zone')" data-field="zone">區域 <span class="inv-sort-icon asc"></span></th>
-            <th style="width:18%">位置</th>
-            <th style="width:22%">備註</th>
+            <th colspan="2" style="width:20%">位置</th>
+            <th style="width:28%">備註</th>
             <th class="edit-only" style="width:24px"></th>
           </tr></thead>
           <tbody id="inv406-tbody"></tbody>
@@ -1101,13 +1101,13 @@ tbody tr:hover td { background: #fafaf8; }
         </div>
         <div style="overflow-x:auto"><table class="inv-tbl" id="inv412-tbl">
           <thead><tr>
-            <th style="width:16%;cursor:pointer" onclick="invSort('inv412','name')" data-field="name">品項 <span class="inv-sort-icon">⇅</span></th>
-            <th style="width:7%;cursor:pointer" onclick="invSort('inv412','cat')" data-field="cat">類別 <span class="inv-sort-icon">⇅</span></th>
+            <th style="width:13%;cursor:pointer" onclick="invSort('inv412','name')" data-field="name">品項 <span class="inv-sort-icon">⇅</span></th>
+            <th style="width:6%;cursor:pointer" onclick="invSort('inv412','cat')" data-field="cat">類別 <span class="inv-sort-icon">⇅</span></th>
             <th style="width:5%">數量</th>
             <th style="width:4%">單位</th>
             <th style="width:6%;cursor:pointer" onclick="invSort('inv412','zone')" data-field="zone">區域 <span class="inv-sort-icon asc"></span></th>
-            <th style="width:18%">位置</th>
-            <th style="width:22%">備註</th>
+            <th colspan="2" style="width:20%">位置</th>
+            <th style="width:28%">備註</th>
             <th class="edit-only" style="width:24px"></th>
           </tr></thead>
           <tbody id="inv412-tbody"></tbody>
@@ -3820,7 +3820,7 @@ function renderInvTable(roomId) {
         <td><select data-field="zone" data-id="${row.id}" data-room="${roomId}"
           style="font-size:11px;padding:1px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface)"
           onchange="invSaveSelect(this)">${zoneOpts}</select></td>
-        ${invShowShelf(roomId, row) ? `<td style="min-width:100px">${invRenderShelf1(roomId, row)}</td><td style="min-width:70px">${invRenderShelf2(roomId, row)}</td>` : ''}
+        ${invShowShelf(roomId, row) ? `<td style="min-width:100px">${invRenderShelf1(roomId, row)}</td><td style="min-width:70px">${invRenderShelf2(roomId, row)}</td>` : (roomId==='inv406'||roomId==='inv412') ? '<td></td><td></td>' : ''}
         <td style="min-width:80px"><span class="inv-editable" contenteditable="true" data-field="note" data-id="${row.id}" data-room="${roomId}"
           onblur="invSaveCell(this)" oncompositionend="invSaveCell(this)" style="color:var(--text2);font-size:11px;min-width:80px;display:inline-block">${row.note}</span></td>
         <td><button class="inv-del" onclick="invDelRow('${roomId}',${row.id})">×</button></td>
@@ -3832,7 +3832,7 @@ function renderInvTable(roomId) {
         <td style="text-align:center">${row.qty}</td>
         <td style="color:var(--text2)">${row.unit}</td>
         <td>${zLabel}</td>
-        ${invShowShelf(roomId, row) ? `<td style="color:var(--text2);font-size:11px">${invShelfDisplay(row)}</td>` : ''}
+        ${invShowShelf(roomId, row) ? `<td colspan="2" style="color:var(--text2);font-size:11px">${invShelfDisplay(row)}</td>` : (roomId==='inv406'||roomId==='inv412') ? '<td colspan="2"></td>' : ''}
         <td style="color:var(--text2);font-size:11px">${row.note}</td>
       </tr>`;
     }
