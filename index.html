@@ -3082,7 +3082,8 @@ function persistData() {
     localStorage.setItem(STORE_KEY, JSON.stringify({
       items, projects, nextId, nextPid,
       shuWu, nextShuWuNo,
-      inv403, inv406, inv412, invNextId, invZones
+      inv403, inv406, inv412, invNextId
+      // invZones 不存 localStorage，統一由 Sheets 提供
     }));
   } catch(e) {}
 }
@@ -3104,11 +3105,7 @@ function restoreData() {
     if (Array.isArray(d.inv406) && d.inv406.length > 0) inv406 = d.inv406;
     if (Array.isArray(d.inv412) && d.inv412.length > 0) inv412 = d.inv412;
     if (d.invNextId) invNextId = d.invNextId;
-    if (d.invZones) {
-      if (Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
-      if (Array.isArray(d.invZones.inv406) && d.invZones.inv406.length > 0) invZones.inv406 = d.invZones.inv406;
-      if (Array.isArray(d.invZones.inv412) && d.invZones.inv412.length > 0) invZones.inv412 = d.invZones.inv412;
-    }
+    // invZones 不從 localStorage 還原，統一由 Sheets 提供最新資料
     invSanitizeAll();
     if(d.sysName) { sysName=d.sysName; applySysName(); }
     return true;
