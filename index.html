@@ -2921,19 +2921,22 @@ function exportCSV() {
 function invZonesToFlat() {
   const flat = [];
   ['inv403','inv406','inv412'].forEach(room => {
-    // 若 invZones 是空的（首次同步），用預設值確保 zones 分頁有資料
     const zones = (invZones[room] && invZones[room].length > 0)
       ? invZones[room]
       : INV_ZONES_DEFAULT[room];
-    (zones || []).forEach(z => {
+    const defaultZones = INV_ZONES_DEFAULT[room] || [];
+    (zones || []).forEach((z, i) => {
+      // id 強制用 INV_ZONES_DEFAULT 的對應 id（A/B/C/D），防止舊的 "0" 被寫回
+      const correctId = (defaultZones[i] && defaultZones[i].id) ? defaultZones[i].id : z.id;
       flat.push({
-        room, id: z.id, label: z.label, sub: z.sub,
+        room, id: correctId, label: z.label, sub: z.sub,
         color: z.color, bg: z.bg,
         top: z.top, left: z.left, w: z.w, h: z.h
       });
     });
   });
   return flat;
+}
 }
 
 // ── 統一套用 Sheets 資料（所有載入點都呼叫這裡）────────────────
@@ -2961,10 +2964,17 @@ function applySheetData(d) {
   if (Array.isArray(d.inv412) && d.inv412.length > 0) inv412 = d.inv412;
   if (d.invNextId) invNextId = parseInt(d.invNextId) || invNextId;
   // 平面配置（Code.gs 已從 zones 分頁組裝好，直接覆蓋）
+  // 若 id 仍為 "0"（舊資料），改用 INV_ZONES_DEFAULT 的 id 修正
   if (d.invZones) {
-    if (Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
-    if (Array.isArray(d.invZones.inv406) && d.invZones.inv406.length > 0) invZones.inv406 = d.invZones.inv406;
-    if (Array.isArray(d.invZones.inv412) && d.invZones.inv412.length > 0) invZones.inv412 = d.invZones.inv412;
+    ['inv403','inv406','inv412'].forEach(room => {
+      if (!Array.isArray(d.invZones[room]) || !d.invZones[room].length) return;
+      const defaults = INV_ZONES_DEFAULT[room] || [];
+      const fixed = d.invZones[room].map((z, i) => ({
+        ...z,
+        id: (z.id && z.id !== '0' && z.id !== 0) ? z.id : (defaults[i] ? defaults[i].id : z.id)
+      }));
+      invZones[room] = fixed;
+    });
   }
   // 系統名稱（meta 欄位，非 JSON）
   if (d.sysName) { sysName = d.sysName; applySysName(); }
