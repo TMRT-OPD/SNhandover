@@ -1369,6 +1369,14 @@ tbody tr:hover td { background: #fafaf8; }
 <script>
 
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwVkMt1kRYsIygrz_PxCKCWwSHOIf0-yyGfT-LaxOIiX9QsWkzKsA_JbZ5vvU1MGVdSRw/exec';
+
+// ── 庫存平面配置（Sheets 為唯一來源，最優先宣告）────────────────
+const INV_ZONES_DEFAULT = {
+  inv403: [{"id": "A", "label": "A 區", "sub": "消防設備", "color": "#2d5f80", "bg": "rgba(232,240,245,0.75)", "top": 5, "left": 3, "w": 32, "h": 55}, {"id": "B", "label": "B 區", "sub": "中央走道", "color": "#534ab7", "bg": "rgba(238,237,254,0.75)", "top": 5, "left": 36, "w": 30, "h": 55}, {"id": "C", "label": "C 區", "sub": "右側角落", "color": "#3b6d11", "bg": "rgba(234,243,222,0.75)", "top": 5, "left": 67, "w": 30, "h": 55}, {"id": "D", "label": "D 區", "sub": "入口雜項", "color": "#854f0b", "bg": "rgba(250,238,218,0.75)", "top": 61, "left": 3, "w": 94, "h": 33}],
+  inv406: [{"id": "A", "label": "A 區", "sub": "耗材雜物", "color": "#a32d2d", "bg": "rgba(252,235,235,0.75)", "top": 5, "left": 3, "w": 44, "h": 58}, {"id": "B", "label": "B 區", "sub": "防護設備", "color": "#854f0b", "bg": "rgba(250,238,218,0.75)", "top": 5, "left": 52, "w": 44, "h": 58}, {"id": "C", "label": "C 區", "sub": "G9物品", "color": "#3b6d11", "bg": "rgba(234,243,222,0.75)", "top": 68, "left": 3, "w": 44, "h": 27}, {"id": "D", "label": "D 區", "sub": "門口區", "color": "#534ab7", "bg": "rgba(238,237,254,0.75)", "top": 68, "left": 52, "w": 44, "h": 27}],
+  inv412: [{"id": "A", "label": "A 區", "sub": "左側", "color": "#2d5f80", "bg": "rgba(232,240,245,0.75)", "top": 15, "left": 3, "w": 30, "h": 75}, {"id": "B", "label": "B 區", "sub": "中間", "color": "#534ab7", "bg": "rgba(238,237,254,0.75)", "top": 15, "left": 35, "w": 30, "h": 75}, {"id": "C", "label": "C 區", "sub": "右側", "color": "#3b6d11", "bg": "rgba(234,243,222,0.75)", "top": 15, "left": 67, "w": 30, "h": 75}],
+};
+let invZones = JSON.parse(JSON.stringify(INV_ZONES_DEFAULT));
 // 層級 S 帳號（可透過修改密碼功能更新，存於 Sheets users 分頁）
 let SUPER_USER = {id:'110219', pw:'zxc110219', name:'\u6797\u7dad\u8fb0', level:'S'};
 
@@ -1470,7 +1478,7 @@ function doChangePw() {
       body: JSON.stringify({ action: 'save', data: {
         items, projects, shuWu, users: allUsers,
         nextId, nextPid, nextShuWuNo,
-        inv403, inv406, inv412, invNextId, invZones,
+        inv403, inv406, inv412, invNextId, zonesFlat: invZonesToFlat(),
         superPw: newPw
       }})
     }).then(r => r.json()).then(d => {
@@ -1507,7 +1515,7 @@ function saveUsers(arr){
     body: JSON.stringify({ action: 'save', data: {
       items, projects, shuWu, users: allUsers,
       nextId, nextPid, nextShuWuNo,
-      inv403, inv406, inv412, invNextId, invZones, superPw: SUPER_USER.pw
+      inv403, inv406, inv412, invNextId, zonesFlat: invZonesToFlat(), superPw: SUPER_USER.pw
     }})
   }).then(r=>r.json()).then(d=>{
     if(d.ok) toast('帳號已更新至 Sheets ✓');
@@ -2907,6 +2915,21 @@ function exportCSV() {
 // ── 儲存 / 載入 ───────────────────────────────────────────────
 // ── Google Sheets 設定 ────────────────────────────────────────
 // 部署 Apps Script 後，將 Web App 網址貼於此
+// ── invZones 轉扁平陣列（寫入 Sheets zones 分頁用）──────────────
+function invZonesToFlat() {
+  const flat = [];
+  ['inv403','inv406','inv412'].forEach(room => {
+    (invZones[room] || []).forEach(z => {
+      flat.push({
+        room, id: z.id, label: z.label, sub: z.sub,
+        color: z.color, bg: z.bg,
+        top: z.top, left: z.left, w: z.w, h: z.h
+      });
+    });
+  });
+  return flat;
+}
+
 // ── 統一套用 Sheets 資料（所有載入點都呼叫這裡）────────────────
 function applySheetData(d) {
   if (!d || !d.ok) return;
@@ -2931,13 +2954,13 @@ function applySheetData(d) {
   if (Array.isArray(d.inv406) && d.inv406.length > 0) inv406 = d.inv406;
   if (Array.isArray(d.inv412) && d.inv412.length > 0) inv412 = d.inv412;
   if (d.invNextId) invNextId = parseInt(d.invNextId) || invNextId;
-  // 平面配置（Sheets 為唯一來源，直接整包覆蓋）
+  // 平面配置（Code.gs 已從 zones 分頁組裝好，直接覆蓋）
   if (d.invZones) {
     if (Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
     if (Array.isArray(d.invZones.inv406) && d.invZones.inv406.length > 0) invZones.inv406 = d.invZones.inv406;
     if (Array.isArray(d.invZones.inv412) && d.invZones.inv412.length > 0) invZones.inv412 = d.invZones.inv412;
   }
-  // 系統名稱
+  // 系統名稱（meta 欄位，非 JSON）
   if (d.sysName) { sysName = d.sysName; applySysName(); }
   // 最後同步資訊
   if (d.lastSaved) sheetsLastSaved = d.lastSaved;
@@ -2971,7 +2994,7 @@ function syncToSheets() {
         body: JSON.stringify({ action: 'save', data: {
           items, projects, shuWu, users: allUsers,
           nextId, nextPid, nextShuWuNo,
-          inv403, inv406, inv412, invNextId, invZones,
+          inv403, inv406, inv412, invNextId, zonesFlat: invZonesToFlat(),
           superPw: SUPER_USER.pw, sysName,
           savedBy: savedByName
         }})
@@ -3028,7 +3051,7 @@ function syncToSheets() {
       body: JSON.stringify({ action: 'save', data: {
         items, projects, shuWu, users: allUsers,
         nextId, nextPid, nextShuWuNo,
-        inv403, inv406, inv412, invNextId, invZones,
+        inv403, inv406, inv412, invNextId, zonesFlat: invZonesToFlat(),
         superPw: SUPER_USER.pw, sysName,
         savedBy: savedByName
       }})
@@ -3487,24 +3510,8 @@ function restoreSession() {
       const s = document.getElementById('jsonp-init');
       if (s) s.remove();
       delete window[cbName];
-      if (d && d.ok) {
-        // A/B 層帳號
-        if (Array.isArray(d.users) && d.users.length > 0) sheetsUsers = d.users.filter(u => u.level !== 'S');
-        // S 密碼從 meta.superPw 取（有值才更新，空字串不覆蓋）
-        if (d.superPw && String(d.superPw).trim()) SUPER_USER = { ...SUPER_USER, pw: String(d.superPw) };
-        // 庫存資料（新扁平結構）
-        if (Array.isArray(d.inv403) && d.inv403.length > 0) inv403 = d.inv403;
-        if (Array.isArray(d.inv406) && d.inv406.length > 0) inv406 = d.inv406;
-        if (Array.isArray(d.inv412) && d.inv412.length > 0) inv412 = d.inv412;
-        if (d.invNextId) invNextId = parseInt(d.invNextId)||invNextId;
-        if (d.invZones) {
-          if (Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
-          if (Array.isArray(d.invZones.inv406) && d.invZones.inv406.length > 0) invZones.inv406 = d.invZones.inv406;
-          if (Array.isArray(d.invZones.inv412) && d.invZones.inv412.length > 0) invZones.inv412 = d.invZones.inv412;
-        }
-        invSanitizeAll();
-      }
-      if(d.sysName) { sysName=d.sysName; applySysName(); }
+      // 套用 Sheets 資料（含 invZones），再進入 initAfterLoad
+      if (d && d.ok) applySheetData(d);
       initAfterLoad();
     };
 
@@ -3546,12 +3553,7 @@ let invSortState = {
 };
 
 // 固定區域定義（id 永遠是大寫字母，不可新增刪除）
-const INV_ZONES_DEFAULT = {
-  inv403: [{"id": "A", "label": "A 區", "sub": "消防設備", "color": "#2d5f80", "bg": "rgba(232,240,245,0.75)", "top": 5, "left": 3, "w": 32, "h": 55}, {"id": "B", "label": "B 區", "sub": "中央走道", "color": "#534ab7", "bg": "rgba(238,237,254,0.75)", "top": 5, "left": 36, "w": 30, "h": 55}, {"id": "C", "label": "C 區", "sub": "右側角落", "color": "#3b6d11", "bg": "rgba(234,243,222,0.75)", "top": 5, "left": 67, "w": 30, "h": 55}, {"id": "D", "label": "D 區", "sub": "入口雜項", "color": "#854f0b", "bg": "rgba(250,238,218,0.75)", "top": 61, "left": 3, "w": 94, "h": 33}],
-  inv406: [{"id": "A", "label": "A 區", "sub": "耗材雜物", "color": "#a32d2d", "bg": "rgba(252,235,235,0.75)", "top": 5, "left": 3, "w": 44, "h": 58}, {"id": "B", "label": "B 區", "sub": "防護設備", "color": "#854f0b", "bg": "rgba(250,238,218,0.75)", "top": 5, "left": 52, "w": 44, "h": 58}, {"id": "C", "label": "C 區", "sub": "G9物品", "color": "#3b6d11", "bg": "rgba(234,243,222,0.75)", "top": 68, "left": 3, "w": 44, "h": 27}, {"id": "D", "label": "D 區", "sub": "門口區", "color": "#534ab7", "bg": "rgba(238,237,254,0.75)", "top": 68, "left": 52, "w": 44, "h": 27}],
-  inv412: [{"id": "A", "label": "A 區", "sub": "左側", "color": "#2d5f80", "bg": "rgba(232,240,245,0.75)", "top": 15, "left": 3, "w": 30, "h": 75}, {"id": "B", "label": "B 區", "sub": "中間", "color": "#534ab7", "bg": "rgba(238,237,254,0.75)", "top": 15, "left": 35, "w": 30, "h": 75}, {"id": "C", "label": "C 區", "sub": "右側", "color": "#3b6d11", "bg": "rgba(234,243,222,0.75)", "top": 15, "left": 67, "w": 30, "h": 75}],
-};
-let invZones = JSON.parse(JSON.stringify(INV_ZONES_DEFAULT));
+// invZones 宣告已移至全域變數區
 
 // 品項資料（從 Sheets 載入後覆寫）
 let inv403 = [{"id": 1, "name": "乾粉滅火器", "cat": "fire", "qty": "19", "unit": "支", "zone": "A", "note": "訓練用×14、備品×4、報廢/已壞×1"}, {"id": 2, "name": "CO₂滅火器", "cat": "fire", "qty": "8", "unit": "支", "zone": "A", "note": "黑色喇叭型"}, {"id": 3, "name": "不鏽鋼隔離柱", "cat": "equip", "qty": "15", "unit": "支", "zone": "B", "note": "附伸縮繩，已確認數量"}, {"id": 4, "name": "摺疊椅（藍色）", "cat": "equip", "qty": "38", "unit": "張", "zone": "B", "note": "堆疊放置"}, {"id": 5, "name": "10層放手欄", "cat": "equip", "qty": "1", "unit": "組", "zone": "A", "note": "60107-1246"}, {"id": 6, "name": "播墩", "cat": "equip", "qty": "2", "unit": "個", "zone": "B", "note": "60602-003 / 60602-006"}, {"id": 7, "name": "輪椅", "cat": "equip", "qty": "1", "unit": "台", "zone": "A", "note": ""}, {"id": 8, "name": "電風扇", "cat": "equip", "qty": "2", "unit": "台", "zone": "C", "note": "立扇"}, {"id": 9, "name": "A2 告示架", "cat": "equip", "qty": "2", "unit": "組", "zone": "D", "note": "60702-1159 / 60702-1158"}, {"id": 10, "name": "A1 告示架", "cat": "equip", "qty": "2", "unit": "組", "zone": "D", "note": "60702-536 / 60702-537"}, {"id": 11, "name": "會議桌", "cat": "equip", "qty": "2", "unit": "張", "zone": "D", "note": "60112-602含延長線×1"}, {"id": 12, "name": "白板", "cat": "equip", "qty": "1", "unit": "塊", "zone": "B", "note": ""}, {"id": 13, "name": "G9 暫存椅", "cat": "equip", "qty": "4", "unit": "張", "zone": "B", "note": ""}, {"id": 14, "name": "錄影架", "cat": "equip", "qty": "1", "unit": "組", "zone": "A", "note": ""}, {"id": 15, "name": "晾衣架", "cat": "equip", "qty": "1", "unit": "組", "zone": "C", "note": "未拆封，靠牆放置"}, {"id": 16, "name": "紅絨（隔離繩）", "cat": "ctrl", "qty": "15", "unit": "條", "zone": "B", "note": ""}, {"id": 17, "name": "紅閃燈", "cat": "ctrl", "qty": "5", "unit": "支", "zone": "D", "note": ""}, {"id": 18, "name": "支架", "cat": "ctrl", "qty": "9", "unit": "支", "zone": "D", "note": ""}, {"id": 19, "name": "推車", "cat": "ctrl", "qty": "6", "unit": "台", "zone": "D", "note": ""}, {"id": 20, "name": "指導背心", "cat": "ctrl", "qty": "12", "unit": "件", "zone": "D", "note": ""}, {"id": 21, "name": "捕蚊燈", "cat": "ctrl", "qty": "2", "unit": "台", "zone": "A", "note": ""}, {"id": 22, "name": "捕貓籠", "cat": "ctrl", "qty": "2", "unit": "個", "zone": "A", "note": ""}, {"id": 23, "name": "垃圾桶", "cat": "ctrl", "qty": "2", "unit": "個", "zone": "D", "note": ""}, {"id": 24, "name": "A4 插牌", "cat": "supply", "qty": "11", "unit": "個", "zone": "C", "note": ""}, {"id": 25, "name": "A4 影印紙", "cat": "supply", "qty": "20", "unit": "包", "zone": "C", "note": "10包×2箱"}, {"id": 26, "name": "POS 紙捲", "cat": "supply", "qty": "47", "unit": "捲", "zone": "C", "note": "30捲×1箱+17捲"}, {"id": 27, "name": "ATIM 感熱紙", "cat": "supply", "qty": "300", "unit": "捲", "zone": "C", "note": "36捲×7箱+18捲+30捲"}, {"id": 28, "name": "PAM 感熱紙", "cat": "supply", "qty": "450", "unit": "捲", "zone": "C", "note": "30捲×15箱"}, {"id": 29, "name": "C型夾工具", "cat": "misc", "qty": "1", "unit": "箱", "zone": "A", "note": ""}, {"id": 30, "name": "木板（門片）", "cat": "misc", "qty": "1", "unit": "片", "zone": "C", "note": ""}, {"id": 31, "name": "捲筒衛生紙", "cat": "misc", "qty": "", "unit": "箱", "zone": "C", "note": "數量待確認"}];
