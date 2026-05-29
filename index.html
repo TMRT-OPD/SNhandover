@@ -1052,11 +1052,12 @@ tbody tr:hover td { background: #fafaf8; }
         </div>
         <div style="overflow-x:auto"><table class="inv-tbl" id="inv406-tbl">
           <thead><tr>
-            <th style="width:28%;cursor:pointer" onclick="invSort('inv406','name')" data-field="name">品項 <span class="inv-sort-icon">⇅</span></th>
-            <th style="width:10%;cursor:pointer" onclick="invSort('inv406','cat')" data-field="cat">類別 <span class="inv-sort-icon">⇅</span></th>
-            <th style="width:8%">數量</th>
-            <th style="width:7%">單位</th>
-            <th style="width:10%;cursor:pointer" onclick="invSort('inv406','zone')" data-field="zone">區域 <span class="inv-sort-icon asc"></span></th>
+            <th style="width:24%;cursor:pointer" onclick="invSort('inv406','name')" data-field="name">品項 <span class="inv-sort-icon">⇅</span></th>
+            <th style="width:9%;cursor:pointer" onclick="invSort('inv406','cat')" data-field="cat">類別 <span class="inv-sort-icon">⇅</span></th>
+            <th style="width:7%">數量</th>
+            <th style="width:6%">單位</th>
+            <th style="width:9%;cursor:pointer" onclick="invSort('inv406','zone')" data-field="zone">區域 <span class="inv-sort-icon asc"></span></th>
+            <th style="width:14%">位置</th>
             <th>備註</th>
             <th class="edit-only" style="width:30px"></th>
           </tr></thead>
@@ -1100,11 +1101,12 @@ tbody tr:hover td { background: #fafaf8; }
         </div>
         <div style="overflow-x:auto"><table class="inv-tbl" id="inv412-tbl">
           <thead><tr>
-            <th style="width:28%;cursor:pointer" onclick="invSort('inv412','name')" data-field="name">品項 <span class="inv-sort-icon">⇅</span></th>
-            <th style="width:10%;cursor:pointer" onclick="invSort('inv412','cat')" data-field="cat">類別 <span class="inv-sort-icon">⇅</span></th>
-            <th style="width:8%">數量</th>
-            <th style="width:7%">單位</th>
-            <th style="width:10%;cursor:pointer" onclick="invSort('inv412','zone')" data-field="zone">區域 <span class="inv-sort-icon asc"></span></th>
+            <th style="width:24%;cursor:pointer" onclick="invSort('inv412','name')" data-field="name">品項 <span class="inv-sort-icon">⇅</span></th>
+            <th style="width:9%;cursor:pointer" onclick="invSort('inv412','cat')" data-field="cat">類別 <span class="inv-sort-icon">⇅</span></th>
+            <th style="width:7%">數量</th>
+            <th style="width:6%">單位</th>
+            <th style="width:9%;cursor:pointer" onclick="invSort('inv412','zone')" data-field="zone">區域 <span class="inv-sort-icon asc"></span></th>
+            <th style="width:14%">位置</th>
             <th>備註</th>
             <th class="edit-only" style="width:30px"></th>
           </tr></thead>
@@ -3830,6 +3832,7 @@ function renderInvTable(roomId) {
         <td><select data-field="zone" data-id="${row.id}" data-room="${roomId}"
           style="font-size:11px;padding:1px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface)"
           onchange="invSaveSelect(this)">${zoneOpts}</select></td>
+        ${(roomId==='inv406'||roomId==='inv412') ? `<td>${renderShelfSelect(roomId, row.id, row.shelf||'')}</td>` : ''}
         <td style="min-width:80px"><span class="inv-editable" contenteditable="true" data-field="note" data-id="${row.id}" data-room="${roomId}"
           onblur="invSaveCell(this)" oncompositionend="invSaveCell(this)" style="color:var(--text2);font-size:11px;min-width:80px;display:inline-block">${row.note}</span></td>
         <td><button class="inv-del" onclick="invDelRow('${roomId}',${row.id})">×</button></td>
@@ -3841,6 +3844,7 @@ function renderInvTable(roomId) {
         <td style="text-align:center">${row.qty}</td>
         <td style="color:var(--text2)">${row.unit}</td>
         <td>${zLabel}</td>
+        ${(roomId==='inv406'||roomId==='inv412') ? `<td style="color:var(--text2);font-size:11px">${row.shelf||''}</td>` : ''}
         <td style="color:var(--text2);font-size:11px">${row.note}</td>
       </tr>`;
     }
@@ -3871,6 +3875,30 @@ function invSort(roomId, field) {
   if (s.field===field) s.dir*=-1;
   else { s.field=field; s.dir=1; }
   renderInvTable(roomId);
+}
+
+// ── 子位置選單（406/412 專用）────────────────────────────────
+const SHELF_OPTIONS = {
+  inv406: ['','左邊層架/第一層','左邊層架/第二層','左邊層架/第三層','左邊層架/頂層',
+           '右邊層架/第一層','右邊層架/第二層','右邊層架/第三層','右邊層架/頂層'],
+  inv412: ['','公文櫃(1)/上層','公文櫃(1)/下層','公文櫃(2)/上層','公文櫃(2)/下層',
+           '公文櫃(3)/上層','公文櫃(3)/下層','公文櫃(4)/上層','公文櫃(4)/下層',
+           '公文櫃(5)/上層','公文櫃(5)/下層',
+           '三層櫃(1)/上層','三層櫃(1)/中層','三層櫃(1)/下層',
+           '三層櫃(2)/上層','三層櫃(2)/中層','三層櫃(2)/下層',
+           '三層櫃(3)/上層','三層櫃(3)/中層','三層櫃(3)/下層',
+           '三層櫃(4)/上層','三層櫃(4)/中層','三層櫃(4)/下層',
+           '三層櫃(5)/上層','三層櫃(5)/中層','三層櫃(5)/下層',
+           '作業區','其他'],
+};
+
+function renderShelfSelect(roomId, rowId, current) {
+  const opts = (SHELF_OPTIONS[roomId]||[]).map(v=>
+    `<option value="${v}" ${v===current?'selected':''}>${v||'（未設定）'}</option>`
+  ).join('');
+  return `<select class="inv-sel" data-field="shelf" data-id="${rowId}" data-room="${roomId}"
+    style="font-size:11px;padding:2px 20px 2px 6px;max-width:120px"
+    onchange="invSaveSelect(this)">${opts}</select>`;
 }
 
 function invSaveCell(el) {
@@ -3906,7 +3934,7 @@ function invAddRow(roomId) {
   const zones = invGetZones(roomId);
   const selZone = invSelZone[roomId];
   const defaultZone = (selZone!=='all'&&zones.find(z=>z.id===selZone)) ? selZone : (zones[0]?.id||'A');
-  const newRow = {id:invNextId++, name:'新品項', cat:'misc', qty:'1', unit:'個', zone:defaultZone, note:''};
+  const newRow = {id:invNextId++, name:'新品項', cat:'misc', qty:'1', unit:'個', zone:defaultZone, shelf:'', note:''};
   invGetItems(roomId).push(newRow);
   persistData(); markDirty();
   renderInvPage(roomId);
