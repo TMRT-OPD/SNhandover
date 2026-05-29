@@ -3602,37 +3602,17 @@ function invCatInfo(catId) {
 // zone 值清理（大小寫不敏感，確保合法）
 function invSanitize(roomId) {
   const validIds = invGetZones(roomId).map(z=>z.id);
-  if (!validIds.length) return false;
-  let changed = false;
+  if (!validIds.length) return;
   invGetItems(roomId).forEach(row => {
     if (!row.zone || validIds.indexOf(row.zone)===-1) {
       const upper = (row.zone||'').toUpperCase();
       const match = validIds.find(id=>id.toUpperCase()===upper);
       row.zone = match || validIds[0];
-      changed = true;
     }
   });
-  return changed;
 }
 function invSanitizeAll() {
-  const anyFixed = ['inv403','inv406','inv412'].map(invSanitize).some(Boolean);
-  if (anyFixed) {
-    // zone 值有被修正（可能是舊的 "0"），自動同步回 Sheets
-    persistData();
-    if (APPS_SCRIPT_URL && appMode === 'admin') {
-      const allUsers = [SUPER_USER, ...sheetsUsers];
-      fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'save', data: {
-          items, projects, shuWu, users: allUsers,
-          nextId, nextPid, nextShuWuNo,
-          inv403, inv406, inv412, invNextId, zonesFlat: invZonesToFlat(),
-          superPw: SUPER_USER.pw, sysName,
-          savedBy: currentUser ? currentUser.name : ''
-        }})
-      }).catch(()=>{});
-    }
-  }
+  ['inv403','inv406','inv412'].forEach(invSanitize);
 }
 
 // ── 渲染入口 ──────────────────────────────────────────────────
