@@ -1744,8 +1744,14 @@ function startApp(){
     // 所有層級：先從 Sheets 拿完整最新資料，再渲染畫面
     if(APPS_SCRIPT_URL){
       document.getElementById('sync-status').textContent='載入中...';
-      fetch(APPS_SCRIPT_URL+'?action=load').then(r=>r.json()).then(d=>{
+      fetch(APPS_SCRIPT_URL+'?action=load').then(r=>r.text()).then(text=>{
         document.getElementById('sync-status').textContent='';
+        let d = {};
+        try { d = JSON.parse(text); } catch(e) {
+          console.error('Sheets 回傳非 JSON:', text.slice(0,200));
+          toast('載入異常，使用本機快取（詳見 F12 Console）');
+          doRender(); return;
+        }
         if(d.ok) {
           applySheetData(d);
           // 確認帳號仍有效（非 S 層）
@@ -1761,8 +1767,9 @@ function startApp(){
         }
         updateSheetsInfo();
         doRender();
-      }).catch(()=>{
-        toast('網路異常，使用本機快取資料');
+      }).catch((err)=>{
+        console.error('Sheets fetch 失敗:', err);
+        toast('網路異常，使用本機快取（詳見 F12 Console）');
         doRender();
       });
     } else {
