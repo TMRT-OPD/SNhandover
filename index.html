@@ -846,8 +846,8 @@ tbody tr:hover td { background: #fafaf8; }
               <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><span class="user-badge badge-a" style="font-size:11px">A</span><div style="font-size:10px;color:var(--text2);margin-top:3px">後台編輯</div></th>
               <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><span class="user-badge badge-am" style="font-size:11px">A-</span><div style="font-size:10px;color:var(--text2);margin-top:3px">庫存編輯</div></th>
               <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><span class="user-badge badge-b" style="font-size:11px">B</span><div style="font-size:10px;color:var(--text2);margin-top:3px">檢視</div></th>
-              <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><span class="user-badge badge-v" style="font-size:11px">C</span><div style="font-size:10px;color:var(--text2);margin-top:3px">業務檢視</div></th>
-              <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><div style="font-size:12px;color:var(--text3)">訪客</div><div style="font-size:10px;color:var(--text2);margin-top:3px">無權限</div></th>
+              <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><span class="user-badge" style="font-size:11px;background:#e8d5f5;color:#6a1b9a">C</span><div style="font-size:10px;color:var(--text2);margin-top:3px">業務檢視</div></th>
+              <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500;color:var(--text3)"><div style="font-size:13px">👤</div><div style="font-size:10px;color:var(--text2);margin-top:3px">訪客（無權限）</div></th>
             </tr>
           </thead>
           <tbody>
@@ -894,6 +894,7 @@ tbody tr:hover td { background: #fafaf8; }
             <option value="A">層級 A（完整編輯）</option>
             <option value="A-">層級 A-（庫存編輯/業務檢視）</option>
             <option value="B">層級 B（僅檢視）</option>
+            <option value="C">層級 C（業務檢視，庫存隱藏）</option>
           </select>
         </div>
       </div>
@@ -1259,6 +1260,7 @@ tbody tr:hover td { background: #fafaf8; }
         <option value="A">A — 後台編輯</option>
         <option value="A-">A- — 庫存編輯/業務檢視</option>
         <option value="B">B — 檢視</option>
+        <option value="C">C — 業務檢視（庫存隱藏）</option>
       </select>
     </div>
     <div class="field" style="margin-bottom:16px">
@@ -1532,13 +1534,13 @@ function doLogin(){
   err.textContent='\u5e33\u865f\u6216\u5bc6\u78bc\u932f\u8aa4\uff0c\u8acb\u91cd\u65b0\u8f38\u5165';
 }
 function enterGuest(){
-  const lb = document.getElementById('login-box');
-  const as = document.getElementById('app-screen');
-  if(lb) lb.style.display='none';
-  if(as){
-    as.style.display='flex';
-    as.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100vh;background:var(--bg,#f5f4f2)"><div style="text-align:center;padding:40px"><div style="font-size:64px;margin-bottom:16px">⛔</div><div style="font-size:24px;font-weight:700;color:#c00;margin-bottom:10px">ERROR</div><div style="font-size:15px;color:#666;margin-bottom:28px">無操作權限，此帳號無法使用本系統</div><button onclick="location.reload()" style="padding:8px 28px;border:1px solid #ccc;border-radius:8px;background:#fff;cursor:pointer;font-size:13px">返回登入</button></div></div>`;
-  }
+  const ls = document.getElementById('login-screen');
+  if(ls) ls.style.display='none';
+  // 建立全螢幕 ERROR 畫面
+  const err = document.createElement('div');
+  err.style.cssText='position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#f5f4f2;z-index:9999';
+  err.innerHTML='<div style="text-align:center;padding:40px"><div style="font-size:64px;margin-bottom:16px">⛔</div><div style="font-size:24px;font-weight:700;color:#c00;margin-bottom:10px">ERROR</div><div style="font-size:15px;color:#555;margin-bottom:28px">無操作權限，此帳號無法使用本系統</div><button onclick="location.reload()" style="padding:10px 32px;border:1px solid #ccc;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;font-family:inherit">返回登入</button></div>';
+  document.body.appendChild(err);
 }
 function doLogout(){
   currentUser=null;appMode=null;
