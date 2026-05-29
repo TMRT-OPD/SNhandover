@@ -1700,12 +1700,19 @@ function startApp(){
             if(currentUser && currentUser.level==='S') currentUser = {...currentUser, pw: String(d.superPw)};
             saveSession();
           }
-          // 確認 A/B 帳號仍有效
-          if(appMode==='admin'&&currentUser&&(isA||isB)){
+          // 確認帳號仍有效，並更新 currentUser（確保 level 為最新值）
+          if(appMode==='admin' && currentUser && currentUser.level !== 'S'){
             const valid=sheetsUsers.find(u=>String(u.id)===String(currentUser.id));
             if(!valid){ doLogout(); toast('帳號已失效，請重新登入'); return; }
+            // 用 Sheets 最新資料更新 currentUser（level 可能已變更）
+            const newLevel = valid.level;
             currentUser={...valid};
             saveSession();
+            // 若層級改變，重新執行 startApp 以套用正確權限
+            if(newLevel !== (isA?'A':isAMinus?'A-':isB?'B':isBMinus?'B-':isC?'C':'')) {
+              startApp();
+              return;
+            }
           }
           // 庫存資料（新扁平結構）
           if(Array.isArray(d.inv403) && d.inv403.length > 0) inv403 = d.inv403;
