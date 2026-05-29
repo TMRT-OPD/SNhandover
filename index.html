@@ -462,7 +462,7 @@ tbody tr:hover td { background: #fafaf8; }
 <nav class="sidebar">
   <div class="sidebar-logo">
     <div class="org">台中捷運 · 運務處</div>
-    <div class="title" id="nav-sys-title">業務交接<br>管理系統</div>
+    <div class="title" id="nav-sys-title">段辦幕僚專員<br>業務系統</div>
     <div class="subtitle" id="sys-subtitle">-</div>
   </div>
   <div class="sidebar-nav">
@@ -3585,8 +3585,8 @@ function invSelectZoneAll(roomId) {
 }
 
 function applySysName() {
-  const l1 = sysName.line1 || '業務交接';
-  const l2 = sysName.line2 || '管理系統';
+  const l1 = sysName.line1 || '段辦幕僚專員';
+  const l2 = sysName.line2 || '業務系統';
   const navTitle = document.getElementById('nav-sys-title');
   if(navTitle) navTitle.innerHTML = l1 + '<br>' + l2;
   const loginTitle = document.getElementById('login-sys-title');
@@ -3595,8 +3595,8 @@ function applySysName() {
 }
 
 function saveSysName() {
-  const l1 = (document.getElementById('sysname-line1').value || '業務交接').trim();
-  const l2 = (document.getElementById('sysname-line2').value || '管理系統').trim();
+  const l1 = (document.getElementById('sysname-line1').value || '段辦幕僚專員').trim();
+  const l2 = (document.getElementById('sysname-line2').value || '業務系統').trim();
   sysName = { line1: l1, line2: l2 };
   applySysName();
   persistData();
