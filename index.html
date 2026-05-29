@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>業務交接系統 - 站務北段</title>
+<title>段辦幕僚專員業務系統 - 站務北段</title>
+<meta property="og:title" content="段辦幕僚專員業務系統" id="og-title">
+<meta property="og:description" content="台中捷運 · 運務處 · 站務北段" id="og-desc">
+<meta property="og:type" content="website">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 
@@ -3589,6 +3592,8 @@ function applySysName() {
   const loginTitle = document.getElementById('login-sys-title');
   if(loginTitle) loginTitle.textContent = l1 + l2;
   document.title = l1 + l2 + ' - 站務北段';
+  const ogTitle = document.getElementById('og-title');
+  if(ogTitle) ogTitle.setAttribute('content', l1 + l2);
 }
 
 function saveSysName() {
