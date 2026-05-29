@@ -1552,6 +1552,18 @@ function doLogin(){
         }
         // S 密碼
         if(d.superPw && String(d.superPw).trim()) SUPER_USER={...SUPER_USER, pw:String(d.superPw)};
+        // 庫存品項
+        if(Array.isArray(d.inv403) && d.inv403.length > 0) inv403 = d.inv403;
+        if(Array.isArray(d.inv406) && d.inv406.length > 0) inv406 = d.inv406;
+        if(Array.isArray(d.inv412) && d.inv412.length > 0) inv412 = d.inv412;
+        if(d.invNextId) invNextId = parseInt(d.invNextId)||invNextId;
+        // 平面配置（Sheets 為唯一來源）
+        if(d.invZones) {
+          if(Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
+          if(Array.isArray(d.invZones.inv406) && d.invZones.inv406.length > 0) invZones.inv406 = d.invZones.inv406;
+          if(Array.isArray(d.invZones.inv412) && d.invZones.inv412.length > 0) invZones.inv412 = d.invZones.inv412;
+        }
+        if(d.sysName) { sysName = d.sysName; }
         // 用 Sheets 最新資料找帳號
         const latestUser = sheetsUsers.find(u=>String(u.id)===String(id));
         if(!latestUser){ err.style.color=''; err.textContent='帳號驗證失敗，請重新登入'; return; }
@@ -1703,68 +1715,83 @@ function startApp(){
     document.getElementById('sync-status').textContent='載入中...';
     loadFromSheetsJsonp();
   } else {
-    const restored = restoreData();
-    renderMain();renderDetail();renderProjects();renderShuWu();updateTimestamp();
-    if(restored) toast('已自動還原上次資料 ✓');
+    // 先從 localStorage 還原業務資料（品項/專案/庶務），invZones 不還原
+    restoreData();
 
     // B- 層直接跳到庫存管理頁面
-    if(isBMinus) {
-      showPage('p6');
-    }
+    if(isBMinus) showPage('p6');
 
-    // 從 Sheets 載入最新帳號、S 密碼、庫存資料
+    // 渲染函式（Sheets 載入後呼叫）
+    const doRender = () => {
+      renderMain();renderDetail();renderProjects();renderShuWu();updateTimestamp();
+      invSanitizeAll();
+      persistData();
+      if(document.getElementById('inv-room-inv403')) renderInvPage(invCurrentRoom);
+      renderUsers();
+      // 權限管理頁按鈕
+      const addBtn = document.getElementById('btn-add-user');
+      if(addBtn) addBtn.style.display = isS ? '' : 'none';
+      const p5sub = document.getElementById('p5-sub');
+      if(p5sub) p5sub.textContent = isS
+        ? '帳號管理：新增、編輯、刪除 A/B 層帳號'
+        : '帳號列表（僅供檢視）';
+      const cpwSec = document.getElementById('changepw-section');
+      if(cpwSec) cpwSec.style.display = isS ? '' : 'none';
+    };
+
+    // 所有層級：先從 Sheets 拿完整最新資料，再渲染畫面
     if(APPS_SCRIPT_URL){
+      document.getElementById('sync-status').textContent='載入中...';
       fetch(APPS_SCRIPT_URL+'?action=load').then(r=>r.json()).then(d=>{
+        document.getElementById('sync-status').textContent='';
         if(d.ok) {
-          // A/B 層帳號
+          // 帳號
           if(Array.isArray(d.users) && d.users.length > 0) sheetsUsers = d.users.filter(u=>u.level!=='S');
-          // S 密碼從 meta.superPw 取（有值才更新）
+          // S 密碼
           if(d.superPw && String(d.superPw).trim()){
             SUPER_USER = {...SUPER_USER, pw: String(d.superPw)};
             if(currentUser && currentUser.level==='S') currentUser = {...currentUser, pw: String(d.superPw)};
             saveSession();
           }
-          // 確認帳號仍有效，並更新 currentUser（確保 level 為最新值）
+          // 確認帳號仍有效（非 S 層）
           if(appMode==='admin' && currentUser && currentUser.level !== 'S'){
             const valid=sheetsUsers.find(u=>String(u.id)===String(currentUser.id));
             if(!valid){ doLogout(); toast('帳號已失效，請重新登入'); return; }
-            // 用 Sheets 最新資料更新 currentUser（level 可能已變更）
             const newLevel = valid.level;
-            currentUser={...valid};
-            saveSession();
-            // 若層級改變，重新執行 startApp 以套用正確權限
+            currentUser={...valid}; saveSession();
             if(newLevel !== (isA?'A':isAMinus?'A-':isB?'B':isBMinus?'B-':isC?'C':'')) {
-              startApp();
-              return;
+              startApp(); return;
             }
           }
-          // 庫存資料（新扁平結構）
+          // 業務資料（Sheets 覆蓋 localStorage）
+          if(Array.isArray(d.items) && d.items.length > 0) items = d.items;
+          if(Array.isArray(d.projects) && d.projects.length > 0) projects = d.projects;
+          if(Array.isArray(d.shuWu) && d.shuWu.length > 0) shuWu = d.shuWu;
+          if(d.nextId) nextId = parseInt(d.nextId)||nextId;
+          if(d.nextPid) nextPid = parseInt(d.nextPid)||nextPid;
+          if(d.nextShuWuNo) nextShuWuNo = parseInt(d.nextShuWuNo)||nextShuWuNo;
+          // 庫存品項
           if(Array.isArray(d.inv403) && d.inv403.length > 0) inv403 = d.inv403;
           if(Array.isArray(d.inv406) && d.inv406.length > 0) inv406 = d.inv406;
           if(Array.isArray(d.inv412) && d.inv412.length > 0) inv412 = d.inv412;
           if(d.invNextId) invNextId = parseInt(d.invNextId)||invNextId;
+          // 平面配置（Sheets 為唯一來源，直接覆蓋）
           if(d.invZones) {
             if(Array.isArray(d.invZones.inv403) && d.invZones.inv403.length > 0) invZones.inv403 = d.invZones.inv403;
             if(Array.isArray(d.invZones.inv406) && d.invZones.inv406.length > 0) invZones.inv406 = d.invZones.inv406;
             if(Array.isArray(d.invZones.inv412) && d.invZones.inv412.length > 0) invZones.inv412 = d.invZones.inv412;
           }
-          invSanitizeAll();
-          persistData();
-          if(document.getElementById('inv-room-inv403')) renderInvPage(invCurrentRoom);
+          // 系統名稱
+          if(d.sysName) { sysName = d.sysName; applySysName(); }
         }
-        renderUsers();
-      }).catch(()=>renderUsers());
-    } else { renderUsers(); }
-
-    // 權限管理頁按鈕
-    const addBtn = document.getElementById('btn-add-user');
-    if(addBtn) addBtn.style.display = isS ? '' : 'none';
-    const p5sub = document.getElementById('p5-sub');
-    if(p5sub) p5sub.textContent = isS
-      ? '帳號管理：新增、編輯、刪除 A/B 層帳號'
-      : '帳號列表（僅供檢視）';
-    const cpwSec = document.getElementById('changepw-section');
-    if(cpwSec) cpwSec.style.display = isS ? '' : 'none';
+        doRender();
+      }).catch(()=>{
+        toast('網路異常，使用本機快取資料');
+        doRender();
+      });
+    } else {
+      doRender();
+    }
   }
 }
 
