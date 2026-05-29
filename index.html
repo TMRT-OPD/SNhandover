@@ -1057,6 +1057,7 @@ tbody tr:hover td { background: #fafaf8; }
             <th style="width:8%">數量</th>
             <th style="width:7%">單位</th>
             <th style="width:10%;cursor:pointer" onclick="invSort('inv406','zone')" data-field="zone">區域 <span class="inv-sort-icon asc"></span></th>
+            <th style="width:12%">位置</th>
             <th>備註</th>
             <th class="edit-only" style="width:30px"></th>
           </tr></thead>
@@ -1105,6 +1106,7 @@ tbody tr:hover td { background: #fafaf8; }
             <th style="width:8%">數量</th>
             <th style="width:7%">單位</th>
             <th style="width:10%;cursor:pointer" onclick="invSort('inv412','zone')" data-field="zone">區域 <span class="inv-sort-icon asc"></span></th>
+            <th style="width:12%">位置</th>
             <th>備註</th>
             <th class="edit-only" style="width:30px"></th>
           </tr></thead>
@@ -3818,6 +3820,7 @@ function renderInvTable(roomId) {
         <td><select data-field="zone" data-id="${row.id}" data-room="${roomId}"
           style="font-size:11px;padding:1px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface)"
           onchange="invSaveSelect(this)">${zoneOpts}</select></td>
+        ${invShowShelf(roomId, row) ? `<td style="min-width:100px">${invRenderShelf1(roomId, row)}</td><td style="min-width:70px">${invRenderShelf2(roomId, row)}</td>` : ''}
         <td style="min-width:80px"><span class="inv-editable" contenteditable="true" data-field="note" data-id="${row.id}" data-room="${roomId}"
           onblur="invSaveCell(this)" oncompositionend="invSaveCell(this)" style="color:var(--text2);font-size:11px;min-width:80px;display:inline-block">${row.note}</span></td>
         <td><button class="inv-del" onclick="invDelRow('${roomId}',${row.id})">×</button></td>
@@ -3829,6 +3832,7 @@ function renderInvTable(roomId) {
         <td style="text-align:center">${row.qty}</td>
         <td style="color:var(--text2)">${row.unit}</td>
         <td>${zLabel}</td>
+        ${invShowShelf(roomId, row) ? `<td style="color:var(--text2);font-size:11px">${invShelfDisplay(row)}</td>` : ''}
         <td style="color:var(--text2);font-size:11px">${row.note}</td>
       </tr>`;
     }
@@ -3862,6 +3866,84 @@ function invSort(roomId, field) {
 }
 
 // ── 子位置選單（406/412 專用）────────────────────────────────
+// ── 子位置兩層式選單（406 A/C區、412 全部）────────────────────
+const SHELF_GROUPS = {
+  inv406: {
+    '左邊層架': ['第一層','第二層','第三層','頂層'],
+    '右邊層架': ['第一層','第二層','第三層','頂層'],
+  },
+  inv412: {
+    '公文櫃(1)': ['上層','下層'],
+    '公文櫃(2)': ['上層','下層'],
+    '公文櫃(3)': ['上層','下層'],
+    '公文櫃(4)': ['上層','下層'],
+    '公文櫃(5)': ['上層','下層'],
+    '三層櫃(1)': ['上層','中層','下層'],
+    '三層櫃(2)': ['上層','中層','下層'],
+    '三層櫃(3)': ['上層','中層','下層'],
+    '三層櫃(4)': ['上層','中層','下層'],
+    '三層櫃(5)': ['上層','中層','下層'],
+    '作業區':    [],
+    '其他':      [],
+  },
+};
+
+// 是否顯示 shelf 欄：406 只有 A/C 區，412 全部
+function invShowShelf(roomId, row) {
+  if (roomId === 'inv412') return true;
+  if (roomId === 'inv406') return row.zone === 'A' || row.zone === 'C';
+  return false;
+}
+
+// 唯讀：合併顯示
+function invShelfDisplay(row) {
+  const s1 = row.shelf1 || '';
+  const s2 = row.shelf2 || '';
+  if (!s1) return '';
+  return s2 ? s1 + ' / ' + s2 : s1;
+}
+
+// 第一層選單
+function invRenderShelf1(roomId, row) {
+  const groups = SHELF_GROUPS[roomId] || {};
+  const cur = row.shelf1 || '';
+  const opts = `<option value="">—</option>` +
+    Object.keys(groups).map(g =>
+      `<option value="${g}" ${g===cur?'selected':''}>${g}</option>`
+    ).join('');
+  return `<select class="inv-sel" data-field="shelf1" data-id="${row.id}" data-room="${roomId}"
+    style="font-size:11px;max-width:100px" onchange="invShelf1Change(this)">${opts}</select>`;
+}
+
+// 第二層選單（依第一層動態產生）
+function invRenderShelf2(roomId, row) {
+  const groups = SHELF_GROUPS[roomId] || {};
+  const g = row.shelf1 || '';
+  const subList = groups[g] || [];
+  if (!subList.length) return '<span style="color:var(--text3);font-size:11px">—</span>';
+  const cur = row.shelf2 || '';
+  const opts = `<option value="">—</option>` +
+    subList.map(s => `<option value="${s}" ${s===cur?'selected':''}>${s}</option>`).join('');
+  return `<select class="inv-sel" data-field="shelf2" data-id="${row.id}" data-room="${roomId}"
+    style="font-size:11px;max-width:70px" onchange="invSaveSelect(this)">${opts}</select>`;
+}
+
+function invShelf1Change(sel) {
+  const {id, room} = sel.dataset;
+  const items = invGetItems(room);
+  const row = items.find(r => String(r.id) === String(id));
+  if (!row) return;
+  row.shelf1 = sel.value;
+  row.shelf2 = ''; // 群組改了，子層清空
+  persistData(); markDirty();
+  // 重新渲染該 tr 的第二層選單
+  const tr = sel.closest('tr');
+  if (tr) {
+    const sub = tr.querySelector('[data-field="shelf2"]');
+    if (sub) sub.outerHTML = invRenderShelf2(room, row);
+  }
+}
+
 function invSaveCell(el) {
   const {field,id,room} = el.dataset;
   const items = invGetItems(room);
@@ -3895,7 +3977,7 @@ function invAddRow(roomId) {
   const zones = invGetZones(roomId);
   const selZone = invSelZone[roomId];
   const defaultZone = (selZone!=='all'&&zones.find(z=>z.id===selZone)) ? selZone : (zones[0]?.id||'A');
-  const newRow = {id:invNextId++, name:'新品項', cat:'misc', qty:'1', unit:'個', zone:defaultZone, shelf:'', note:''};
+  const newRow = {id:invNextId++, name:'新品項', cat:'misc', qty:'1', unit:'個', zone:defaultZone, shelf1:'', shelf2:'', note:''};
   invGetItems(roomId).push(newRow);
   persistData(); markDirty();
   renderInvPage(roomId);
