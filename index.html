@@ -2919,7 +2919,11 @@ function exportCSV() {
 function invZonesToFlat() {
   const flat = [];
   ['inv403','inv406','inv412'].forEach(room => {
-    (invZones[room] || []).forEach(z => {
+    // 若 invZones 是空的（首次同步），用預設值確保 zones 分頁有資料
+    const zones = (invZones[room] && invZones[room].length > 0)
+      ? invZones[room]
+      : INV_ZONES_DEFAULT[room];
+    (zones || []).forEach(z => {
       flat.push({
         room, id: z.id, label: z.label, sub: z.sub,
         color: z.color, bg: z.bg,
