@@ -362,6 +362,7 @@ tbody tr:hover td { background: #fafaf8; }
 .badge-a{background:#7ab8d6;color:#1a1917}
 .badge-am{background:#b8a0d6;color:#1a1917}
 .badge-b{background:#a8d8a8;color:#1a1917}
+.badge-bm{background:#f4a460;color:#1a1917}
 .badge-v{background:#d0d0d0;color:#1a1917}
 .badge-v{background:rgba(255,255,255,.15);color:rgba(255,255,255,.7)}
 .user-name{font-size:13px;font-weight:500;color:#fff}
@@ -442,7 +443,7 @@ tbody tr:hover td { background: #fafaf8; }
 <div id="login-screen" class="login-screen">
   <div class="login-card">
     <div class="login-logo">台中捷運 · 運務處 · 站務北段</div>
-    <div class="login-title" id="login-sys-title">業務交接系統</div>
+    <div class="login-title" id="login-sys-title">段辦幕僚專員業務系統</div>
     <div class="login-sub">請選擇進入方式</div>
     <button class="login-btn-viewer" onclick="enterGuest()">訪客進入</button>
     <div class="login-divider"><span>後台登入</span></div>
@@ -845,42 +846,43 @@ tbody tr:hover td { background: #fafaf8; }
               <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><span class="user-badge badge-s" style="font-size:11px">S</span><div style="font-size:10px;color:var(--text2);margin-top:3px">最高管理</div></th>
               <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><span class="user-badge badge-a" style="font-size:11px">A</span><div style="font-size:10px;color:var(--text2);margin-top:3px">後台編輯</div></th>
               <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><span class="user-badge badge-am" style="font-size:11px">A-</span><div style="font-size:10px;color:var(--text2);margin-top:3px">庫存編輯</div></th>
-              <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><span class="user-badge" style="font-size:11px;background:#a8d8a8;color:#1a4a1a">B</span><div style="font-size:10px;color:var(--text2);margin-top:3px">業務+庫存檢視</div></th>
+              <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><span class="user-badge badge-b" style="font-size:11px">B</span><div style="font-size:10px;color:var(--text2);margin-top:3px">業務+庫存檢視</div></th>
+              <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><span class="user-badge badge-bm" style="font-size:11px">B-</span><div style="font-size:10px;color:var(--text2);margin-top:3px">庫存管理</div></th>
               <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500"><span class="user-badge" style="font-size:11px;background:#ffd7a0;color:#7a3a00">C</span><div style="font-size:10px;color:var(--text2);margin-top:3px">業務檢視</div></th>
               <th style="padding:10px 14px;text-align:center;border:1px solid var(--border);font-weight:500;background:#f8f0f0"><div style="font-size:13px">👤</div><div style="font-size:10px;color:#a32d2d;margin-top:3px">訪客（無權限）</div></th>
             </tr>
           </thead>
           <tbody>
-            <tr><td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2);font-size:11px;font-weight:500;background:var(--surface2)" colspan="7">📋 業務總表 / 業務解說 / 庶務申請</td></tr>
+            <tr><td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2);font-size:11px;font-weight:500;background:var(--surface2)" colspan="8">📋 業務總表 / 業務解說 / 庶務申請</td></tr>
             <tr>
-              <td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2)">檢視內容</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td>
+              <td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2)">檢視內容</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td>
             </tr>
             <tr style="background:var(--surface2)">
-              <td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2)">新增 / 編輯 / 刪除</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td>
+              <td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2)">新增 / 編輯 / 刪除</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td>
             </tr>
-            <tr><td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2);font-size:11px;font-weight:500;background:var(--surface2)" colspan="7">📦 庫存管理</td></tr>
+            <tr><td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2);font-size:11px;font-weight:500;background:var(--surface2)" colspan="8">📦 庫存管理</td></tr>
             <tr>
-              <td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2)">檢視庫存</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗ 隱藏</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td>
+              <td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2)">檢視庫存</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗ 隱藏</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td>
             </tr>
             <tr style="background:var(--surface2)">
-              <td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2)">新增 / 編輯品項 / 編輯地圖</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td>
+              <td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2)">新增 / 編輯品項 / 編輯地圖</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td>
             </tr>
-            <tr><td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2);font-size:11px;font-weight:500;background:var(--surface2)" colspan="7">☁ 資料同步</td></tr>
+            <tr><td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2);font-size:11px;font-weight:500;background:var(--surface2)" colspan="8">☁ 資料同步</td></tr>
             <tr>
-              <td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2)">同步至 Sheets / 從 Sheets 載入</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td>
+              <td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2)">同步至 Sheets / 從 Sheets 載入</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td>
             </tr>
             <tr style="background:var(--surface2)">
-              <td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2)">備份 JSON / 還原 JSON</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td>
+              <td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2)">備份 JSON / 還原 JSON</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td>
             </tr>
             <tr>
-              <td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2)">匯出 CSV / 列印</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td>
+              <td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2)">匯出 CSV / 列印</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td>
             </tr>
-            <tr><td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2);font-size:11px;font-weight:500;background:var(--surface2)" colspan="7">⚙ 系統管理</td></tr>
+            <tr><td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2);font-size:11px;font-weight:500;background:var(--surface2)" colspan="8">⚙ 系統管理</td></tr>
             <tr style="background:var(--surface2)">
-              <td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2)">新增 / 刪除帳號 / 修改他人密碼</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td>
+              <td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2)">新增 / 刪除帳號 / 修改他人密碼</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td>
             </tr>
             <tr>
-              <td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2)">修改自己密碼</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td>
+              <td style="padding:9px 14px;border:1px solid var(--border);color:var(--text2)">修改自己密碼</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#3b6d11">✓</td><td style="padding:9px 14px;border:1px solid var(--border);text-align:center;color:#a32d2d">✗</td>
             </tr>
           </tbody>
         </table>
@@ -902,7 +904,8 @@ tbody tr:hover td { background: #fafaf8; }
           <select id="nu-level">
             <option value="A">層級 A（完整編輯）</option>
             <option value="A-">層級 A-（庫存編輯/業務檢視）</option>
-            <option value="B">層級 B（僅檢視）</option>
+            <option value="B">層級 B（業務+庫存檢視）</option>
+            <option value="B-">層級 B-（僅庫存管理）</option>
             <option value="C">層級 C（業務檢視，庫存隱藏）</option>
           </select>
         </div>
@@ -1268,7 +1271,8 @@ tbody tr:hover td { background: #fafaf8; }
       <select id="eu-level" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:13px">
         <option value="A">A — 後台編輯</option>
         <option value="A-">A- — 庫存編輯/業務檢視</option>
-        <option value="B">B — 檢視</option>
+        <option value="B">B — 業務+庫存檢視</option>
+        <option value="B-">B- — 僅庫存管理</option>
         <option value="C">C — 業務檢視（庫存隱藏）</option>
       </select>
     </div>
@@ -1570,6 +1574,7 @@ function startApp(){
   const isA      = level === 'A';
   const isAMinus = level === 'A-';
   const isB      = level === 'B';
+  const isBMinus = level === 'B-';
   const isViewer = appMode === 'viewer'; // 真正的訪客（非帳號登入）
   const isC = level === 'C'; // C 層：帳號登入，僅業務檢視，庫存隱藏
   const isSuper  = isS; // 相容舊程式碼
@@ -1578,12 +1583,12 @@ function startApp(){
   const badge = document.getElementById('user-badge-label');
   badge.textContent  = level;
   badge.className    = 'user-badge ' +
-    (isS?'badge-s':isA?'badge-a':isAMinus?'badge-am':isB?'badge-b':isC?'badge-v':'badge-v');
+    (isS?'badge-s':isA?'badge-a':isAMinus?'badge-am':isB?'badge-b':isBMinus?'badge-bm':isC?'badge-v':'badge-v');
   document.getElementById('user-display-name').textContent = currentUser.name;
   document.getElementById('user-display-id').textContent   =
     isViewer ? '觀看模式' : 'ID: ' + currentUser.id;
   document.getElementById('sys-subtitle').textContent =
-    isViewer?'訪客':isC?'檢視模式 C':isS?'後台管理 S':isA?'後台編輯 A':isAMinus?'後台管理 A-':isB?'檢視模式 B':'觀看版';
+    isViewer?'訪客':isC?'檢視模式 C':isS?'後台管理 S':isA?'後台編輯 A':isAMinus?'後台管理 A-':isB?'檢視模式 B':isBMinus?'庫存管理 B-':'觀看版';
 
   // ── 左側選單顯示控制 ─────────────────────────────────────
   // 資料儲存區（同步 Sheets 等）：S 和 A 可見
@@ -1605,7 +1610,7 @@ function startApp(){
   if(navInvSub && (isViewer||isC)) navInvSub.style.display = 'none';
   // A/B 層顯示帳號設定（改密碼）- nav-ab-section 去 p5
   const navAB = document.getElementById('nav-ab-section');
-  if(navAB) navAB.style.display = (isA||isAMinus||isB||isC) ? '' : 'none';
+  if(navAB) navAB.style.display = (isA||isAMinus||isB||isBMinus||isC) ? '' : 'none';
   // nav-a-section: 直接開改密碼 modal（同樣給 A/B 用，二擇一保留）
   const navASec = document.getElementById('nav-a-section');
   if(navASec) navASec.style.display = 'none';  // 統一用 nav-ab-section
@@ -1629,6 +1634,25 @@ function startApp(){
     window.deleteProject     = noop;
     window.updatePct         = noop;
     window.addShuWu          = noop;
+  }
+
+  // B- 層：只能用庫存管理和改密碼，業務全鎖
+  if(isBMinus){
+    const toast2bm = ()=>toast('B- 層僅能使用庫存管理');
+    window.openEditModal     = toast2bm;
+    window.openProjModal     = toast2bm;
+    window.openShuwuModal    = toast2bm;
+    window.openAddShuWuModal = toast2bm;
+    window.toggleForm        = ()=>{};
+    window.addItem           = toast2bm;
+    window.addProject        = toast2bm;
+    window.deleteProject     = toast2bm;
+    window.updatePct         = toast2bm;
+    window.addShuWu          = toast2bm;
+    // 隱藏業務相關側邊欄
+    ['nav-p1','nav-p2','nav-p3','nav-p4'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.style.display='none';
+    });
   }
 
   // A- 層：業務/專案/庶務不能編輯，庫存可以編輯
@@ -1772,7 +1796,7 @@ function doChangeSelfPw() {
   const errEl    = document.getElementById('sp-error');
   errEl.textContent = '';
 
-  if (!currentUser || !['A','A-','B','C'].includes(currentUser.level)) { toast('權限不足'); return; }
+  if (!currentUser || !['A','A-','B','B-','C'].includes(currentUser.level)) { toast('權限不足'); return; }
 
   // 比對目前密碼
   const users = getUsers();
@@ -1848,7 +1872,7 @@ function renderUsers(){
   const aUsers = getUsers();
   const all = [SUPER_USER, ...aUsers];
   tbody.innerHTML = all.map(u => {
-    const lvlBadge = u.level==='S'?'badge-s':u.level==='A'?'badge-a':u.level==='A-'?'badge-am':u.level==='B'?'badge-b':'badge-v';
+    const lvlBadge = u.level==='S'?'badge-s':u.level==='A'?'badge-a':u.level==='A-'?'badge-am':u.level==='B'?'badge-b':u.level==='B-'?'badge-bm':'badge-v';
     const canManage = isS && u.level !== 'S';
     return `<tr>
       <td style="font-family:var(--mono);font-size:12px">${u.id}</td>
@@ -2157,7 +2181,7 @@ let projects = [
 ];
 
 let nextId = 53;
-let sysName = { line1: '業務交接', line2: '管理系統' };  // 系統名稱，可從 Sheets 讀取
+let sysName = { line1: '段辦幕僚專員', line2: '業務系統' };  // 系統名稱，可從 Sheets 讀取
 let nextPid = projects.length + 1;
 let jumpTarget = null;
 
@@ -3480,7 +3504,7 @@ function renderInvMap(roomId) {
   const zones = invGetZones(roomId);
   const items = invGetItems(roomId);
   const selZone = invSelZone[roomId]||'all';
-  const canEdit = appMode==='admin' && currentUser && (currentUser.level==='S'||currentUser.level==='A'||currentUser.level==='A-');
+  const canEdit = appMode==='admin' && currentUser && ['S','A','A-','B-'].includes(currentUser.level);
   const isEditing = invEditMode && canEdit;
 
   const wrap = document.getElementById(roomId+'-zones-wrap');
@@ -3556,7 +3580,7 @@ function toggleInventoryNav() {
 function renderInvZoneEditor(roomId) {
   const el = document.getElementById(roomId+'-zone-editor');
   if (!el) return;
-  const canEdit = appMode==='admin' && currentUser && (currentUser.level==='S'||currentUser.level==='A'||currentUser.level==='A-');
+  const canEdit = appMode==='admin' && currentUser && ['S','A','A-','B-'].includes(currentUser.level);
   if (!invEditMode || !canEdit) { el.innerHTML=''; el.style.display='none'; return; }
   el.style.display='';
   const zones = invGetZones(roomId);
@@ -3610,7 +3634,7 @@ function invUpdateZoneNum(roomId, zoneId, field, val) {
 }
 
 function invToggleEdit(roomId) {
-  const canEdit = appMode==='admin' && currentUser && (currentUser.level==='S'||currentUser.level==='A'||currentUser.level==='A-');
+  const canEdit = appMode==='admin' && currentUser && ['S','A','A-','B-'].includes(currentUser.level);
   if (!canEdit) return;
   invEditMode = !invEditMode;
   const btn = document.getElementById(roomId+'-edit-btn');
@@ -3624,7 +3648,7 @@ function invToggleEdit(roomId) {
 
 // ── 表格渲染 ──────────────────────────────────────────────────
 function renderInvTable(roomId) {
-  const canEdit = appMode==='admin' && currentUser && (currentUser.level==='S'||currentUser.level==='A'||currentUser.level==='A-');
+  const canEdit = appMode==='admin' && currentUser && ['S','A','A-','B-'].includes(currentUser.level);
   const selZone = invSelZone[roomId]||'all';
   let items = [...invGetItems(roomId)];
   if (selZone!=='all') items = items.filter(r=>r.zone===selZone);
@@ -3761,7 +3785,7 @@ function invAddRow(roomId) {
 function initInvPage() {
   ['inv403','inv406','inv412'].forEach(rid=>{
     const btn = document.getElementById(rid+'-edit-btn');
-    if (btn) btn.style.display = (appMode==='admin'&&currentUser&&(currentUser.level==='S'||currentUser.level==='A'||currentUser.level==='A-')) ? '' : 'none';
+    if (btn) btn.style.display = (appMode==='admin'&&currentUser&&['S','A','A-','B-'].includes(currentUser.level)) ? '' : 'none';
   });
   renderInvPage(invCurrentRoom);
 }
