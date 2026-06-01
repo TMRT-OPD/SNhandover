@@ -1057,15 +1057,7 @@ tbody tr:hover td { background: #fafaf8; }
             <th style="width:5%">數量</th>
             <th style="width:4%">單位</th>
             <th style="width:6%;cursor:pointer" onclick="invSort('inv406','zone')" data-field="zone">區域 <span class="inv-sort-icon asc"></span></th>
-            <th colspan="2" style="width:20%">
-              <div style="display:flex;flex-direction:column;gap:3px">
-                <span>位置</span>
-                <div style="display:flex;gap:3px">
-                  <select style="font-size:10px;border:1px solid var(--border);border-radius:3px;background:var(--surface);padding:1px 2px;max-width:90px;cursor:pointer" onchange="invSetShelf('inv406','shelf1',this.value)"><option value="all">全部</option><option value="左邊層架">左邊層架</option><option value="右邊層架">右邊層架</option></select>
-                  <select style="font-size:10px;border:1px solid var(--border);border-radius:3px;background:var(--surface);padding:1px 2px;max-width:90px;cursor:pointer" onchange="invSetShelf('inv406','shelf2',this.value)"><option value="all">全部</option><option value="底層">底層</option><option value="中層">中層</option><option value="上層">上層</option><option value="頂層">頂層</option></select>
-                </div>
-              </div>
-            </th>
+            <th colspan="2" style="width:20%;cursor:pointer" onclick="invSort('inv406','shelf1')" data-field="shelf1">位置 <span class="inv-sort-icon">⇅</span></th>
             <th style="width:28%">備註</th>
             <th class="edit-only" style="width:24px"></th>
           </tr></thead>
@@ -1114,15 +1106,7 @@ tbody tr:hover td { background: #fafaf8; }
             <th style="width:5%">數量</th>
             <th style="width:4%">單位</th>
             <th style="width:6%;cursor:pointer" onclick="invSort('inv412','zone')" data-field="zone">區域 <span class="inv-sort-icon asc"></span></th>
-            <th colspan="2" style="width:20%">
-              <div style="display:flex;flex-direction:column;gap:3px">
-                <span>位置</span>
-                <div style="display:flex;gap:3px">
-                  <select style="font-size:10px;border:1px solid var(--border);border-radius:3px;background:var(--surface);padding:1px 2px;max-width:90px;cursor:pointer" onchange="invSetShelf('inv412','shelf1',this.value)"><option value="all">全部</option><option value="公文櫃(1)">公文櫃(1)</option><option value="公文櫃(2)">公文櫃(2)</option><option value="公文櫃(3)">公文櫃(3)</option><option value="公文櫃(4)">公文櫃(4)</option><option value="公文櫃(5)">公文櫃(5)</option><option value="三層櫃(1)">三層櫃(1)</option><option value="三層櫃(2)">三層櫃(2)</option><option value="三層櫃(3)">三層櫃(3)</option><option value="三層櫃(4)">三層櫃(4)</option><option value="三層櫃(5)">三層櫃(5)</option><option value="作業區">作業區</option><option value="其他">其他</option></select>
-                  <select style="font-size:10px;border:1px solid var(--border);border-radius:3px;background:var(--surface);padding:1px 2px;max-width:90px;cursor:pointer" onchange="invSetShelf('inv412','shelf2',this.value)"><option value="all">全部</option><option value="底層">底層</option><option value="中層">中層</option><option value="上層">上層</option><option value="頂層">頂層</option></select>
-                </div>
-              </div>
-            </th>
+            <th colspan="2" style="width:20%;cursor:pointer" onclick="invSort('inv412','shelf1')" data-field="shelf1">位置 <span class="inv-sort-icon">⇅</span></th>
             <th style="width:28%">備註</th>
             <th class="edit-only" style="width:24px"></th>
           </tr></thead>
@@ -3561,10 +3545,7 @@ let invSortState = {
   inv406:{field:'zone',dir:1},
   inv412:{field:'zone',dir:1}
 };
-let invSelShelf = {
-  inv406:{shelf1:'all', shelf2:'all'},
-  inv412:{shelf1:'all', shelf2:'all'},
-};
+
 
 // 固定區域定義（id 永遠是大寫字母，不可新增刪除）
 // invZones 宣告已移至全域變數區
@@ -3796,13 +3777,6 @@ function renderInvTable(roomId) {
   let items = [...invGetItems(roomId)];
   if (selZone!=='all') items = items.filter(r=>r.zone===selZone);
 
-  // shelf 篩選（406/412）
-  if (invSelShelf[roomId]) {
-    const s1 = invSelShelf[roomId].shelf1;
-    const s2 = invSelShelf[roomId].shelf2;
-    if (s1 && s1!=='all') items = items.filter(r=>(r.shelf1||'')=== s1);
-    if (s2 && s2!=='all') items = items.filter(r=>(r.shelf2||'')=== s2);
-  }
 
   // 排序
   const sort = invSortState[roomId];
@@ -3874,7 +3848,7 @@ function renderInvTable(roomId) {
   }
 
   // 更新排序圖示
-  ['name','cat','zone'].forEach(f=>{
+  ['name','cat','zone','shelf1'].forEach(f=>{
     const th = document.querySelector(`#${roomId}-tbl th[data-field="${f}"]`);
     if (!th) return;
     const icon = th.querySelector('.inv-sort-icon');
@@ -3970,12 +3944,6 @@ function invShelf1Change(sel) {
   if (sub) {
     sub.outerHTML = invRenderShelf2(room, row);
   }
-}
-
-function invSetShelf(roomId, field, val) {
-  if (!invSelShelf[roomId]) invSelShelf[roomId] = {shelf1:'all', shelf2:'all'};
-  invSelShelf[roomId][field] = val;
-  renderInvTable(roomId);
 }
 
 function invSaveCell(el) {
