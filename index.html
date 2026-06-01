@@ -1057,7 +1057,8 @@ tbody tr:hover td { background: #fafaf8; }
             <th style="width:5%">數量</th>
             <th style="width:4%">單位</th>
             <th style="width:6%;cursor:pointer" onclick="invSort('inv406','zone')" data-field="zone">區域 <span class="inv-sort-icon asc"></span></th>
-            <th colspan="2" style="width:20%;cursor:pointer" onclick="invSort('inv406','shelf1')" data-field="shelf1">位置 <span class="inv-sort-icon">⇅</span></th>
+            <th style="width:11%;cursor:pointer" onclick="invSort('inv406','shelf1')" data-field="shelf1">位置1 <span class="inv-sort-icon">⇅</span></th>
+            <th style="width:9%;cursor:pointer" onclick="invSort('inv406','shelf2')" data-field="shelf2">位置2 <span class="inv-sort-icon">⇅</span></th>
             <th style="width:28%">備註</th>
             <th class="edit-only" style="width:24px"></th>
           </tr></thead>
@@ -1106,7 +1107,8 @@ tbody tr:hover td { background: #fafaf8; }
             <th style="width:5%">數量</th>
             <th style="width:4%">單位</th>
             <th style="width:6%;cursor:pointer" onclick="invSort('inv412','zone')" data-field="zone">區域 <span class="inv-sort-icon asc"></span></th>
-            <th colspan="2" style="width:20%;cursor:pointer" onclick="invSort('inv412','shelf1')" data-field="shelf1">位置 <span class="inv-sort-icon">⇅</span></th>
+            <th style="width:11%;cursor:pointer" onclick="invSort('inv412','shelf1')" data-field="shelf1">位置1 <span class="inv-sort-icon">⇅</span></th>
+            <th style="width:9%;cursor:pointer" onclick="invSort('inv412','shelf2')" data-field="shelf2">位置2 <span class="inv-sort-icon">⇅</span></th>
             <th style="width:28%">備註</th>
             <th class="edit-only" style="width:24px"></th>
           </tr></thead>
@@ -3834,7 +3836,7 @@ function renderInvTable(roomId) {
         <td style="text-align:center">${row.qty}</td>
         <td style="color:var(--text2)">${row.unit}</td>
         <td>${zLabel}</td>
-        ${invShowShelf(roomId, row) ? `<td colspan="2" style="color:var(--text2);font-size:11px">${invShelfDisplay(row)}</td>` : (roomId==='inv406'||roomId==='inv412') ? '<td colspan="2"></td>' : ''}
+        ${invShowShelf(roomId, row) ? `<td style="color:var(--text2);font-size:11px">${row.shelf1||''}</td><td style="color:var(--text2);font-size:11px">${row.shelf2||''}</td>` : (roomId==='inv406'||roomId==='inv412') ? '<td colspan="2"></td>' : ''}
         <td style="color:var(--text2);font-size:11px">${row.note}</td>
       </tr>`;
     }
@@ -3848,7 +3850,7 @@ function renderInvTable(roomId) {
   }
 
   // 更新排序圖示
-  ['name','cat','zone','shelf1'].forEach(f=>{
+  ['name','cat','zone','shelf1','shelf2'].forEach(f=>{
     const th = document.querySelector(`#${roomId}-tbl th[data-field="${f}"]`);
     if (!th) return;
     const icon = th.querySelector('.inv-sort-icon');
