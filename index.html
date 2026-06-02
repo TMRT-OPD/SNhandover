@@ -2640,6 +2640,19 @@ function renderProjects() {
 
   const riskOrder = {特級:0, 緊急:1, 普通:2};
   const riskCmp = (a, b) => (riskOrder[a.risk] ?? 9) - (riskOrder[b.risk] ?? 9);
+  const dueCmp = (a, b) => {
+    const da = a.due ? new Date(a.due).getTime() : Infinity;
+    const db = b.due ? new Date(b.due).getTime() : Infinity;
+    return da - db;
+  };
+  // 三層預設排序：截止日 → 風險 → 進度
+  const defaultSort = (a, b) => {
+    const dc = dueCmp(a, b);
+    if (dc !== 0) return dc;
+    const rc = riskCmp(a, b);
+    if (rc !== 0) return rc;
+    return a.pct - b.pct;
+  };
 
   // 排序：未完成
   if (sort3.col && sort3.dir) {
@@ -2648,6 +2661,11 @@ function renderProjects() {
     } else if (sort3.col === 'pct') {
       incomplete = [...incomplete].sort((a, b) => {
         const cmp = sort3.dir === 'asc' ? a.pct - b.pct : b.pct - a.pct;
+        return cmp !== 0 ? cmp : riskCmp(a, b);
+      });
+    } else if (sort3.col === 'due') {
+      incomplete = [...incomplete].sort((a, b) => {
+        const cmp = sort3.dir === 'asc' ? dueCmp(a,b) : dueCmp(b,a);
         return cmp !== 0 ? cmp : riskCmp(a, b);
       });
     } else {
@@ -2659,7 +2677,7 @@ function renderProjects() {
       });
     }
   } else {
-    incomplete = [...incomplete].sort(riskCmp);
+    incomplete = [...incomplete].sort(defaultSort);
   }
   // 已完成：固定依完成日（due）倒排，無 due 的排最後
   done = [...done].sort((a, b) => {
