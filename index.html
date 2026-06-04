@@ -2734,7 +2734,7 @@ function renderProjects() {
           <span style="font-size:11px;color:var(--text3)">%</span>
         </div>
       </td>
-      <td style="font-size:12px;max-width:200px;line-height:1.5;color:var(--text2)">${p.note}</td>
+      <td style="font-size:12px;max-width:200px;line-height:1.5;color:var(--text2);white-space:pre-wrap;word-break:break-word">${p.note}</td>
       <td style="font-size:12px">${p.owner}</td>
       <td style="font-size:12px;font-family:var(--mono);white-space:nowrap">${formatDate(p.due)}</td>
       ${editCol(p.id)}
