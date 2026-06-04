@@ -687,8 +687,11 @@ tbody tr:hover td { background: #fafaf8; }
         <option value="">全部進度</option>
         <option value="0">未開始 (0%)</option>
         <option value="50">進行中 (&lt;100%)</option>
-        <option value="100">已完成 (100%)</option>
+        <option value=\"100\">已完成 (100%)</option>
       </select>
+      <div class="search-wrap" style="flex:1;max-width:280px">
+        <input id="q3" placeholder="搜尋專案…" oninput="renderProjects()" style="width:100%">
+      </div>
     </div>
     <div class="table-wrap">
     <table>
@@ -1000,8 +1003,11 @@ tbody tr:hover td { background: #fafaf8; }
       </div>
       <!-- 表格 -->
       <div class="inv-table-card">
-        <div class="inv-table-header">
+        <div class="inv-table-header" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
           <span class="inv-zone-badge" id="inv403-zlabel" style="background:#f0ede8;color:#6b6860">全部品項</span>
+          <div class="search-wrap" style="flex:1;max-width:240px;min-width:140px">
+            <input id="q-inv403" placeholder="搜尋品項…" oninput="renderInvTable('inv403')" style="width:100%;font-size:12px">
+          </div>
         </div>
         <div style="overflow-x:auto"><table class="inv-tbl" id="inv403-tbl">
           <thead><tr>
@@ -1047,8 +1053,11 @@ tbody tr:hover td { background: #fafaf8; }
         <div id="inv406-zone-editor"></div>
       </div>
       <div class="inv-table-card">
-        <div class="inv-table-header">
+        <div class="inv-table-header" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
           <span class="inv-zone-badge" id="inv406-zlabel" style="background:#f0ede8;color:#6b6860">全部品項</span>
+          <div class="search-wrap" style="flex:1;max-width:240px;min-width:140px">
+            <input id="q-inv406" placeholder="搜尋品項…" oninput="renderInvTable('inv406')" style="width:100%;font-size:12px">
+          </div>
         </div>
         <div style="overflow-x:auto"><table class="inv-tbl" id="inv406-tbl">
           <thead><tr>
@@ -1097,8 +1106,11 @@ tbody tr:hover td { background: #fafaf8; }
         <div id="inv412-zone-editor"></div>
       </div>
       <div class="inv-table-card">
-        <div class="inv-table-header">
+        <div class="inv-table-header" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
           <span class="inv-zone-badge" id="inv412-zlabel" style="background:#f0ede8;color:#6b6860">全部品項</span>
+          <div class="search-wrap" style="flex:1;max-width:240px;min-width:140px">
+            <input id="q-inv412" placeholder="搜尋品項…" oninput="renderInvTable('inv412')" style="width:100%;font-size:12px">
+          </div>
         </div>
         <div style="overflow-x:auto"><table class="inv-tbl" id="inv412-tbl">
           <thead><tr>
@@ -2622,6 +2634,8 @@ function renderProjects() {
   }
   const fr = document.getElementById('fr3').value;
   const fd = document.getElementById('fd3').value;
+  const q3el = document.getElementById('q3');
+  const q3 = q3el ? q3el.value.toLowerCase() : '';
 
   // 分成未完成 / 已完成兩份
   let incomplete = projects.filter(p => {
@@ -2629,12 +2643,20 @@ function renderProjects() {
     if (fr && p.risk !== fr) return false;
     if (fd === '0' && p.pct !== 0) return false;
     if (fd === '50' && (p.pct === 0 || p.pct === 100)) return false;
-    if (fd === '100') return false; // 已完成在下方
+    if (fd === '100') return false;
+    if (q3 && !((p.item||'').toLowerCase().includes(q3) ||
+                (p.cat||'').toLowerCase().includes(q3) ||
+                (p.note||'').toLowerCase().includes(q3) ||
+                (p.owner||'').toLowerCase().includes(q3))) return false;
     return true;
   });
   let done = projects.filter(p => {
     if (p.pct < 100) return false;
     if (fr && p.risk !== fr) return false;
+    if (q3 && !((p.item||'').toLowerCase().includes(q3) ||
+                (p.cat||'').toLowerCase().includes(q3) ||
+                (p.note||'').toLowerCase().includes(q3) ||
+                (p.owner||'').toLowerCase().includes(q3))) return false;
     return true;
   });
 
@@ -3796,6 +3818,16 @@ function renderInvTable(roomId) {
   const selZone = invSelZone[roomId]||'all';
   let items = [...invGetItems(roomId)];
   if (selZone!=='all') items = items.filter(r=>r.zone===selZone);
+
+  // 關鍵字搜尋
+  const qEl = document.getElementById('q-'+roomId);
+  const q = qEl ? qEl.value.toLowerCase() : '';
+  if (q) items = items.filter(r =>
+    (r.name||'').toLowerCase().includes(q) ||
+    (r.note||'').toLowerCase().includes(q) ||
+    (r.shelf1||'').toLowerCase().includes(q) ||
+    (r.shelf2||'').toLowerCase().includes(q)
+  );
 
 
   // 排序
