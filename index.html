@@ -1565,17 +1565,10 @@ function doLogin(){
     return;
   }
 
-  // A/B/A-/B-/C 層：先用本機資料驗證密碼，再從 Sheets 取最新 level
-  const found = getUsers().find(u=>String(u.id)===String(id)&&String(u.pw)===String(pw));
-  if(!found){
-    err.textContent='帳號或密碼錯誤，請重新輸入'; return;
-  }
-
-  // 密碼正確，顯示載入中
+  // A/B/A-/B-/C 層：直接從 Sheets 取最新資料驗證（避免本機舊密碼問題）
   err.style.color='var(--accent)';
   err.textContent='驗證中…';
 
-  // 從 Sheets 取最新帳號資料（確保 level 是最新的）
   if(APPS_SCRIPT_URL){
     fetch(APPS_SCRIPT_URL+'?action=load')
       .then(r=>r.json())
@@ -4103,7 +4096,7 @@ function invSaveSelect(sel) {
 
 function invDelRow(roomId, id) {
   if (!confirm('確認刪除此品項？')) return;
-  invSetItems(roomId, invGetItems(roomId).filter(r=>r.id!==id));
+  invSetItems(roomId, invGetItems(roomId).filter(r=>String(r.id)!==String(id)));
   persistData(); markDirty();
   renderInvPage(roomId);
   toast('品項已刪除');
