@@ -897,7 +897,7 @@ tbody tr:hover td { background: #fafaf8; }
       </div>
     </div>
     <div class="table-wrap"><table class="user-table">
-      <thead><tr><th>帳號</th><th>姓名</th><th>層級</th><th>建立日期</th><th></th></tr></thead>
+      <thead><tr><th>帳號</th><th>姓名</th><th>層級</th><th>建立日期</th><th>登入狀態</th><th>最後登入</th><th></th></tr></thead>
       <tbody id="user-tbody"></tbody>
     </table></div>
     <div id="add-user-form" class="add-form" style="display:none;margin-top:20px">
@@ -1791,7 +1791,8 @@ function startApp(){
               try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)||'{}').token; } catch(e){ return null; }
             })();
             if (d.sessions && localToken) {
-              const sheetToken = d.sessions[String(currentUser.id)];
+              const sessObj = d.sessions[String(currentUser.id)];
+              const sheetToken = sessObj ? sessObj.token : null;
               if (sheetToken && sheetToken !== localToken) {
                 doLogout();
                 toast('此帳號已在其他裝置登入，請重新登入');
@@ -1830,6 +1831,7 @@ function applyViewerRestrictions(){
 let isDirty = false;
 let sheetsLastSaved = '';
 let sheetsSavedBy   = '';
+let sheetsSessionMap = {}; // {userId: {token, loginAt}}
 
 function updateSheetsInfo() {
   const el = document.getElementById('sheets-last-sync');
@@ -1968,11 +1970,27 @@ function renderUsers(){
   tbody.innerHTML = all.map(u => {
     const lvlBadge = u.level==='S'?'badge-s':u.level==='A'?'badge-a':u.level==='A-'?'badge-am':u.level==='B'?'badge-b':u.level==='B-'?'badge-bm':u.level==='C'?'badge-cv':'badge-v';
     const canManage = isS && u.level !== 'S';
+    // 登入狀態（從 sheetsSessionMap 取得）
+    const sessInfo = (u.level !== 'S' && u.level !== 'V') ? (sheetsSessionMap[String(u.id)] || null) : null;
+    const isOnline = !!sessInfo;
+    const statusCell = u.level === 'S'
+      ? '<td style="font-size:11px;color:var(--text3)">—</td>'
+      : `<td style="white-space:nowrap">
+          <span style="font-size:11px;color:${isOnline?'#3b6d11':'var(--text3)'}">
+            ${isOnline ? '🟢 登入中' : '⚪ 未登入'}
+          </span>
+          ${isOnline && isS ? `<button class="btn btn-sm btn-danger" style="margin-left:6px;font-size:10px;padding:1px 6px" onclick="forceLogout('${u.id}','${u.name}')">強制登出</button>` : ''}
+        </td>`;
+    const loginAtCell = sessInfo
+      ? `<td style="font-size:11px;color:var(--text3)">${sessInfo.loginAt||'—'}</td>`
+      : `<td style="font-size:11px;color:var(--text3)">—</td>`;
     return `<tr>
       <td style="font-family:var(--mono);font-size:12px">${u.id}</td>
       <td>${u.name}</td>
       <td><span class="badge ${lvlBadge}">${u.level}</span>${u.isFirstLogin?'<span style="font-size:10px;color:var(--amber);margin-left:6px">首次登入</span>':''}</td>
       <td style="font-size:12px;color:var(--text3)">${formatCreated(u.created)||'系統預設'}</td>
+      ${statusCell}
+      ${loginAtCell}
       <td style="white-space:nowrap">${canManage
         ? `<button class="btn btn-sm" onclick="openEditUser('${u.id}')" style="color:var(--accent);border-color:#c5daea;margin-right:4px">編輯</button>
            <button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}')">刪除</button>`
@@ -1992,6 +2010,20 @@ function renderUsers(){
     : '帳號列表（僅供檢視）';
 }
 
+
+function forceLogout(userId, userName) {
+  if (!confirm(`確定強制登出「${userName}」嗎？\n對方下次系統刷新時會被踢出。`)) return;
+  if (!APPS_SCRIPT_URL) return;
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action:'clearSession', userId })
+  }).then(()=>{
+    sheetsSessionMap[String(userId)] = null;
+    delete sheetsSessionMap[String(userId)];
+    renderUsers();
+    toast(`已強制登出 ${userName} ✓`);
+  }).catch(()=>{ toast('操作失敗，請稍後再試'); });
+}
 
 function showAddUserForm(){if(!currentUser||currentUser.level!=='S'){toast('權限不足');return}const f=document.getElementById('add-user-form');f.style.display=f.style.display==='none'?'block':'none'}
 function addUser(){
@@ -3020,6 +3052,14 @@ function applySheetData(d) {
   // 最後同步資訊
   if (d.lastSaved) sheetsLastSaved = d.lastSaved;
   if (d.savedBy)   sheetsSavedBy   = d.savedBy;
+  // sessions 對照表
+  if (d.sessions) {
+    sheetsSessionMap = {};
+    Object.entries(d.sessions).forEach(([id, val]) => {
+      if (typeof val === 'object') sheetsSessionMap[id] = val;
+      else sheetsSessionMap[id] = { token: val, loginAt: '' };
+    });
+  }
   // invZones 套好後才清理 zone 值
   invSanitizeAll();
 }
