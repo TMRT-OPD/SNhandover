@@ -1611,6 +1611,13 @@ function enterGuest(){
   document.body.appendChild(err);
 }
 function doLogout(){
+  // 清除 Sheets 上的 session token（非同步）
+  if (APPS_SCRIPT_URL && currentUser && currentUser.level !== 'S' && currentUser.level !== 'V') {
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action:'clearSession', userId: currentUser.id })
+    }).catch(()=>{});
+  }
   currentUser=null;appMode=null;
   document.getElementById('app-screen').style.display='none';
   document.getElementById('login-screen').style.display='flex';
@@ -1778,6 +1785,18 @@ function startApp(){
             currentUser={...valid}; saveSession();
             if(newLevel !== (isA?'A':isAMinus?'A-':isB?'B':isBMinus?'B-':isC?'C':'')) {
               startApp(); return;
+            }
+            // Token 驗證：若 Sheets 上的 token 與本機不同，代表帳號已在其他裝置登入
+            const localToken = (() => {
+              try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)||'{}').token; } catch(e){ return null; }
+            })();
+            if (d.sessions && localToken) {
+              const sheetToken = d.sessions[String(currentUser.id)];
+              if (sheetToken && sheetToken !== localToken) {
+                doLogout();
+                toast('此帳號已在其他裝置登入，請重新登入');
+                return;
+              }
             }
           }
         }
@@ -3491,14 +3510,32 @@ function addShuWu() {
 // ── SESSION 保存 ────────────────────────────────────────────────
 const SESSION_KEY = 'handover_session_v1';
 
+function genToken() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
 function saveSession() {
   try {
+    // 產生或保留 token（S層和訪客不需要 token 驗證）
+    let token = null;
+    if (currentUser && currentUser.level !== 'S' && currentUser.level !== 'V') {
+      const existing = JSON.parse(sessionStorage.getItem(SESSION_KEY) || '{}');
+      token = existing.token || genToken();
+      // 寫入 Sheets（非同步，不阻塞）
+      if (APPS_SCRIPT_URL) {
+        fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action:'writeSession', userId: currentUser.id, token })
+        }).catch(()=>{});
+      }
+    }
     sessionStorage.setItem(SESSION_KEY, JSON.stringify({
-      userId: currentUser ? currentUser.id : null,
+      userId:    currentUser ? currentUser.id    : null,
       userLevel: currentUser ? currentUser.level : null,
-      userName: currentUser ? currentUser.name : null,
-      appMode: appMode,
-      superPw: SUPER_USER.pw  // 保存最新密碼
+      userName:  currentUser ? currentUser.name  : null,
+      appMode:   appMode,
+      superPw:   SUPER_USER.pw,
+      token
     }));
   } catch(e) {}
 }
