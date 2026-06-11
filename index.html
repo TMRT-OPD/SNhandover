@@ -1636,29 +1636,36 @@ function doLoginCore(id, pw, err) {
   }
 }
 
-// ── 方案 A 核心：登入前查 Firebase，偵測既有 session ──
+// ── 方案 A 核心：用 transaction 原子性寫入，確保不會有競爭條件 ──
 function fbCheckAndLogin(user, errEl) {
-  _fbDB.ref('sessions/' + user.id).once('value').then(snap => {
-    const existing = snap.val();
+  const sessionRef  = _fbDB.ref('sessions/'    + user.id);
+  const lockRef     = _fbDB.ref('accountLock/' + user.id);
 
-    // sessions/{userId} 存在即視為衝突，不論是否同裝置、同 token
-    // 同一裝置重複登入時 sessionStorage 會保留舊 token，必須一律擋下
-    if (existing) {
-      // ── 已有 session：先寫鎖，再刪 session（觸發甲強制登出）──
+  // transaction 保證原子讀寫：同一時間只有一個客戶端能成功寫入
+  sessionRef.transaction(current => {
+    if (current === null) {
+      // 沒有既有 session → 先佔位，寫入臨時標記
+      return { token: '__pending__', loginAt: Date.now() };
+    }
+    // 已有 session（不論是誰的）→ 回傳 undefined 中止 transaction（不修改）
+    return undefined;
+  }).then(result => {
+    if (!result.committed) {
+      // Transaction 被中止 → 表示已有其他 session，執行雙踢並鎖帳號
       const until = Date.now() + 8 * 60 * 60 * 1000;
-      _fbDB.ref('accountLock/' + user.id).set({
+      // 先寫鎖
+      lockRef.set({
         until,
         reason: '重複登入偵測',
         lockedAt: Date.now(),
         lockedBy: 'system'
       }).then(() => {
-        // 鎖確認寫入後，刪 session → 觸發甲的 onValue → 甲強制登出
-        _fbDB.ref('sessions/' + user.id).remove();
+        // 鎖寫入後刪 session → 觸發甲的 onValue → 甲強制登出
+        sessionRef.remove();
       });
 
-      // 乙：清空狀態，顯示鎖定提示，不給進入
+      // 乙：清空、顯示提示、不給進入
       currentUser = null; appMode = null;
-      // 同時清掉 sessionStorage，避免下次重整還原舊 session
       try { sessionStorage.removeItem(SESSION_KEY); } catch(e) {}
       const ut = new Date(until);
       const ts = (ut.getMonth()+1)+'/'+ut.getDate()+' '+
@@ -1668,11 +1675,12 @@ function fbCheckAndLogin(user, errEl) {
       errEl.textContent = `⛔ 此帳號已在其他裝置登入，為防止帳號共用已鎖定 8 小時。自動解鎖：${ts}`;
 
     } else {
-      // 無衝突 → 正常登入
+      // Transaction 成功（佔位寫入）→ 無衝突，正常登入
+      // saveSession() 之後會覆寫正確的 token
       startApp(); saveSession();
     }
   }).catch(() => {
-    // Firebase 查詢失敗 → 放行（不因 Firebase 問題阻擋正常登入）
+    // Firebase 失敗 → 放行，不因 Firebase 問題阻擋正常登入
     startApp(); saveSession();
   });
 }
