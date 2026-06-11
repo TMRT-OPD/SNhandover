@@ -1570,6 +1570,22 @@ function doLogin(){
   const err=document.getElementById('login-error');
   err.textContent='';
 
+  // ── [Firebase] 先檢查此裝置是否被鎖定 ──
+  fbCheckDeviceLock().then(lockInfo => {
+    if (lockInfo.locked) {
+      const unlockTime = new Date(lockInfo.until);
+      const hh = unlockTime.getHours().toString().padStart(2,'0');
+      const mm = unlockTime.getMinutes().toString().padStart(2,'0');
+      err.style.color = '#c00';
+      err.textContent = `⛔ 此裝置因重複登入已被鎖定，解鎖時間：${unlockTime.getMonth()+1}/${unlockTime.getDate()} ${hh}:${mm}`;
+      return;
+    }
+    doLoginCore(id, pw, err);
+  }).catch(() => doLoginCore(id, pw, err));
+}
+
+function doLoginCore(id, pw, err) {
+
   // S 層：先 fetch Sheets 取最新資料，再進入系統
   if(id===SUPER_USER.id && pw===SUPER_USER.pw){
     currentUser=SUPER_USER; appMode='admin';
@@ -1984,10 +2000,23 @@ function renderUsers(){
   const isS = currentUser.level === 'S';
   const aUsers = getUsers();
   const all = [SUPER_USER, ...aUsers];
+  // S 層：同時載入 Firebase 鎖定清單後再渲染
+  if (isS) {
+    fbLoadLockList(lockData => {
+      window._fbLockData = lockData;
+      _renderUsersTable(tbody, all, isS);
+    });
+  } else {
+    window._fbLockData = {};
+    _renderUsersTable(tbody, all, isS);
+  }
+}
+
+function _renderUsersTable(tbody, all, isS) {
+  const now = Date.now();
   tbody.innerHTML = all.map(u => {
     const lvlBadge = u.level==='S'?'badge-s':u.level==='A'?'badge-a':u.level==='A-'?'badge-am':u.level==='B'?'badge-b':u.level==='B-'?'badge-bm':u.level==='C'?'badge-cv':'badge-v';
     const canManage = isS && u.level !== 'S';
-    // 登入狀態（從 sheetsSessionMap 取得）
     const sessInfo = (u.level !== 'S' && u.level !== 'V') ? (sheetsSessionMap[String(u.id)] || null) : null;
     const isOnline = !!sessInfo;
     const statusCell = u.level === 'S'
@@ -2017,6 +2046,8 @@ function renderUsers(){
       </td>
     </tr>`;
   }).join('');
+  // S 層：渲染鎖定裝置管理區
+  if (isS) _renderLockPanel(window._fbLockData || {}, now);
   const addBtn = document.getElementById('btn-add-user');
   if(addBtn) addBtn.style.display = isS ? '' : 'none';
   const cpwSec = document.getElementById('changepw-section');
@@ -2025,6 +2056,51 @@ function renderUsers(){
   if(p5sub) p5sub.textContent = isS
     ? '帳號管理：新增、編輯、刪除 A/B 層帳號'
     : '帳號列表（僅供檢視）';
+}
+
+function _renderLockPanel(lockData, now) {
+  let panel = document.getElementById('fb-lock-panel');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'fb-lock-panel';
+    panel.style.cssText = 'margin-top:24px;padding:16px;background:var(--card);border:1px solid var(--border);border-radius:10px';
+    const tbl = document.getElementById('user-tbody');
+    if (tbl && tbl.closest('table')) {
+      tbl.closest('table').insertAdjacentElement('afterend', panel);
+    }
+  }
+  const entries = Object.entries(lockData).filter(([,v]) => v.until && now < v.until);
+  if (entries.length === 0) {
+    panel.innerHTML = '<div style="font-size:13px;font-weight:600;color:var(--text1);margin-bottom:8px">🔒 裝置鎖定管理</div><div style="font-size:12px;color:var(--text3)">目前無鎖定裝置</div>';
+    return;
+  }
+  panel.innerHTML = `<div style="font-size:13px;font-weight:600;color:var(--text1);margin-bottom:10px">🔒 裝置鎖定管理（共 ${entries.length} 台）</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="color:var(--text3);border-bottom:1px solid var(--border)">
+        <th style="text-align:left;padding:4px 8px;font-weight:500">裝置 ID</th>
+        <th style="text-align:left;padding:4px 8px;font-weight:500">原因</th>
+        <th style="text-align:left;padding:4px 8px;font-weight:500">解鎖時間</th>
+        <th style="padding:4px 8px"></th>
+      </tr></thead>
+      <tbody>${entries.map(([did, v]) => {
+        const ut = new Date(v.until);
+        const ts = (ut.getMonth()+1)+'/'+ut.getDate()+' '+ut.getHours().toString().padStart(2,'0')+':'+ut.getMinutes().toString().padStart(2,'0');
+        return `<tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:6px 8px;font-family:var(--mono);color:var(--text2)">${did.slice(0,22)}…</td>
+          <td style="padding:6px 8px;color:var(--text2)">${v.reason||'—'}</td>
+          <td style="padding:6px 8px;color:var(--amber)">${ts}</td>
+          <td style="padding:6px 8px"><button class="btn btn-sm" style="color:#3b6d11;border-color:#b7d9a0;font-size:10px;padding:1px 8px" onclick="adminUnlockDevice('${did}')">解鎖</button></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+}
+
+function adminUnlockDevice(deviceId) {
+  if (!confirm('確定解鎖此裝置？解鎖後該裝置可立即重新登入。')) return;
+  fbUnlockDevice(deviceId).then(() => {
+    toast('裝置已解鎖 ✓');
+    renderUsers();
+  }).catch(() => toast('解鎖失敗，請稍後再試'));
 }
 
 
@@ -3605,13 +3681,62 @@ function saveSession() {
 // ── Firebase Session 管理 ────────────────────────────────────────
 let _fbSessionUnwatch = null; // 用來取消監聽
 
+// ── DeviceId：存在 localStorage，跨頁面重整保留 ──
+function getDeviceId() {
+  let did = localStorage.getItem('tmrt_device_id');
+  if (!did) {
+    did = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+    localStorage.setItem('tmrt_device_id', did);
+  }
+  return did;
+}
+
+// ── 檢查此裝置是否在鎖定名單內，回傳 Promise<{locked, until}> ──
+function fbCheckDeviceLock() {
+  const did = getDeviceId();
+  return _fbDB.ref('lockList/' + did).once('value').then(snap => {
+    const data = snap.val();
+    if (!data) return { locked: false };
+    if (data.until && Date.now() < data.until) {
+      return { locked: true, until: data.until };
+    }
+    // 鎖定已過期，自動清除
+    _fbDB.ref('lockList/' + did).remove();
+    return { locked: false };
+  }).catch(() => ({ locked: false }));
+}
+
+// ── 鎖定某裝置 8 小時 ──
+function fbLockDevice(deviceId, reason) {
+  const until = Date.now() + 8 * 60 * 60 * 1000;
+  _fbDB.ref('lockList/' + deviceId).set({
+    until,
+    reason: reason || '重複登入',
+    lockedAt: Date.now()
+  });
+}
+
+// ── S 層解鎖特定裝置 ──
+function fbUnlockDevice(deviceId) {
+  return _fbDB.ref('lockList/' + deviceId).remove();
+}
+
+// ── 載入所有鎖定清單（S 層用）──
+function fbLoadLockList(callback) {
+  _fbDB.ref('lockList').once('value').then(snap => {
+    const data = snap.val() || {};
+    callback(data);
+  }).catch(() => callback({}));
+}
+
 function fbWriteSession(userId, token) {
   try {
     const ref = _fbDB.ref('sessions/' + userId);
     ref.set({
-      token:   token,
-      loginAt: Date.now(),
-      ua:      navigator.userAgent.slice(0, 80)
+      token:    token,
+      deviceId: getDeviceId(),
+      loginAt:  Date.now(),
+      ua:       navigator.userAgent.slice(0, 80)
     });
     // 啟動監聽（若已有舊監聽先取消）
     fbWatchSession(userId, token);
@@ -3629,6 +3754,8 @@ function fbWatchSession(userId, myToken) {
     if (!data || (data.token && data.token !== myToken)) {
       ref.off('value', handler);
       _fbSessionUnwatch = null;
+      // 鎖定本裝置 8 小時
+      fbLockDevice(getDeviceId(), '重複登入偵測');
       fbForceLogout();
     }
   });
