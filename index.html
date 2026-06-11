@@ -1570,14 +1570,18 @@ function doLogin(){
   const err=document.getElementById('login-error');
   err.textContent='';
 
-  // ── [Firebase] 先檢查此裝置是否被鎖定 ──
-  fbCheckDeviceLock().then(lockInfo => {
+  // ── [Firebase] 先檢查此帳號是否被鎖定（S 層不受限）──
+  if (id === SUPER_USER.id) {
+    doLoginCore(id, pw, err);
+    return;
+  }
+  fbCheckAccountLock(id).then(lockInfo => {
     if (lockInfo.locked) {
       const unlockTime = new Date(lockInfo.until);
       const hh = unlockTime.getHours().toString().padStart(2,'0');
       const mm = unlockTime.getMinutes().toString().padStart(2,'0');
       err.style.color = '#c00';
-      err.textContent = `⛔ 此裝置因重複登入已被鎖定，解鎖時間：${unlockTime.getMonth()+1}/${unlockTime.getDate()} ${hh}:${mm}`;
+      err.textContent = `⛔ 此帳號因重複登入已被鎖定，自動解鎖時間：${unlockTime.getMonth()+1}/${unlockTime.getDate()} ${hh}:${mm}`;
       return;
     }
     doLoginCore(id, pw, err);
@@ -1618,10 +1622,11 @@ function doLoginCore(id, pw, err) {
         if(String(latestUser.pw)!==String(pw)){ err.textContent='帳號或密碼錯誤，請重新輸入'; return; }
         currentUser = latestUser;
         appMode = 'admin';
-        startApp(); saveSession();
+        // ── 方案 A：檢查是否已有其他 session，若有則雙踢並鎖帳號 ──
+        fbCheckAndLogin(latestUser, err);
       })
       .catch(()=>{
-        // 網路失敗：用本機資料登入
+        // 網路失敗：用本機資料登入（略過 session 衝突檢查）
         err.textContent=''; err.style.color='';
         currentUser=found; appMode='admin'; startApp(); saveSession();
       });
@@ -1629,6 +1634,33 @@ function doLoginCore(id, pw, err) {
     // 沒有 APPS_SCRIPT_URL：直接用本機資料
     currentUser=found; appMode='admin'; startApp(); saveSession();
   }
+}
+
+// ── 方案 A 核心：登入前查 Firebase，偵測既有 session ──
+function fbCheckAndLogin(user, errEl) {
+  _fbDB.ref('sessions/' + user.id).once('value').then(snap => {
+    const existing = snap.val();
+
+    if (existing && existing.token) {
+      // 已有其他裝置的 session → 雙踢並鎖帳號
+      // 1. 刪除舊 session（甲的 onValue 會偵測到，觸發甲的強制登出）
+      _fbDB.ref('sessions/' + user.id).remove();
+      // 2. 鎖定帳號 8 小時
+      fbLockAccount(user.id, '重複登入（雙裝置同時登入）');
+      // 3. 乙也不給進，顯示提示
+      currentUser = null; appMode = null;
+      const ut = new Date(Date.now() + 8 * 60 * 60 * 1000);
+      const ts = (ut.getMonth()+1)+'/'+ut.getDate()+' '+ut.getHours().toString().padStart(2,'0')+':'+ut.getMinutes().toString().padStart(2,'0');
+      errEl.style.color = '#c00';
+      errEl.textContent = `⛔ 偵測到重複登入，帳號已被鎖定 8 小時。自動解鎖：${ts}`;
+    } else {
+      // 無衝突 → 正常登入
+      startApp(); saveSession();
+    }
+  }).catch(() => {
+    // Firebase 查詢失敗 → 放行（不因 Firebase 問題阻擋正常登入）
+    startApp(); saveSession();
+  });
 }
 function enterGuest(){
   const ls = document.getElementById('login-screen');
@@ -2069,36 +2101,46 @@ function _renderLockPanel(lockData, now) {
       tbl.closest('table').insertAdjacentElement('afterend', panel);
     }
   }
+  // 取出仍在鎖定期的帳號，並對應帳號名稱
+  const allUsers = [SUPER_USER, ...getUsers()];
   const entries = Object.entries(lockData).filter(([,v]) => v.until && now < v.until);
   if (entries.length === 0) {
-    panel.innerHTML = '<div style="font-size:13px;font-weight:600;color:var(--text1);margin-bottom:8px">🔒 裝置鎖定管理</div><div style="font-size:12px;color:var(--text3)">目前無鎖定裝置</div>';
+    panel.innerHTML = '<div style="font-size:13px;font-weight:600;color:var(--text1);margin-bottom:8px">🔒 帳號鎖定管理</div><div style="font-size:12px;color:var(--text3)">目前無鎖定帳號</div>';
     return;
   }
-  panel.innerHTML = `<div style="font-size:13px;font-weight:600;color:var(--text1);margin-bottom:10px">🔒 裝置鎖定管理（共 ${entries.length} 台）</div>
+  panel.innerHTML = `<div style="font-size:13px;font-weight:600;color:var(--text1);margin-bottom:10px">🔒 帳號鎖定管理（共 ${entries.length} 個）</div>
     <table style="width:100%;border-collapse:collapse;font-size:12px">
       <thead><tr style="color:var(--text3);border-bottom:1px solid var(--border)">
-        <th style="text-align:left;padding:4px 8px;font-weight:500">裝置 ID</th>
+        <th style="text-align:left;padding:4px 8px;font-weight:500">帳號</th>
+        <th style="text-align:left;padding:4px 8px;font-weight:500">姓名</th>
         <th style="text-align:left;padding:4px 8px;font-weight:500">原因</th>
-        <th style="text-align:left;padding:4px 8px;font-weight:500">解鎖時間</th>
+        <th style="text-align:left;padding:4px 8px;font-weight:500">自動解鎖時間</th>
         <th style="padding:4px 8px"></th>
       </tr></thead>
-      <tbody>${entries.map(([did, v]) => {
+      <tbody>${entries.map(([uid, v]) => {
+        const u = allUsers.find(x => String(x.id) === String(uid));
+        const uName = u ? u.name : '—';
         const ut = new Date(v.until);
         const ts = (ut.getMonth()+1)+'/'+ut.getDate()+' '+ut.getHours().toString().padStart(2,'0')+':'+ut.getMinutes().toString().padStart(2,'0');
         return `<tr style="border-bottom:1px solid var(--border)">
-          <td style="padding:6px 8px;font-family:var(--mono);color:var(--text2)">${did.slice(0,22)}…</td>
+          <td style="padding:6px 8px;font-family:var(--mono);color:var(--text2)">${uid}</td>
+          <td style="padding:6px 8px;color:var(--text2)">${uName}</td>
           <td style="padding:6px 8px;color:var(--text2)">${v.reason||'—'}</td>
           <td style="padding:6px 8px;color:var(--amber)">${ts}</td>
-          <td style="padding:6px 8px"><button class="btn btn-sm" style="color:#3b6d11;border-color:#b7d9a0;font-size:10px;padding:1px 8px" onclick="adminUnlockDevice('${did}')">解鎖</button></td>
+          <td style="padding:6px 8px"><button class="btn btn-sm" style="color:#3b6d11;border-color:#b7d9a0;font-size:10px;padding:1px 8px" onclick="adminUnlockAccount('${uid}')">提前解鎖</button></td>
         </tr>`;
       }).join('')}</tbody>
     </table>`;
 }
 
-function adminUnlockDevice(deviceId) {
-  if (!confirm('確定解鎖此裝置？解鎖後該裝置可立即重新登入。')) return;
-  fbUnlockDevice(deviceId).then(() => {
-    toast('裝置已解鎖 ✓');
+function adminUnlockAccount(userId) {
+  const allUsers = [SUPER_USER, ...getUsers()];
+  const u = allUsers.find(x => String(x.id) === String(userId));
+  const name = u ? u.name : userId;
+  if (!confirm(`確定提前解鎖「${name}」的帳號？
+解鎖後該帳號可從任何裝置立即重新登入。`)) return;
+  fbUnlockAccount(userId).then(() => {
+    toast(`帳號 ${name} 已解鎖 ✓`);
     renderUsers();
   }).catch(() => toast('解鎖失敗，請稍後再試'));
 }
@@ -3682,48 +3724,39 @@ function saveSession() {
 let _fbSessionUnwatch = null; // 用來取消監聽
 
 // ── DeviceId：存在 localStorage，跨頁面重整保留 ──
-function getDeviceId() {
-  let did = localStorage.getItem('tmrt_device_id');
-  if (!did) {
-    did = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
-    localStorage.setItem('tmrt_device_id', did);
-  }
-  return did;
-}
-
-// ── 檢查此裝置是否在鎖定名單內，回傳 Promise<{locked, until}> ──
-function fbCheckDeviceLock() {
-  const did = getDeviceId();
-  return _fbDB.ref('lockList/' + did).once('value').then(snap => {
+// ── 檢查帳號是否被鎖定，回傳 Promise<{locked, until, lockedBy}> ──
+function fbCheckAccountLock(userId) {
+  return _fbDB.ref('accountLock/' + userId).once('value').then(snap => {
     const data = snap.val();
     if (!data) return { locked: false };
     if (data.until && Date.now() < data.until) {
-      return { locked: true, until: data.until };
+      return { locked: true, until: data.until, lockedBy: data.lockedBy };
     }
-    // 鎖定已過期，自動清除
-    _fbDB.ref('lockList/' + did).remove();
+    // 已過期，自動清除
+    _fbDB.ref('accountLock/' + userId).remove();
     return { locked: false };
   }).catch(() => ({ locked: false }));
 }
 
-// ── 鎖定某裝置 8 小時 ──
-function fbLockDevice(deviceId, reason) {
+// ── 鎖定帳號 8 小時 ──
+function fbLockAccount(userId, reason) {
   const until = Date.now() + 8 * 60 * 60 * 1000;
-  _fbDB.ref('lockList/' + deviceId).set({
+  _fbDB.ref('accountLock/' + userId).set({
     until,
     reason: reason || '重複登入',
-    lockedAt: Date.now()
+    lockedAt: Date.now(),
+    lockedBy: 'system'
   });
 }
 
-// ── S 層解鎖特定裝置 ──
-function fbUnlockDevice(deviceId) {
-  return _fbDB.ref('lockList/' + deviceId).remove();
+// ── S 層手動解鎖帳號 ──
+function fbUnlockAccount(userId) {
+  return _fbDB.ref('accountLock/' + userId).remove();
 }
 
-// ── 載入所有鎖定清單（S 層用）──
+// ── 載入所有帳號鎖定清單（S 層用）──
 function fbLoadLockList(callback) {
-  _fbDB.ref('lockList').once('value').then(snap => {
+  _fbDB.ref('accountLock').once('value').then(snap => {
     const data = snap.val() || {};
     callback(data);
   }).catch(() => callback({}));
@@ -3754,8 +3787,10 @@ function fbWatchSession(userId, myToken) {
     if (!data || (data.token && data.token !== myToken)) {
       ref.off('value', handler);
       _fbSessionUnwatch = null;
-      // 鎖定本裝置 8 小時
-      fbLockDevice(getDeviceId(), '重複登入偵測');
+      // 鎖定帳號 8 小時（所有裝置都無法登入）
+      if (currentUser && currentUser.level !== 'S') {
+        fbLockAccount(currentUser.id, '重複登入偵測');
+      }
       fbForceLogout();
     }
   });
@@ -3783,7 +3818,7 @@ function fbForceLogout() {
 
   const errEl = document.getElementById('login-error');
   errEl.style.color = '#c00';
-  errEl.textContent = '⚠️ 此帳號已在其他裝置登入，您已被登出。';
+  errEl.textContent = '⚠️ 偵測到有人嘗試共用此帳號，您已被登出，帳號已鎖定 8 小時。如需提前解鎖請聯繫管理員。';
 }
 
 function restoreSession() {
