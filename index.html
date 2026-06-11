@@ -440,6 +440,26 @@ tbody tr:hover td { background: #fafaf8; }
 .inv-row-over{background:#e8f0f5 !important;border-top:2px solid var(--accent)}
 .inv-row-deny{background:#fdf0f0 !important;border-top:2px solid #e8a0a0;cursor:not-allowed}
 </style>
+<!-- ── Firebase SDK (compat 版，支援直接 CDN 載入) ── -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+  const _fbConfig = {
+    apiKey:            "AIzaSyBAvBojcgmgmuL_Rnnv4s4cX_UqU8gaJg8",
+    authDomain:        "tmrt-opd-snhandover.firebaseapp.com",
+    databaseURL:       "https://tmrt-opd-snhandover-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "tmrt-opd-snhandover",
+    storageBucket:     "tmrt-opd-snhandover.firebasestorage.app",
+    messagingSenderId: "84776893870",
+    appId:             "1:84776893870:web:7d79677b8b2e39d783dc3f"
+  };
+  firebase.initializeApp(_fbConfig);
+  const _fbDB   = firebase.database();
+  const _fbAuth = firebase.auth();
+  // 匿名登入，取得 Firebase UID（僅用於授權，不綁帳號密碼）
+  _fbAuth.signInAnonymously().catch(e => console.warn('[Firebase] 匿名登入失敗:', e));
+</script>
 </head>
 <body>
 
@@ -1604,12 +1624,16 @@ function enterGuest(){
   document.body.appendChild(err);
 }
 function doLogout(){
-  // 清除 Sheets 上的 session token（非同步）
+  // ── [Sheets] 清除 session token（非同步）──
   if (APPS_SCRIPT_URL && currentUser && currentUser.level !== 'S' && currentUser.level !== 'V') {
     fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       body: JSON.stringify({ action:'clearSession', userId: currentUser.id })
     }).catch(()=>{});
+  }
+  // ── [Firebase] 清除 session 並停止監聽 ──
+  if (currentUser && currentUser.level !== 'S' && currentUser.level !== 'V') {
+    fbClearSession(currentUser.id);
   }
   currentUser=null;appMode=null;
   document.getElementById('app-screen').style.display='none';
@@ -3554,14 +3578,19 @@ function saveSession() {
     if (currentUser && currentUser.level !== 'S' && currentUser.level !== 'V') {
       const existing = JSON.parse(sessionStorage.getItem(SESSION_KEY) || '{}');
       token = existing.token || genToken();
-      // 寫入 Sheets（非同步，不阻塞）
+
+      // ── [Sheets] 寫入 session（保留備份）──
       if (APPS_SCRIPT_URL) {
         fetch(APPS_SCRIPT_URL, {
           method: 'POST',
           body: JSON.stringify({ action:'writeSession', userId: currentUser.id, token })
         }).catch(()=>{});
       }
+
+      // ── [Firebase] 寫入 session 並啟動重複登入監聽 ──
+      fbWriteSession(currentUser.id, token);
     }
+
     sessionStorage.setItem(SESSION_KEY, JSON.stringify({
       userId:    currentUser ? currentUser.id    : null,
       userLevel: currentUser ? currentUser.level : null,
@@ -3571,6 +3600,63 @@ function saveSession() {
       token
     }));
   } catch(e) {}
+}
+
+// ── Firebase Session 管理 ────────────────────────────────────────
+let _fbSessionUnwatch = null; // 用來取消監聽
+
+function fbWriteSession(userId, token) {
+  try {
+    const ref = _fbDB.ref('sessions/' + userId);
+    ref.set({
+      token:   token,
+      loginAt: Date.now(),
+      ua:      navigator.userAgent.slice(0, 80)
+    });
+    // 啟動監聽（若已有舊監聽先取消）
+    fbWatchSession(userId, token);
+  } catch(e) { console.warn('[Firebase] writeSession 失敗:', e); }
+}
+
+function fbWatchSession(userId, myToken) {
+  // 先移除舊的監聽
+  if (_fbSessionUnwatch) { _fbSessionUnwatch(); _fbSessionUnwatch = null; }
+
+  const ref = _fbDB.ref('sessions/' + userId);
+  const handler = ref.on('value', snap => {
+    const data = snap.val();
+    // 若節點被刪除或 token 與本機不同 → 另一裝置已登入
+    if (!data || (data.token && data.token !== myToken)) {
+      ref.off('value', handler);
+      _fbSessionUnwatch = null;
+      fbForceLogout();
+    }
+  });
+  // 回傳取消函式
+  _fbSessionUnwatch = () => ref.off('value', handler);
+}
+
+function fbClearSession(userId) {
+  try {
+    if (_fbSessionUnwatch) { _fbSessionUnwatch(); _fbSessionUnwatch = null; }
+    _fbDB.ref('sessions/' + userId).remove();
+  } catch(e) {}
+}
+
+function fbForceLogout() {
+  // 停止監聽、清除本機 session
+  try { sessionStorage.removeItem(SESSION_KEY); } catch(e) {}
+  currentUser = null; appMode = null;
+
+  // 顯示提示後跳回登入畫面
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+
+  const errEl = document.getElementById('login-error');
+  errEl.style.color = '#c00';
+  errEl.textContent = '⚠️ 此帳號已在其他裝置登入，您已被登出。';
 }
 
 function restoreSession() {
@@ -3592,6 +3678,10 @@ function restoreSession() {
     } else {
       // A 或 B 層：用 session 記錄的正確 level 暫代，Sheets 載入後再確認
       currentUser = { id: s.userId, name: s.userName, level: String(s.userLevel || 'A').trim() };
+      // 還原後重啟 Firebase 重複登入監聽
+      if (s.token) {
+        try { fbWatchSession(s.userId, s.token); } catch(e) {}
+      }
     }
     return true;
   } catch(e) { return false; }
