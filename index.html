@@ -1642,17 +1642,30 @@ function fbCheckAndLogin(user, errEl) {
     const existing = snap.val();
 
     if (existing && existing.token) {
-      // 已有其他裝置的 session → 雙踢並鎖帳號
-      // 1. 刪除舊 session（甲的 onValue 會偵測到，觸發甲的強制登出）
-      _fbDB.ref('sessions/' + user.id).remove();
-      // 2. 鎖定帳號 8 小時
-      fbLockAccount(user.id, '重複登入（雙裝置同時登入）');
-      // 3. 乙也不給進，顯示提示
+      // ── 已有其他裝置的 session：雙踢並鎖帳號 ──
+      // 順序很重要：先寫鎖，再刪 session
+      // 這樣甲的 onValue 觸發時，鎖已存在，甲不會再重複寫鎖
+      const until = Date.now() + 8 * 60 * 60 * 1000;
+      const lockRef = _fbDB.ref('accountLock/' + user.id);
+      lockRef.set({
+        until,
+        reason: '重複登入（雙裝置同時嘗試）',
+        lockedAt: Date.now(),
+        lockedBy: 'system'
+      }).then(() => {
+        // 鎖寫入成功後，再刪 session → 觸發甲的強制登出
+        _fbDB.ref('sessions/' + user.id).remove();
+      });
+
+      // 乙清空狀態，不給進入
       currentUser = null; appMode = null;
-      const ut = new Date(Date.now() + 8 * 60 * 60 * 1000);
-      const ts = (ut.getMonth()+1)+'/'+ut.getDate()+' '+ut.getHours().toString().padStart(2,'0')+':'+ut.getMinutes().toString().padStart(2,'0');
+      const ut = new Date(until);
+      const ts = (ut.getMonth()+1)+'/'+ut.getDate()+' '+
+                 ut.getHours().toString().padStart(2,'0')+':'+
+                 ut.getMinutes().toString().padStart(2,'0');
       errEl.style.color = '#c00';
-      errEl.textContent = `⛔ 偵測到重複登入，帳號已被鎖定 8 小時。自動解鎖：${ts}`;
+      errEl.textContent = `⛔ 偵測到重複登入，帳號已鎖定 8 小時。自動解鎖：${ts}`;
+
     } else {
       // 無衝突 → 正常登入
       startApp(); saveSession();
@@ -3724,6 +3737,15 @@ function saveSession() {
 let _fbSessionUnwatch = null; // 用來取消監聽
 
 // ── DeviceId：存在 localStorage，跨頁面重整保留 ──
+function getDeviceId() {
+  let did = localStorage.getItem('tmrt_device_id');
+  if (!did) {
+    did = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+    localStorage.setItem('tmrt_device_id', did);
+  }
+  return did;
+}
+
 // ── 檢查帳號是否被鎖定，回傳 Promise<{locked, until, lockedBy}> ──
 function fbCheckAccountLock(userId) {
   return _fbDB.ref('accountLock/' + userId).once('value').then(snap => {
@@ -3787,10 +3809,7 @@ function fbWatchSession(userId, myToken) {
     if (!data || (data.token && data.token !== myToken)) {
       ref.off('value', handler);
       _fbSessionUnwatch = null;
-      // 鎖定帳號 8 小時（所有裝置都無法登入）
-      if (currentUser && currentUser.level !== 'S') {
-        fbLockAccount(currentUser.id, '重複登入偵測');
-      }
+      // 鎖已由乙登入時寫入，甲只需登出，不重複寫鎖
       fbForceLogout();
     }
   });
