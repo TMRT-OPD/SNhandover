@@ -2054,25 +2054,32 @@ function renderUsers(){
   const isS = currentUser.level === 'S';
   const aUsers = getUsers();
   const all = [SUPER_USER, ...aUsers];
-  // S 層：同時載入 Firebase 鎖定清單後再渲染
-  if (isS) {
-    fbLoadLockList(lockData => {
-      window._fbLockData = lockData;
-      _renderUsersTable(tbody, all, isS);
-    });
-  } else {
-    window._fbLockData = {};
+  // 同時從 Firebase 載入 sessions（即時登入狀態）和 lockList（S 層用）
+  const p1 = _fbDB.ref('sessions').once('value').then(s => s.val() || {});
+  const p2 = isS ? _fbDB.ref('accountLock').once('value').then(s => s.val() || {}) : Promise.resolve({});
+  Promise.all([p1, p2]).then(([fbSessions, lockData]) => {
+    window._fbSessionData = fbSessions;
+    window._fbLockData    = lockData;
     _renderUsersTable(tbody, all, isS);
-  }
+  }).catch(() => {
+    window._fbSessionData = {};
+    window._fbLockData    = {};
+    _renderUsersTable(tbody, all, isS);
+  });
 }
 
 function _renderUsersTable(tbody, all, isS) {
   const now = Date.now();
+  const fbSessions = window._fbSessionData || {};
   tbody.innerHTML = all.map(u => {
     const lvlBadge = u.level==='S'?'badge-s':u.level==='A'?'badge-a':u.level==='A-'?'badge-am':u.level==='B'?'badge-b':u.level==='B-'?'badge-bm':u.level==='C'?'badge-cv':'badge-v';
     const canManage = isS && u.level !== 'S';
-    const sessInfo = (u.level !== 'S' && u.level !== 'V') ? (sheetsSessionMap[String(u.id)] || null) : null;
-    const isOnline = !!sessInfo;
+    // 登入狀態改由 Firebase RTDB sessions 提供（即時，不用 Sheets）
+    const fbSess = (u.level !== 'S' && u.level !== 'V') ? (fbSessions[String(u.id)] || null) : null;
+    const isOnline = !!fbSess;
+    const loginAtStr = fbSess && fbSess.loginAt
+      ? new Date(fbSess.loginAt).toLocaleString('zh-TW', {timeZone:'Asia/Taipei',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})
+      : '—';
     const statusCell = u.level === 'S'
       ? '<td style="font-size:11px;color:var(--text3)">—</td>'
       : `<td style="white-space:nowrap">
@@ -2081,9 +2088,7 @@ function _renderUsersTable(tbody, all, isS) {
           </span>
           ${isOnline && isS ? `<button class="btn btn-sm btn-danger" style="margin-left:6px;font-size:10px;padding:1px 6px" onclick="forceLogout('${u.id}','${u.name}')">強制登出</button>` : ''}
         </td>`;
-    const loginAtCell = sessInfo
-      ? `<td style="font-size:11px;color:var(--text3)">${sessInfo.loginAt||'—'}</td>`
-      : `<td style="font-size:11px;color:var(--text3)">—</td>`;
+    const loginAtCell = `<td style="font-size:11px;color:var(--text3)">${loginAtStr}</td>`;
     return `<tr>
       <td style="font-family:var(--mono);font-size:12px">${u.id}</td>
       <td>${u.name}</td>
@@ -2169,17 +2174,16 @@ function adminUnlockAccount(userId) {
 
 
 function forceLogout(userId, userName) {
-  if (!confirm(`確定強制登出「${userName}」嗎？\n對方下次系統刷新時會被踢出。`)) return;
-  if (!APPS_SCRIPT_URL) return;
-  fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action:'clearSession', userId })
-  }).then(()=>{
-    sheetsSessionMap[String(userId)] = null;
-    delete sheetsSessionMap[String(userId)];
+  if (!confirm(`確定強制登出「${userName}」嗎？\n對方將立即被踢出系統。`)) return;
+  // 同時清除 Firebase session（即時踢出）和 Sheets session（備份）
+  const fbDone = _fbDB.ref('sessions/' + userId).remove();
+  const sheetsDone = APPS_SCRIPT_URL
+    ? fetch(APPS_SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'clearSession', userId }) }).catch(()=>{})
+    : Promise.resolve();
+  Promise.all([fbDone, sheetsDone]).then(() => {
     renderUsers();
     toast(`已強制登出 ${userName} ✓`);
-  }).catch(()=>{ toast('操作失敗，請稍後再試'); });
+  }).catch(() => toast('操作失敗，請稍後再試'));
 }
 
 function showAddUserForm(){if(!currentUser||currentUser.level!=='S'){toast('權限不足');return}const f=document.getElementById('add-user-form');f.style.display=f.style.display==='none'?'block':'none'}
