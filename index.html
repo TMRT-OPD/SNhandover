@@ -1641,30 +1641,31 @@ function fbCheckAndLogin(user, errEl) {
   _fbDB.ref('sessions/' + user.id).once('value').then(snap => {
     const existing = snap.val();
 
-    if (existing && existing.token) {
-      // ── 已有其他裝置的 session：雙踢並鎖帳號 ──
-      // 順序很重要：先寫鎖，再刪 session
-      // 這樣甲的 onValue 觸發時，鎖已存在，甲不會再重複寫鎖
+    // sessions/{userId} 存在即視為衝突，不論是否同裝置、同 token
+    // 同一裝置重複登入時 sessionStorage 會保留舊 token，必須一律擋下
+    if (existing) {
+      // ── 已有 session：先寫鎖，再刪 session（觸發甲強制登出）──
       const until = Date.now() + 8 * 60 * 60 * 1000;
-      const lockRef = _fbDB.ref('accountLock/' + user.id);
-      lockRef.set({
+      _fbDB.ref('accountLock/' + user.id).set({
         until,
-        reason: '重複登入（雙裝置同時嘗試）',
+        reason: '重複登入偵測',
         lockedAt: Date.now(),
         lockedBy: 'system'
       }).then(() => {
-        // 鎖寫入成功後，再刪 session → 觸發甲的強制登出
+        // 鎖確認寫入後，刪 session → 觸發甲的 onValue → 甲強制登出
         _fbDB.ref('sessions/' + user.id).remove();
       });
 
-      // 乙清空狀態，不給進入
+      // 乙：清空狀態，顯示鎖定提示，不給進入
       currentUser = null; appMode = null;
+      // 同時清掉 sessionStorage，避免下次重整還原舊 session
+      try { sessionStorage.removeItem(SESSION_KEY); } catch(e) {}
       const ut = new Date(until);
       const ts = (ut.getMonth()+1)+'/'+ut.getDate()+' '+
                  ut.getHours().toString().padStart(2,'0')+':'+
                  ut.getMinutes().toString().padStart(2,'0');
       errEl.style.color = '#c00';
-      errEl.textContent = `⛔ 偵測到重複登入，帳號已鎖定 8 小時。自動解鎖：${ts}`;
+      errEl.textContent = `⛔ 此帳號已在其他裝置登入，為防止帳號共用已鎖定 8 小時。自動解鎖：${ts}`;
 
     } else {
       // 無衝突 → 正常登入
