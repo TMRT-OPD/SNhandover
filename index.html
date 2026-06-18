@@ -463,6 +463,22 @@ tbody tr:hover td { background: #fafaf8; }
 </head>
 <body>
 
+<!-- 載入中過渡畫面：避免重整時先閃登入頁再跳轉 -->
+<div id="boot-loading" style="position:fixed;inset:0;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px">
+  <div style="width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:#2563eb;border-radius:50%;animation:boot-spin 0.8s linear infinite"></div>
+  <div style="font-size:13px;color:#6b7280">載入中…</div>
+</div>
+<style>@keyframes boot-spin{to{transform:rotate(360deg)}}</style>
+<script>
+  // 提早判斷：sessionStorage 有舊 session 時，先隱藏登入頁，避免閃爍
+  // 不直接顯示 app-screen，因為還沒驗證完成，先維持載入中畫面
+  try {
+    if (sessionStorage.getItem('handover_session_v1')) {
+      document.write('<style id="boot-hide-login">#login-screen{display:none!important}</style>');
+    }
+  } catch(e) {}
+</script>
+
 <!-- LOGIN -->
 <div id="login-screen" class="login-screen">
   <div class="login-card">
@@ -3921,8 +3937,14 @@ function restoreSession() {
   function initAfterLoad() {
     if (restoreSession()) {
       startApp();
+    } else {
+      // 還原失敗（無 session 或已失效）→ 移除早期注入的強制隱藏樣式，讓登入頁正常顯示
+      const hideStyle = document.getElementById('boot-hide-login');
+      if (hideStyle) hideStyle.remove();
     }
-    // 登入頁已預設顯示，不需要額外操作
+    // 判斷完成，移除載入中畫面（不論結果是登入頁或系統頁）
+    const bootEl = document.getElementById('boot-loading');
+    if (bootEl) bootEl.remove();
   }
 })();
 
